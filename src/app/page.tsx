@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase'
 import AddAssetForm from '@/components/AddAssetForm'
 
+export const dynamic = 'force-dynamic'
+
 export default async function Home() {
   const { data: assets, error } = await supabase.from('assets').select('*').order('category')
 
