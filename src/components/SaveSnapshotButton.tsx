@@ -29,7 +29,7 @@ export default function SaveSnapshotButton({ totalValue, breakdown }: Props) {
     <button
       onClick={handleClick}
       disabled={loading || totalValue === 0}
-      className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-4 py-2 rounded font-semibold mb-6"
+      className="rounded-xl border border-teal-200/20 bg-teal-300 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-teal-950/20 transition hover:bg-teal-200 disabled:cursor-not-allowed disabled:opacity-50"
     >
       {loading ? 'Guardando...' : '📸 Guardar snapshot de hoy'}
     </button>

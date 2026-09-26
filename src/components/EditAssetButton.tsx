@@ -100,19 +100,19 @@ export default function EditAssetButton({ asset }: { asset: Asset }) {
         type="button"
         onClick={openForm}
         aria-label={`Editar ${asset.name}`}
-        className="rounded border border-gray-600 px-3 py-1 text-sm hover:bg-gray-700"
+        className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-teal-200/25 hover:bg-teal-200/10 hover:text-teal-100"
       >
         Editar
       </button>
 
       {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-sm">
           <form
             onSubmit={handleSubmit}
             role="dialog"
             aria-modal="true"
             aria-labelledby="edit-asset-title"
-            className="my-auto grid w-full max-w-lg grid-cols-1 gap-3 rounded-lg bg-gray-900 p-5 text-white shadow-xl sm:grid-cols-2"
+            className="my-auto grid w-full max-w-lg grid-cols-1 gap-3 rounded-2xl border border-white/10 bg-slate-900 p-5 text-white shadow-2xl sm:grid-cols-2"
           >
             <h2 id="edit-asset-title" className="col-span-full text-lg font-bold">
               Editar posición
@@ -120,37 +120,37 @@ export default function EditAssetButton({ asset }: { asset: Asset }) {
 
             <label className="grid gap-1 text-sm">
               Nombre
-              <input name="name" value={form.name} onChange={handleChange} required className="rounded p-2 text-black" />
+              <input name="name" value={form.name} onChange={handleChange} required className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
             </label>
             <label className="grid gap-1 text-sm">
               Ticker
-              <input name="ticker" value={form.ticker} onChange={handleChange} className="rounded p-2 text-black" />
+              <input name="ticker" value={form.ticker} onChange={handleChange} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
             </label>
             <label className="grid gap-1 text-sm">
               Categoría
-              <select name="category" value={form.category} onChange={handleChange} className="rounded p-2 text-black">
+              <select name="category" value={form.category} onChange={handleChange} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white">
                 {CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
               </select>
             </label>
             <label className="grid gap-1 text-sm">
               Broker
-              <input name="broker" value={form.broker} onChange={handleChange} className="rounded p-2 text-black" />
+              <input name="broker" value={form.broker} onChange={handleChange} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
             </label>
             <label className="grid gap-1 text-sm">
               Cantidad
-              <input name="quantity" value={form.quantity} onChange={handleChange} type="number" min="0" step="any" required className="rounded p-2 text-black" />
+              <input name="quantity" value={form.quantity} onChange={handleChange} type="number" min="0" step="any" required className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
             </label>
             <label className="grid gap-1 text-sm">
               Precio medio de compra
-              <input name="avg_price" value={form.avg_price} onChange={handleChange} type="number" min="0" step="any" className="rounded p-2 text-black" />
+              <input name="avg_price" value={form.avg_price} onChange={handleChange} type="number" min="0" step="any" className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
             </label>
             <label className="grid gap-1 text-sm">
               Precio actual
-              <input name="current_price" value={form.current_price} onChange={handleChange} type="number" min="0" step="any" className="rounded p-2 text-black" />
+              <input name="current_price" value={form.current_price} onChange={handleChange} type="number" min="0" step="any" className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
             </label>
             <label className="grid gap-1 text-sm">
               Peso objetivo (%)
-              <input name="target_weight" value={form.target_weight} onChange={handleChange} type="number" min="0" step="any" className="rounded p-2 text-black" />
+              <input name="target_weight" value={form.target_weight} onChange={handleChange} type="number" min="0" step="any" className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
             </label>
 
             {errorMessage && (
@@ -162,14 +162,14 @@ export default function EditAssetButton({ asset }: { asset: Asset }) {
                 type="button"
                 onClick={() => setEditing(false)}
                 disabled={loading}
-                className="rounded border border-gray-600 px-4 py-2 hover:bg-gray-700 disabled:opacity-50"
+                className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-300 transition hover:bg-white/[0.06] disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="rounded bg-blue-600 px-4 py-2 font-semibold hover:bg-blue-700 disabled:opacity-50"
+                className="rounded-xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-teal-200 disabled:opacity-50"
               >
                 {loading ? 'Guardando…' : 'Guardar cambios'}
               </button>
