@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import AddAssetForm from '@/components/AddAssetForm'
+import EditAssetButton from '@/components/EditAssetButton'
 import PortfolioChart from '@/components/PortfolioChart'
 import SaveSnapshotButton from '@/components/SaveSnapshotButton'
 import TrackRecordChart from '@/components/TrackRecordChart'
@@ -83,7 +84,7 @@ export default async function Home() {
             <tr className="border-b border-gray-700">
               <th className="p-2">Nombre</th><th className="p-2">Ticker</th><th className="p-2">Categoría</th>
               <th className="p-2">Broker</th><th className="p-2">Cant.</th><th className="p-2">P. medio</th>
-              <th className="p-2">P. actual</th><th className="p-2">Peso obj.</th>
+              <th className="p-2">P. actual</th><th className="p-2">Peso obj.</th><th className="p-2">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -92,6 +93,7 @@ export default async function Home() {
                 <td className="p-2">{a.name}</td><td className="p-2">{a.ticker}</td><td className="p-2">{a.category}</td>
                 <td className="p-2">{a.broker}</td><td className="p-2">{a.quantity}</td><td className="p-2">{a.avg_price}</td>
                 <td className="p-2">{a.current_price}</td><td className="p-2">{a.target_weight}%</td>
+                <td className="p-2"><EditAssetButton asset={a} /></td>
               </tr>
             ))}
           </tbody>
