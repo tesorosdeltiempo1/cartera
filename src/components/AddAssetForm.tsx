@@ -8,7 +8,7 @@ export default function AddAssetForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
-    name: '', ticker: '', category: 'Satélite', broker: '',
+    name: '', ticker: '', category: 'Núcleo Pasivo', broker: '',
     quantity: '', avg_price: '', current_price: '', target_weight: '',
   })
 
@@ -34,7 +34,7 @@ export default function AddAssetForm() {
     setLoading(false)
     if (error) { alert('Error al guardar: ' + error.message); return }
 
-    setForm({ name: '', ticker: '', category: 'Satélite', broker: '', quantity: '', avg_price: '', current_price: '', target_weight: '' })
+    setForm({ name: '', ticker: '', category: 'Núcleo Pasivo', broker: '', quantity: '', avg_price: '', current_price: '', target_weight: '' })
     router.refresh()
   }
 
@@ -43,9 +43,10 @@ export default function AddAssetForm() {
       <input name="name" value={form.name} onChange={handleChange} placeholder="Nombre (ej. Amazon)" required className="p-2 rounded text-black" />
       <input name="ticker" value={form.ticker} onChange={handleChange} placeholder="Ticker (ej. AMZN)" className="p-2 rounded text-black" />
       <select name="category" value={form.category} onChange={handleChange} className="p-2 rounded text-black">
-        <option value="Núcleo">Núcleo</option>
-        <option value="Satélite">Satélite</option>
-        <option value="Activos Duros">Activos Duros</option>
+        <option value="Núcleo Pasivo">Núcleo Pasivo</option>
+        <option value="Satélite Convicción">Satélite Convicción</option>
+        <option value="Seguridad y Liquidez">Seguridad y Liquidez</option>
+        <option value="Especulativo">Especulativo</option>
       </select>
       <input name="broker" value={form.broker} onChange={handleChange} placeholder="Broker" className="p-2 rounded text-black" />
       <input name="quantity" value={form.quantity} onChange={handleChange} placeholder="Cantidad" type="number" step="any" className="p-2 rounded text-black" />
