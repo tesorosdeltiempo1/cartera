@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase'
 import AddAssetForm from '@/components/AddAssetForm'
 import PortfolioChart from '@/components/PortfolioChart'
+import SaveSnapshotButton from '@/components/SaveSnapshotButton'
+import TrackRecordChart from '@/components/TrackRecordChart'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,6 +31,7 @@ function eur(n: number) {
 
 export default async function Home() {
   const { data: assets, error } = await supabase.from('assets').select('*').order('category')
+  const { data: snapshots } = await supabase.from('portfolio_snapshots').select('*').order('snapshot_date')
 
   const totales = CATEGORIES.map((cat) => {
     const items = (assets ?? []).filter((a) => a.category === cat)
@@ -40,12 +43,14 @@ export default async function Home() {
   return (
     <main className="p-8 max-w-4xl mx-auto text-white">
       <h1 className="text-2xl font-bold mb-1">Cartera</h1>
-      <p className="text-3xl font-bold mb-6">{eur(granTotal)}</p>
+      <p className="text-3xl font-bold mb-4">{eur(granTotal)}</p>
 
       {error && <p className="text-red-500">Error: {error.message}</p>}
 
       {granTotal > 0 && (
         <>
+          <SaveSnapshotButton totalValue={granTotal} breakdown={totales} />
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {totales.map((t) => (
               <div key={t.category} className="bg-gray-800 rounded-lg p-4">
@@ -59,6 +64,13 @@ export default async function Home() {
           </div>
           <PortfolioChart data={totales} />
         </>
+      )}
+
+      {snapshots && snapshots.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-bold mb-3">Track record</h2>
+          <TrackRecordChart data={snapshots} />
+        </div>
       )}
 
       <AddAssetForm />
