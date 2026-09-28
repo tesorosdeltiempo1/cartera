@@ -41,16 +41,26 @@ Tres principios que no se negocian:
 - [x] Tarjetas resumen por categoría con peso % real
 - [x] Gráfico donut de distribución de pesos
 - [x] Snapshots de track record (botón manual) + gráfico de evolución del valor total
+- [x] Dashboard con tema oscuro, resumen visual y tabla adaptable a móvil
 - [x] Desplegado en producción, accesible desde cualquier dispositivo
+
+El historial de iteraciones y su validación está en [CHANGELOG.md](CHANGELOG.md).
+
+### Prioridad de seguridad — antes de activar más operaciones destructivas
+- [ ] Revisar las políticas RLS efectivas de `assets` y `portfolio_snapshots` para el rol `anon`.
+- [ ] Decidir cómo limitar el acceso al dashboard antes de permitir borrados desde una URL pública.
+- [ ] Probar operaciones de modificación y borrado con una copia de datos o un entorno separado antes de usarlas en producción.
 
 ## Roadmap
 
 ### Fase 2 — Terminar el ciclo de gestión de datos
 Lo mínimo para que esto sea *usable* de verdad día a día, no solo una demo:
-- [ ] Editar una posición existente (ahora mismo solo se puede crear)
-- [ ] Eliminar una posición
+- [x] Editar una posición existente (probado por el usuario en producción)
+- [ ] Eliminar una posición (implementado localmente; pendiente revisar acceso/RLS y validar antes de producción)
 - [ ] Editar/eliminar un snapshot por error
-- [ ] Confirmación antes de borrar (evitar borrados accidentales desde el móvil)
+- [ ] Confirmación antes de borrar snapshots (la confirmación de posiciones ya está implementada; pendiente validación)
+- [ ] Mostrar un resultado claro después de cada operación y no perder cambios ante un error de red
+- [ ] Exportar un respaldo manual de posiciones y snapshots antes de permitir borrados habituales (descarga JSON implementada; pendiente verificar archivo y guardado seguro)
 
 ### Fase 3 — Reflejar la política de inversión de verdad
 Acercar la herramienta a cómo gestionas de verdad, no a un CRUD genérico:
@@ -62,13 +72,16 @@ Acercar la herramienta a cómo gestionas de verdad, no a un CRUD genérico:
 ### Fase 4 — Menos trabajo manual (con cuidado)
 Aquí es donde la automatización empieza a tentar — se añade solo si se puede revisar y desactivar:
 - [ ] Actualización automática de `current_price` vía API de cotizaciones (con opción de forzar un valor manual si la API falla o desconfías del dato)
+- [ ] Guardar y mostrar la fecha y el origen de cada precio para distinguir datos recientes de valores introducidos manualmente
 - [ ] Snapshot automático semanal/mensual (cron job), sin perder el botón manual
 - [ ] Multi-moneda si algún broker opera en USD
 
 ### Fase 5 — Pulido de uso diario
 - [ ] Instalable como PWA (icono en el móvil, pantalla completa, sin barra de navegador)
-- [ ] Modo oscuro/claro (o fijar uno según preferencia)
-- [ ] Protección simple opcional por si el enlace se filtra (sin sistema de usuarios, solo una contraseña de acceso)
+- [x] Tema oscuro fijado para el dashboard
+- [ ] Selector de modo oscuro/claro
+- [ ] Protección de acceso antes de compartir o ampliar el uso (autenticación o alternativa revisada; una contraseña visual no debe sustituir las políticas RLS)
+- [ ] Revisar permisos mínimos de Supabase y evitar que una clave pública permita cambios no autorizados
 
 ### Fase 6 — La parte soñadora, cuando todo lo anterior sea aburrido de estable
 - [ ] Proyección a 15-25 años según aportaciones y rentabilidad histórica asumida (con los supuestos siempre visibles, nunca una caja negra)

@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase'
 import AddAssetForm from '@/components/AddAssetForm'
+import DeleteAssetButton from '@/components/DeleteAssetButton'
 import EditAssetButton from '@/components/EditAssetButton'
+import ExportBackupButton from '@/components/ExportBackupButton'
 import PortfolioChart from '@/components/PortfolioChart'
 import SaveSnapshotButton from '@/components/SaveSnapshotButton'
 import TrackRecordChart from '@/components/TrackRecordChart'
@@ -41,7 +43,7 @@ function categoryStyle(category: string) {
 
 export default async function Home() {
   const { data: assets, error } = await supabase.from('assets').select('*').order('category')
-  const { data: snapshots } = await supabase.from('portfolio_snapshots').select('*').order('snapshot_date')
+  const { data: snapshots, error: snapshotsError } = await supabase.from('portfolio_snapshots').select('*').order('snapshot_date')
 
   const totales = CATEGORIES.map((cat) => {
     const items = (assets ?? []).filter((a) => a.category === cat)
@@ -74,6 +76,11 @@ export default async function Home() {
       {error && (
         <div role="alert" className="mb-6 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">
           No se pudieron cargar las posiciones: {error.message}
+        </div>
+      )}
+      {snapshotsError && (
+        <div role="alert" className="mb-6 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">
+          No se pudo cargar el histórico: {snapshotsError.message}
         </div>
       )}
 
@@ -147,9 +154,16 @@ export default async function Home() {
             <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-teal-200">Detalle</p>
             <h2 className="text-lg font-semibold text-white">Posiciones</h2>
           </div>
-          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-300">
-            {assets?.length ?? 0} {(assets?.length ?? 0) === 1 ? 'posición' : 'posiciones'}
-          </span>
+          <div className="flex flex-wrap items-end justify-end gap-3">
+            <ExportBackupButton
+              assets={assets ?? []}
+              snapshots={snapshots ?? []}
+              disabled={Boolean(error || snapshotsError || !assets || !snapshots)}
+            />
+            <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-300">
+              {assets?.length ?? 0} {(assets?.length ?? 0) === 1 ? 'posición' : 'posiciones'}
+            </span>
+          </div>
         </div>
 
         {assets && assets.length === 0 ? (
@@ -187,7 +201,12 @@ export default async function Home() {
                     <td className="px-4 py-4 text-right tabular-nums text-slate-300">{asset.avg_price == null ? '—' : eur(asset.avg_price)}</td>
                     <td className="px-4 py-4 text-right tabular-nums text-slate-300">{asset.current_price == null ? '—' : eur(asset.current_price)}</td>
                     <td className="px-4 py-4 text-right tabular-nums text-slate-300">{asset.target_weight == null ? '—' : `${asset.target_weight}%`}</td>
-                    <td className="px-5 py-4 text-right"><EditAssetButton asset={asset} /></td>
+                    <td className="px-5 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <EditAssetButton asset={asset} />
+                        <DeleteAssetButton assetId={asset.id} assetName={asset.name} />
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -196,7 +215,7 @@ export default async function Home() {
         )}
       </section>
 
-      <footer className="py-8 text-center text-xs text-slate-600">Datos introducidos y revisados manualmente · No es asesoramiento financiero</footer>
+      <footer className="py-8 text-center text-xs text-slate-600">Datos introducidos y revisados manualmente · Guarda el archivo de respaldo en un lugar privado · No es asesoramiento financiero</footer>
     </main>
   )
 }
