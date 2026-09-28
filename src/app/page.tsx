@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import AllocationComparison from '@/components/AllocationComparison'
 import AddAssetForm from '@/components/AddAssetForm'
 import DeleteAssetButton from '@/components/DeleteAssetButton'
 import EditAssetButton from '@/components/EditAssetButton'
@@ -51,6 +52,19 @@ export default async function Home() {
     return { category: cat, value }
   })
   const granTotal = totales.reduce((s, c) => s + c.value, 0)
+  const comparativaPesos = CATEGORIES.map((category) => {
+    const items = (assets ?? []).filter((asset) => asset.category === category)
+    return {
+      category,
+      actualWeight: granTotal > 0
+        ? (totales.find((total) => total.category === category)?.value ?? 0) / granTotal * 100
+        : 0,
+      targetWeight: items.reduce((sum, asset) => sum + (asset.target_weight ?? 0), 0),
+      hasPositions: items.length > 0,
+      targetComplete: items.length > 0 && items.every((asset) => asset.target_weight !== null),
+    }
+  })
+  const posicionesConObjetivo = (assets ?? []).filter((asset) => asset.target_weight !== null).length
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-7xl px-4 py-6 text-slate-100 sm:px-6 sm:py-10 lg:px-8">
@@ -111,6 +125,12 @@ export default async function Home() {
               </article>
             ))}
           </section>
+
+          <AllocationComparison
+            data={comparativaPesos}
+            positionsWithTarget={posicionesConObjetivo}
+            totalPositions={(assets ?? []).length}
+          />
 
           <section className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
             <article className="min-w-0 rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4 sm:p-5">

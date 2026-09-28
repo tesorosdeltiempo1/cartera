@@ -2,12 +2,20 @@
 
 Este archivo recoge las iteraciones funcionales y visuales por separado del README. Las fechas indican cuándo se implementó cada cambio; no implican por sí mismas que esté desplegado ni validado en producción.
 
-## 2026-09-28 — Exportación manual de respaldo (pendiente de comprobación)
+## 2026-09-28 — Comparativa de pesos por categoría (pendiente de producción)
+
+- Se muestra el peso real junto al objetivo agregado de las posiciones de cada categoría.
+- La desviación en puntos porcentuales solo aparece si todas las posiciones de esa categoría tienen objetivo definido; los datos incompletos se señalan como parciales.
+- La interfaz aclara que la comparación es informativa y no una recomendación de compra o venta.
+- Validación local: pendiente de ejecutar.
+
+## 2026-09-28 — Exportación manual de respaldo
 
 - Se añadió la descarga de un JSON con posiciones e histórico, con versión de formato y fecha de exportación.
 - La descarga se deshabilita si no se pudieron leer ambas tablas, para evitar generar intencionadamente una copia incompleta.
 - El archivo contiene datos patrimoniales sin cifrar: guardarlo en una ubicación privada y protegida.
-- Validación de código: `npm run lint` y `npm run build` completados correctamente; pendiente comprobar manualmente el contenido del archivo descargado.
+- Validación de código: `npm run lint` y `npm run build` completados correctamente.
+- Validación de producción: el usuario confirmó que la descarga funciona correctamente.
 - Esta iteración no implementa restauración/importación del respaldo.
 
 ## 2026-09-28 — Eliminación de posiciones (pendiente de validación)

@@ -60,14 +60,14 @@ Lo mínimo para que esto sea *usable* de verdad día a día, no solo una demo:
 - [ ] Editar/eliminar un snapshot por error
 - [ ] Confirmación antes de borrar snapshots (la confirmación de posiciones ya está implementada; pendiente validación)
 - [ ] Mostrar un resultado claro después de cada operación y no perder cambios ante un error de red
-- [ ] Exportar un respaldo manual de posiciones y snapshots antes de permitir borrados habituales (descarga JSON implementada; pendiente verificar archivo y guardado seguro)
+- [x] Exportar un respaldo manual de posiciones y snapshots antes de permitir borrados habituales (probado por el usuario en producción; guardar el archivo en un lugar privado)
 
 ### Fase 3 — Reflejar la política de inversión de verdad
 Acercar la herramienta a cómo gestionas de verdad, no a un CRUD genérico:
 - [ ] Campo de "tesis de inversión" por posición del Satélite de Convicción (máx. 5 empresas), con fecha de última revisión
 - [ ] Aviso visual cuando una posición del satélite lleva más de un trimestre sin revisión (tu propia regla de revisión trimestral obligatoria)
 - [ ] Registro de aportaciones periódicas a Activos Duros (la aportación semanal diferencial), separado del valor de mercado, para distinguir "cuánto he metido" de "cuánto vale ahora"
-- [ ] Comparativa peso real vs. peso objetivo por categoría, con indicador visual de desviación
+- [ ] Comparativa peso real vs. peso objetivo por categoría (implementada; pendiente revisar con la cartera real en producción)
 
 ### Fase 4 — Menos trabajo manual (con cuidado)
 Aquí es donde la automatización empieza a tentar — se añade solo si se puede revisar y desactivar:
