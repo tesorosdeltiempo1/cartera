@@ -30,7 +30,7 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 
 ## Prioridades
 
-### P0 — Fiabilidad de valoración y divisa · esquema verificado, transición desplegable
+### P0 — Fiabilidad de valoración y divisa · transición desplegada, clasificación pendiente
 
 **Objetivo:** evitar que una valoración parezca precisa cuando el precio puede estar en otra divisa o no tener fecha/origen conocidos.
 
@@ -47,7 +47,7 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - El valor en moneda base se puede reproducir a partir de cantidad, precio, moneda y tipo de cambio fechado.
 - No se silencian valores desconocidos ni se aplica una tasa ficticia/implícita.
 - Usuarios pueden distinguir el valor original del convertido y ver la fecha del precio/cambio.
-- El esquema y constraints están inspeccionados. La interfaz puede desplegarse en modo de transición: preserva cifras heredadas sin sumarlas, bloquea snapshots parciales y permite clasificar cada posición desde su edición.
+- El esquema y constraints están inspeccionados. La transición está desplegada desde el commit `19e3acb`; la revisión automática confirmó el acceso privado de la nueva versión. La interfaz preserva cifras heredadas sin sumarlas, bloquea snapshots parciales y permite clasificar cada posición desde su edición.
 - Cierre completo del P0: el propietario verifica sesión/datos en producción, revisa moneda y precio por posición, y confirma valores EUR y snapshots futuros.
 
 **Fuera de alcance:** API de cotizaciones, conversión intradía, cambios retroactivos de snapshots, fuente cambiaria común automatizada y look-through de fondos.

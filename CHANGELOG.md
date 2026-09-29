@@ -23,7 +23,8 @@ Este archivo recoge las iteraciones funcionales y visuales por separado del READ
 - Los snapshots nuevos conservan los inputs de valoración por posición; los snapshots previos permanecen intactos. El respaldo pasa a formato 4.
 - La migración aditiva `docs/database/006_position_price_provenance.sql` terminó con `Success. No rows returned`; el diagnóstico 002 confirmó columnas, constraints y que las policies/grants del propietario siguen intactos.
 - La UI conserva a la vista las cifras heredadas pero no las etiqueta ni suma como EUR hasta su clasificación manual; los snapshots incompletos quedan bloqueados.
-- Próximo paso: desplegar en modo de transición, clasificar las posiciones existentes mediante edición autenticada y completar QA; no inferir monedas ni enviar importes patrimoniales al chat.
+- Desplegada desde `main` en el commit `19e3acb`; se confirmó en el dominio de producción la pantalla privada de acceso de la nueva versión.
+- Próximo paso: el propietario verifica la sesión y clasifica las posiciones existentes mediante edición autenticada; no inferir monedas ni enviar importes patrimoniales al chat.
 
 ## 2026-09-29 — Acceso del propietario confirmado y nueva identidad visual
 
