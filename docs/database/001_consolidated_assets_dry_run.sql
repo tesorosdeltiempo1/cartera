@@ -33,7 +33,7 @@ language sql
 stable
 set search_path = ''
 as $$
-  select auth.uid() = '25391e02-8234-4f3e-aed5-2ba94008d3d7'::uuid
+  select auth.uid() = 'REPLACE_WITH_OWNER_USER_UUID'::uuid
 $$;
 
 -- ---------------------------------------------------------------------
