@@ -18,7 +18,7 @@ export default function ExportBackupButton({ assets, snapshots, investmentAssets
       const exportedAt = new Date()
       const backup = {
         app: 'Cartera',
-        formatVersion: 3,
+        formatVersion: 4,
         exportedAt: exportedAt.toISOString(),
         tables: {
           assets,

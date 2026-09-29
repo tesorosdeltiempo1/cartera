@@ -10,6 +10,8 @@
 
 **No repitas el proceso inicial.** No vuelvas a ejecutar la migración 001 como un despliegue. [001_consolidated_assets_dry_run.sql](001_consolidated_assets_dry_run.sql) se conserva como registro de la migración original, termina en `ROLLBACK` y tiene el UID reemplazado por un marcador. Para cambios futuros, prepara una migración nueva a partir del estado vigente.
 
+El propietario informó que la migración 006 de moneda/procedencia terminó con `Success. No rows returned`. La inspección 002 confirma las seis columnas añadidas a `assets`, `valuation_detail` en `portfolio_snapshot_assets`, sus constraints, RLS activo en las cuatro tablas, grants CRUD a `authenticated`, policies del propietario y ningún grant de tabla a `anon`. Las filas previas quedan con moneda/precio/FX sin clasificar; el nuevo cliente puede mostrarlas como pendientes sin sumarlas a EUR ni permitir snapshots incompletos. Después de desplegar la UI, revísalas individualmente.
+
 ## Comprobación de solo lectura
 
 Para volver a inspeccionar la base de datos, ejecuta [002_inspect_supabase_read_only.sql](002_inspect_supabase_read_only.sql) en Supabase SQL Editor. No modifica filas ni estructura. Comprueba que:

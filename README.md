@@ -34,9 +34,9 @@ La autenticación de la interfaz no sustituye RLS. No habilitar registro públic
 - `assets` representa una posición individual en un broker; `investment_assets` es el catálogo maestro.
 - La exposición consolidada suma las posiciones vinculadas al mismo activo. Los objetivos pertenecen al activo maestro, no a cada broker.
 - No se copian automáticamente objetivos antiguos ni se fusionan nombres/tickers ambiguos.
-- Los valores se interpretan como EUR; no existe conversión automática de divisa. Verifica manualmente la moneda de cada precio antes de usar los pesos.
+- **Producción actual** sigue interpretando como EUR los precios registrados. La migración de campos ya está aplicada; el cliente local P0 marca los registros antiguos sin clasificar, conserva sus cifras visibles y los excluye de importes EUR hasta verificarlos.
 - La exposición indirecta dentro de fondos (look-through) no se calcula.
-- Los snapshots nuevos guardan desglose; los registros antiguos no se recalculan retroactivamente.
+- Producción guarda desglose en snapshots. La nueva versión P0 adjunta inputs de valoración reproducibles a snapshots futuros; ningún snapshot histórico se recalcula.
 - La exportación JSON contiene datos patrimoniales en claro: guárdala en un lugar privado.
 
 ## Stack
@@ -67,17 +67,12 @@ npm run build
 - El estado de acceso y las comprobaciones continuas se documentan en [docs/database/005_owner_access_status.md](docs/database/005_owner_access_status.md).
 - [docs/database/002_inspect_supabase_read_only.sql](docs/database/002_inspect_supabase_read_only.sql) permite volver a inspeccionar esquema, RLS, políticas y grants.
 - [docs/database/001_consolidated_assets_dry_run.sql](docs/database/001_consolidated_assets_dry_run.sql) conserva el SQL de la instalación inicial y acaba en `ROLLBACK`. **No lo ejecutes**: el `COMMIT` inicial ya se aplicó; cualquier cambio futuro requiere una migración nueva basada en el esquema vigente.
+- El propietario informa que [docs/database/006_position_price_provenance.sql](docs/database/006_position_price_provenance.sql) se ejecutó correctamente. **No despliegues el cliente nuevo** hasta verificar columnas/restricciones y clasificar los datos existentes.
 - El UID del propietario no se guarda en el repositorio. El UID no es una contraseña, pero tampoco se debe publicar innecesariamente.
 - Después de cambios de permisos, vuelve a ejecutar el diagnóstico de solo lectura y prueba tanto la sesión propietaria como el acceso sin sesión antes de dar por seguro el despliegue.
 
-## Próximas mejoras
+## Roadmap
 
-Prioridad recomendada, en pasos pequeños y comprobables:
-
-1. Refinar la identidad renacentista/rococó en las pantallas restantes y revisar la experiencia móvil/accesible.
-2. Añadir visibilidad a divisas y origen/fecha del precio antes de confiar en comparativas cuando haya activos no denominados en EUR.
-3. Revisar la calidad de vínculos y objetivos consolidados, sin alterar snapshots históricos.
-4. Mejorar el histórico y las operaciones de edición/borrado con confirmación y mensajes inequívocos.
-5. Evaluar cotizaciones, aportaciones periódicas o proyecciones solo cuando sus datos y supuestos puedan auditarse.
+La migración de divisa/procedencia está aplicada y verificada en Supabase. La interfaz nueva mantiene visibles los valores heredados sin moneda, pero no los presenta como euros; faltará revisarlos individualmente antes de recuperar el total confirmado y guardar nuevos snapshots. No se infieren monedas ni se recalculan snapshots pasados. El plan por fases, criterios de aceptación y flujo de publicación está en [docs/ROADMAP.md](docs/ROADMAP.md).
 
 El historial de cambios y validaciones está en [CHANGELOG.md](CHANGELOG.md).

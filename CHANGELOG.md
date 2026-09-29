@@ -6,7 +6,24 @@ Este archivo recoge las iteraciones funcionales y visuales por separado del READ
 
 - A petición del usuario se mantiene la paleta tinta/mármol/oro y se reemplaza la sensación de cards de app moderna por marcos dobles, filetes interiores, esquinas alternas y pequeños motivos de filigrana.
 - La ornamentación se aplica a paneles principales y elementos interactivos; las tablas conservan desplazamiento horizontal y los formularios se apilan en móvil.
-- Revisión visual local en Posiciones, escritorio y viewport de 390 px. Esta iteración está en workspace local; no se ha desplegado.
+- Revisión visual en Posiciones, escritorio y viewport móvil de 390 px.
+- Desplegado desde `main` en el commit `ee6c085`; el acceso Aureum se confirmó en el dominio de producción.
+
+## 2026-09-29 — Roadmap profesional por fases
+
+- Se sustituye la lista breve de mejoras por un roadmap con estado confirmado, prioridades, alcance, criterios de salida y procedimiento de calidad/publicación.
+- Siguiente incremento propuesto: precisión monetaria y trazabilidad de precios (moneda explícita, fecha y procedencia), sin inferir datos antiguos ni alterar snapshots.
+- El documento está en `docs/ROADMAP.md`; no se modificaron datos ni esquema de producción.
+
+## 2026-09-29 — P0: procedencia de precios y valoración en EUR (desarrollo local)
+
+- Trazado el flujo de precio desde alta/edición a dashboard, exposiciones, snapshots e histórico. Hasta ahora se sumaba `quantity × current_price` y se formateaba como EUR sin dato de moneda, fecha u origen.
+- Añadido un validador que excluye de totales las posiciones sin moneda, precio fechado/fuente o cambio manual cuando la moneda no es EUR; dashboard y catálogo muestran valoraciones parciales y se bloquean snapshots incompletos.
+- Los formularios de alta/edición solicitan moneda explícita, fecha/origen de cotización y, para moneda extranjera, EUR por unidad con fecha/fuente. Las valoraciones confirmadas se muestran en posiciones y activos.
+- Los snapshots nuevos conservan los inputs de valoración por posición; los snapshots previos permanecen intactos. El respaldo pasa a formato 4.
+- La migración aditiva `docs/database/006_position_price_provenance.sql` terminó con `Success. No rows returned`; el diagnóstico 002 confirmó columnas, constraints y que las policies/grants del propietario siguen intactos.
+- La UI conserva a la vista las cifras heredadas pero no las etiqueta ni suma como EUR hasta su clasificación manual; los snapshots incompletos quedan bloqueados.
+- Próximo paso: desplegar en modo de transición, clasificar las posiciones existentes mediante edición autenticada y completar QA; no inferir monedas ni enviar importes patrimoniales al chat.
 
 ## 2026-09-29 — Acceso del propietario confirmado y nueva identidad visual
 

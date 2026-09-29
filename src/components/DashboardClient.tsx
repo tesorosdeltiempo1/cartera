@@ -7,6 +7,7 @@ import PortfolioChart from '@/components/PortfolioChart'
 import SaveSnapshotButton from '@/components/SaveSnapshotButton'
 import TrackRecordChart from '@/components/TrackRecordChart'
 import { supabase } from '@/lib/supabase'
+import { getPositionValuation, getSnapshotValuationDetail, type SnapshotValuationDetail } from '@/lib/valuation'
 
 type Category = 'Núcleo Pasivo' | 'Satélite Convicción' | 'Seguridad y Liquidez' | 'Activos Duros' | 'Especulativo'
 type Position = {
@@ -20,10 +21,16 @@ type Position = {
   current_price: number | null
   target_weight: number | null
   investment_asset_id: string | null
+  currency: string | null
+  price_as_of: string | null
+  price_source: string | null
+  fx_rate_to_eur: number | null
+  fx_as_of: string | null
+  fx_source: string | null
 }
 type InvestmentAsset = { id: string; name: string; category: Category; target_weight: number | null }
 type Snapshot = { id: string; snapshot_date: string; total_value: number; breakdown: Record<string, number> }
-type SnapshotAsset = { snapshot_id: string; investment_asset_id: string | null; asset_name: string; category: Category; value: number; target_weight: number | null }
+type SnapshotAsset = { snapshot_id: string; investment_asset_id: string | null; asset_name: string; category: Category; value: number; target_weight: number | null; valuation_detail: SnapshotValuationDetail[] }
 
 const CATEGORIES: Category[] = ['Núcleo Pasivo', 'Satélite Convicción', 'Seguridad y Liquidez', 'Activos Duros', 'Especulativo']
 const CATEGORY_STYLES: Record<Category, string> = {
@@ -35,7 +42,7 @@ const CATEGORY_STYLES: Record<Category, string> = {
 }
 
 function valueOf(position: Position) {
-  return position.quantity * (position.current_price ?? position.avg_price ?? 0)
+  return getPositionValuation(position).valueEur ?? 0
 }
 
 function eur(value: number) {
@@ -98,21 +105,28 @@ export default function DashboardClient() {
     }
   })
   const unlinkedCount = positions.filter((position) => !position.investment_asset_id).length
+  const unvaluedPositions = positions.filter((position) => !getPositionValuation(position).complete)
+  const legacyPriceCount = unvaluedPositions.filter((position) => position.current_price !== null || position.avg_price !== null).length
   const masterTargetsCount = investmentAssets.filter((asset) => asset.target_weight !== null).length
   const snapshotDetailRows: Omit<SnapshotAsset, 'snapshot_id'>[] = [
-    ...investmentAssets.map((asset) => ({
-      investment_asset_id: asset.id,
-      asset_name: asset.name,
-      category: asset.category,
-      value: positions.filter((position) => position.investment_asset_id === asset.id).reduce((sum, position) => sum + valueOf(position), 0),
-      target_weight: asset.target_weight,
-    })),
+    ...investmentAssets.map((asset) => {
+      const linkedPositions = positions.filter((position) => position.investment_asset_id === asset.id)
+      return {
+        investment_asset_id: asset.id,
+        asset_name: asset.name,
+        category: asset.category,
+        value: linkedPositions.reduce((sum, position) => sum + valueOf(position), 0),
+        target_weight: asset.target_weight,
+        valuation_detail: linkedPositions.map(getSnapshotValuationDetail).filter((detail): detail is SnapshotValuationDetail => detail !== null),
+      }
+    }),
     ...positions.filter((position) => !position.investment_asset_id).map((position) => ({
       investment_asset_id: null,
       asset_name: `Sin vincular: ${position.name}${position.broker ? ` · ${position.broker}` : ''}`,
       category: position.category,
       value: valueOf(position),
       target_weight: null,
+      valuation_detail: [getSnapshotValuationDetail(position)].filter((detail): detail is SnapshotValuationDetail => detail !== null),
     })),
   ]
 
@@ -134,6 +148,13 @@ export default function DashboardClient() {
           Hay {unlinkedCount} posiciones sin vincular a un activo consolidado. La comparación por activo solo incluye posiciones vinculadas y no representa todavía toda la cartera.
         </div>
       )}
+        {unvaluedPositions.length > 0 && (
+            <div role="status" className="mb-6 rounded-xl border border-amber-300/20 bg-amber-300/[0.07] px-4 py-3 text-sm leading-6 text-amber-100">
+              <p>{unvaluedPositions.length} {unvaluedPositions.length === 1 ? 'posición requiere' : 'posiciones requieren'} confirmar moneda, precio fechado y tipo de cambio si aplica. Sus cifras originales siguen disponibles en Posiciones, pero no se suman como euros ni entran en snapshots nuevos.</p>
+              {legacyPriceCount > 0 && <p className="mt-1 text-amber-100/80">Hay {legacyPriceCount} {legacyPriceCount === 1 ? 'precio heredado' : 'precios heredados'} sin moneda confirmada. No sumamos esas cifras entre sí porque podrían estar expresadas en monedas distintas.</p>}
+              <a href="/posiciones" className="mt-2 inline-flex font-semibold text-teal-100 underline decoration-teal-100/40 underline-offset-4">Revisar posiciones →</a>
+          </div>
+        )}
 
       {loading ? (
         <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-8 text-sm text-slate-400" aria-live="polite">Cargando cartera…</div>
@@ -143,11 +164,11 @@ export default function DashboardClient() {
             <div className="pointer-events-none absolute -right-16 -top-28 size-80 rounded-full bg-teal-300/[0.07] blur-3xl" />
             <div className="relative flex flex-wrap items-end justify-between gap-6">
               <div>
-                <p className="mb-2 text-sm text-slate-400">Valor total estimado</p>
+                <p className="mb-2 text-sm text-slate-400">{unvaluedPositions.length ? 'Subtotal EUR · valoraciones confirmadas' : 'Valor total estimado en EUR'}</p>
                 <p className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">{eur(grandTotal)}</p>
-                <p className="mt-3 text-sm text-slate-400">Asume que todos los precios registrados ya están expresados en EUR.</p>
+                <p className="mt-3 text-sm text-slate-400">Precios y cambios fechados manualmente; no se consultan cotizaciones automáticas.</p>
               </div>
-              {grandTotal > 0 && <SaveSnapshotButton totalValue={grandTotal} breakdown={totals} snapshotAssets={snapshotDetailRows} />}
+              {grandTotal > 0 && <SaveSnapshotButton totalValue={grandTotal} breakdown={totals} snapshotAssets={snapshotDetailRows} disabled={unvaluedPositions.length > 0} />}
             </div>
           </section>
 
@@ -165,12 +186,12 @@ export default function DashboardClient() {
             ))}
           </section>
 
-          {investmentAssets.length > 0 && <AllocationComparison data={allocationData} positionsWithTarget={masterTargetsCount} totalPositions={investmentAssets.length} />}
+          {investmentAssets.length > 0 && unvaluedPositions.length === 0 && <AllocationComparison data={allocationData} positionsWithTarget={masterTargetsCount} totalPositions={investmentAssets.length} />}
 
           <section className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
             <article className="min-w-0 rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4 sm:p-5">
               <h2 className="font-semibold text-white">Distribución por categoría</h2>
-              <p className="mt-1 text-sm text-slate-400">Valor actual registrado por clase estratégica de posición</p>
+              <p className="mt-1 text-sm text-slate-400">{unvaluedPositions.length ? 'Solo valoraciones EUR confirmadas; las posiciones pendientes se excluyen.' : 'Valor actual registrado por clase estratégica de posición'}</p>
               <PortfolioChart data={totals} />
             </article>
             <article className="min-w-0 rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4 sm:p-5">

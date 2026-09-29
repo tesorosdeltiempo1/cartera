@@ -3,20 +3,23 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { notifyPortfolioChanged } from '@/lib/portfolioEvents'
+import type { SnapshotValuationDetail } from '@/lib/valuation'
 
 type Props = {
   totalValue: number
   breakdown: { category: string; value: number }[]
+  disabled?: boolean
   snapshotAssets: {
     investment_asset_id: string | null
     asset_name: string
     category: string
     value: number
     target_weight: number | null
+    valuation_detail: SnapshotValuationDetail[]
   }[]
 }
 
-export default function SaveSnapshotButton({ totalValue, breakdown, snapshotAssets }: Props) {
+export default function SaveSnapshotButton({ totalValue, breakdown, snapshotAssets, disabled = false }: Props) {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -57,7 +60,7 @@ export default function SaveSnapshotButton({ totalValue, breakdown, snapshotAsse
     <div className="flex flex-col items-start gap-2 sm:items-end">
       <button
         onClick={handleClick}
-        disabled={loading || totalValue === 0}
+        disabled={loading || totalValue === 0 || disabled}
         className="rounded-xl border border-teal-200/20 bg-teal-300 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-teal-950/20 transition hover:bg-teal-200 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? 'Guardando…' : '📸 Guardar snapshot de hoy'}

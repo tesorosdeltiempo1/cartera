@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { supabase } from '@/lib/supabase'
 import { notifyPortfolioChanged } from '@/lib/portfolioEvents'
+import { getPositionValuation } from '@/lib/valuation'
 
 type Category = 'Núcleo Pasivo' | 'Satélite Convicción' | 'Seguridad y Liquidez' | 'Activos Duros' | 'Especulativo'
 type InvestmentAsset = {
@@ -28,6 +29,12 @@ type Position = {
   current_price: number | null
   target_weight: number | null
   investment_asset_id: string | null
+  currency: string | null
+  price_as_of: string | null
+  price_source: string | null
+  fx_rate_to_eur: number | null
+  fx_as_of: string | null
+  fx_source: string | null
 }
 type NewAsset = {
   name: string
@@ -53,7 +60,7 @@ function formatEur(value: number) {
 }
 
 function positionValue(position: Position) {
-  return position.quantity * (position.current_price ?? position.avg_price ?? 0)
+  return getPositionValuation(position).valueEur ?? 0
 }
 
 function databaseMessage(message: string) {
@@ -78,7 +85,7 @@ export default function ActivosPage() {
     try {
       const [assetResult, positionResult] = await Promise.all([
         supabase.from('investment_assets').select('id,name,ticker,market,isin,canonical_id,category,target_weight,thesis,last_reviewed').order('name'),
-        supabase.from('assets').select('id,name,ticker,category,broker,quantity,avg_price,current_price,target_weight,investment_asset_id').order('name').order('broker'),
+        supabase.from('assets').select('id,name,ticker,category,broker,quantity,avg_price,current_price,target_weight,investment_asset_id,currency,price_as_of,price_source,fx_rate_to_eur,fx_as_of,fx_source').order('name').order('broker'),
       ])
       const failed = assetResult.error ?? positionResult.error
       if (failed) throw failed
@@ -200,6 +207,7 @@ export default function ActivosPage() {
 
   const input = (name: keyof NewAsset, value: string) => setForm((current) => ({ ...current, [name]: value }))
   const linkedCount = positions.filter((position) => position.investment_asset_id).length
+  const unvaluedCount = positions.filter((position) => !getPositionValuation(position).complete).length
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-7xl px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
@@ -207,7 +215,7 @@ export default function ActivosPage() {
         <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-teal-200">Política de inversión</p>
         <h1 className="text-2xl font-semibold text-white">Activos y objetivos</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">Define el objetivo una sola vez por activo. Después vincula manualmente cada posición de tus brokers; ninguna se fusiona automáticamente.</p>
-        <p className="mt-2 max-w-3xl text-xs leading-5 text-amber-200/80">Las valoraciones se interpretan como EUR: la tabla actual aún no registra divisa ni conversión. Confirma que los precios de cada posición estén convertidos a EUR antes de usar los pesos como referencia.</p>
+        <p className="mt-2 max-w-3xl text-xs leading-5 text-amber-200/80">La exposición se expresa en EUR cuando cada posición tiene moneda y precio actuales documentados; las divisas extranjeras requieren tipo de cambio manual fechado. No se infieren monedas ni se convierten precios automáticamente.</p>
       </header>
 
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
@@ -217,6 +225,7 @@ export default function ActivosPage() {
       </div>
 
       {errorMessage && <p role="alert" className="mb-4 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">{errorMessage}</p>}
+      {!loading && unvaluedCount > 0 && <p role="status" className="mb-4 rounded-xl border border-amber-300/20 bg-amber-300/[0.07] px-4 py-3 text-sm leading-6 text-amber-100">{unvaluedCount} posiciones aún no se incluyen en las exposiciones EUR porque falta verificar moneda, precio o cambio.</p>}
       {successMessage && <p role="status" className="mb-4 rounded-xl border border-teal-300/20 bg-teal-300/[0.07] px-4 py-3 text-sm text-teal-100">{successMessage}</p>}
 
       <section className="mb-6 rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4 sm:p-6">
@@ -245,7 +254,8 @@ export default function ActivosPage() {
             <tbody className="divide-y divide-white/[0.06]">{assets.map((asset) => {
               const linked = positions.filter((position) => position.investment_asset_id === asset.id)
               const exposure = linked.reduce((sum, position) => sum + positionValue(position), 0)
-              return <AssetRow key={`${asset.id}:${asset.target_weight ?? 'null'}`} asset={asset} linkedCount={linked.length} exposure={exposure} saving={saving} onSave={saveTarget} />
+              const unvaluedLinked = linked.filter((position) => !getPositionValuation(position).complete).length
+              return <AssetRow key={`${asset.id}:${asset.target_weight ?? 'null'}`} asset={asset} linkedCount={linked.length} exposure={exposure} unvaluedLinked={unvaluedLinked} saving={saving} onSave={saveTarget} />
             })}</tbody>
           </table></div>
         )}
@@ -271,10 +281,11 @@ export default function ActivosPage() {
   )
 }
 
-function AssetRow({ asset, linkedCount, exposure, saving, onSave }: {
+function AssetRow({ asset, linkedCount, exposure, unvaluedLinked, saving, onSave }: {
   asset: InvestmentAsset
   linkedCount: number
   exposure: number
+  unvaluedLinked: number
   saving: boolean
   onSave: (asset: InvestmentAsset, value: string) => Promise<void>
 }) {
@@ -288,7 +299,7 @@ function AssetRow({ asset, linkedCount, exposure, saving, onSave }: {
       <td className="px-4 py-3"><p className="font-medium text-slate-100">{asset.name}</p><p className="text-xs text-slate-500">{[asset.ticker, asset.market, asset.isin, asset.canonical_id].filter(Boolean).join(' · ')}</p>{asset.category === 'Satélite Convicción' && <p className={`mt-1 text-xs ${reviewExpired ? 'text-amber-200' : 'text-slate-500'}`}>{reviewExpired ? 'Revisión trimestral pendiente' : `Revisado ${reviewDate?.toLocaleDateString('es-ES')}`}</p>}</td>
       <td className="px-4 py-3 text-slate-300">{asset.category}</td>
       <td className="px-4 py-3 text-right tabular-nums text-slate-300">{linkedCount}</td>
-      <td className="px-4 py-3 text-right tabular-nums text-slate-300">{formatEur(exposure)}</td>
+      <td className="px-4 py-3 text-right tabular-nums text-slate-300">{unvaluedLinked === linkedCount && linkedCount > 0 ? <><span className="text-amber-200">Pendiente de verificar</span><span className="block text-xs text-slate-400">Sin EUR confirmados</span></> : unvaluedLinked > 0 ? <><span>{formatEur(exposure)} · parcial</span><span className="block text-xs text-amber-200">{unvaluedLinked} pendiente(s)</span></> : formatEur(exposure)}</td>
       <td className="px-4 py-3 text-right"><input aria-label={`Objetivo global de ${asset.name} en porcentaje`} type="number" min="0" max="100" step="any" value={target} onChange={(event) => setTarget(event.target.value)} className="w-28 rounded-lg border border-white/10 bg-slate-950 px-2 py-2 text-right text-slate-100" />%</td>
       <td className="px-4 py-3"><button type="button" disabled={saving || target === (asset.target_weight == null ? '' : String(asset.target_weight))} onClick={() => void onSave(asset, target)} className="rounded-lg border border-teal-300/20 px-3 py-2 text-xs font-medium text-teal-100 hover:bg-teal-300/10 disabled:cursor-not-allowed disabled:opacity-40">Guardar</button></td>
     </tr>
