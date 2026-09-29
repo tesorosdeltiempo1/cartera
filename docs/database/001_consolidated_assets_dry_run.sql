@@ -3,30 +3,20 @@
 --
 -- Artefacto manual de revisión para el SQL Editor de Supabase.
 -- NO se ejecuta durante el build ni forma parte de una migración automática.
--- Supone que `assets` y `portfolio_snapshots` ya existen y que el tipo de
--- `portfolio_snapshots.id` es UUID. Revisar estas premisas en el esquema real.
--- `IF NOT EXISTS` permite repetir una instalación completa conforme a este
--- diseño; no repara tablas preexistentes parciales o con definiciones distintas.
--- Inspección de esquema (2026-09-29): `investment_assets` ya existe con un
--- check de cuatro categorías; `assets.investment_asset_id` también existe y
--- tiene una FK a esa tabla. El bloque siguiente comprueba la FK, porque ADD
--- COLUMN IF NOT EXISTS no la añade a una columna preexistente.
--- IMPORTANTE: se encontró una política `Allow all for anon` y grants amplios
--- sobre assets, investment_assets y portfolio_snapshots. El COMMIT retirará
--- acceso anon a esas tablas y habilitará el acceso solo al UUID de propietario
--- que sustituyas abajo. Antes: desactiva los registros públicos en Auth y crea
--- tu usuario desde el Dashboard de Supabase.
---
--- Primera prueba: conservar ROLLBACK al final; esto valida la ejecución,
--- pero revierte todos los cambios y NO deja el esquema instalado.
--- Solo tras revisar el SQL y los resultados, cambiar ROLLBACK por COMMIT
--- y ejecutarlo conscientemente en el proyecto/entorno elegido.
+-- ESTADO (2026-09-29): esta migración ya fue ejecutada por el propietario
+-- con ROLLBACK de prueba y después con COMMIT en el proyecto activo. Este
+-- archivo se conserva como referencia; NO volver a ejecutarlo. Para cambios
+-- futuros, inspeccionar el estado real y preparar una migración nueva.
+-- ARCHIVO HISTÓRICO: conserva el SQL de la instalación inicial para auditoría.
+-- No ejecutar este archivo ni cambiar ROLLBACK por COMMIT: la migración ya
+-- fue aplicada en el proyecto activo. Los comentarios operativos del cuerpo
+-- describen el procedimiento original y no son instrucciones vigentes.
+-- Para cambios futuros, inspeccionar el esquema actual y crear otra migración.
 -- =====================================================================
 
 begin;
 
--- Sustituye REPLACE_WITH_OWNER_USER_UUID por el User UID de tu cuenta Supabase
--- Auth (Authentication → Users). No es tu contraseña ni una clave secreta.
+-- Marcador conservado para no versionar el UID real del propietario.
 create or replace function public.is_cartera_owner()
 returns boolean
 language sql

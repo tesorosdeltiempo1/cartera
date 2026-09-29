@@ -1,137 +1,83 @@
 # Cartera
 
-Dashboard personal de gestión patrimonial. No es una app de trading ni un tracker de moda con gráficos bonitos y datos de mentira — es la herramienta de trabajo de quien lleva su propio patrimonio a largo plazo (15-25 años) con una política de inversión escrita y versionada, y quiere una única fuente de verdad accesible desde el móvil o el PC, sin fricción y sin depender de nadie más.
+> **Patrimonio · Disciplina · Legado**
 
-## Visión
+Registro privado de patrimonio personal, inspirado en la sobriedad clásica: criterio antes que ruido, constancia antes que espectáculo. La identidad visual toma referencias grecorromanas con una paleta de tinta, mármol y oro antiguo; la prioridad sigue siendo la claridad de los datos.
 
-Esto se construye con la cabeza de quien sueña en grande pero pone los pies en el suelo cada vez que toca decidir qué construir esta semana. El objetivo final es ambicioso — un panel de control patrimonial completo, con histórico, automatización de precios, alertas de rebalanceo y generación de contenido a partir de los propios datos — pero se llega ahí sumando piezas pequeñas, probadas una a una en producción, nunca de golpe.
+## Propósito
 
-Tres principios que no se negocian:
+Cartera registra posiciones reales por broker, las reúne manualmente bajo activos consolidados, compara exposición con objetivos y conserva un histórico mediante snapshots. No ejecuta operaciones ni ofrece asesoramiento financiero.
 
-1. **Los datos primero, lo bonito después.** Un gráfico precioso con números falsos no vale nada; una tabla fea con datos reales sí.
-2. **Control manual sobre automatización ciega.** Cada automatización que se añada (precios en vivo, cálculos, alertas) debe poder revisarse y desactivarse — nunca "magia" que decide por ti sin que lo veas.
-3. **Esto es una herramienta de gestión familiar a largo plazo, no un juguete.** Se construye pensando en que alguien más (pareja, herencia, quien sea) tenga que entenderlo dentro de 15 años sin ayuda.
+Principios de producto:
 
-## Qué es / qué no es
-
-**Es:**
-- Un registro de posiciones reales, repartidas entre brokers, categorizado según la política de inversión propia.
-- Un panel visual de pesos actuales vs. objetivos consolidados por activo, no por broker.
-- Un track record del valor total en el tiempo, con snapshots manuales.
-
-**No es (todavía, o quizá nunca):**
-- Un broker ni ejecuta operaciones — solo registra lo que ya ha pasado.
-- Una fuente de asesoramiento financiero automatizado.
-- Una herramienta de un solo propietario; no se prevé gestión multiusuario. El despliegue actual no tiene inicio de sesión y la clave pública de Supabase no hace privada una URL pública.
-
-## Stack técnico
-
-- **Next.js 16** (App Router, TypeScript) — frontend y lógica de servidor en uno.
-- **Supabase** (Postgres) — base de datos real, con Row Level Security abierto a la key `anon` (sin autenticación de usuarios).
-- **Vercel** — hosting, desplegado automáticamente en cada push a `main`.
-- **Recharts** — gráficos (donut de pesos, línea de track record).
-- **Tailwind CSS** — estilos.
+1. Datos verificables antes que adornos.
+2. Consolidación manual y explícita; nunca fusionar instrumentos solo por su nombre.
+3. Las automatizaciones deben explicar sus supuestos y poder revisarse.
+4. La privacidad patrimonial y la continuidad a largo plazo son requisitos, no extras.
 
 ## Estado actual
 
-- [x] Proyecto Next.js conectado a Supabase real (no datos de prueba)
-- [x] Esquema de datos con las 4 categorías reales: Núcleo Pasivo, Satélite Convicción, Seguridad y Liquidez, Especulativo
-- [x] Alta de posiciones desde formulario web
-- [x] Tabla de listado de posiciones
-- [x] Tarjetas resumen por categoría con peso % real
-- [x] Gráfico donut de distribución de pesos
-- [x] Snapshots de track record (botón manual) + gráfico de evolución del valor total
-- [x] Dashboard con tema oscuro, resumen visual y tabla adaptable a móvil
-- [x] Comparativa provisional por categoría desplegada (no equivale a un objetivo consolidado por empresa y debe sustituirse)
-- [x] Navegación principal desplegada; las páginas de Activos, Posiciones e Histórico siguen siendo placeholders
-- [ ] Modelo de objetivos por activo consolidado y suma de exposiciones entre brokers
-- [x] Desplegado en producción, accesible desde cualquier dispositivo
+- App desplegada en Vercel, con login de propietario por correo y contraseña de Supabase Auth.
+- El propietario confirmó en producción que pudo iniciar sesión y que sus datos cargan correctamente.
+- Registros públicos desactivados en Supabase.
+- RLS activo en `assets`, `investment_assets`, `portfolio_snapshots` y `portfolio_snapshot_assets`; las políticas limitan acceso a la sesión cuyo UID está configurado en `public.is_cartera_owner()`.
+- El inventario posterior a la migración mostró grants CRUD a `authenticated`, ninguna concesión a `anon` en esas cuatro tablas y políticas de propietario. `FORCE ROW LEVEL SECURITY` figura desactivado; el acceso desde la aplicación utiliza roles Supabase de cliente, no el propietario de las tablas.
+- Activos consolidados, objetivos, tesis/notas y vínculo manual entre posiciones de broker y activos maestros.
+- Dashboard, posiciones por broker, histórico de snapshots y exportación JSON privada.
+- Migración aplicada por el propietario en Supabase y plantilla SQL sin UID personal versionado.
+- Identidad visual Aureum: referencias clásicas grecorromanas, tinta verde profunda, mármol cálido y oro antiguo; accesibilidad y legibilidad como límites de diseño.
 
-El historial de iteraciones y su validación está en [CHANGELOG.md](CHANGELOG.md).
+La autenticación de la interfaz no sustituye RLS. No habilitar registro público ni compartir respaldos, correo, contraseña, tokens o datos patrimoniales.
 
-### Prioridad de seguridad — antes de activar más operaciones destructivas
-- [ ] Aplicar el cierre de `anon` y la política RLS de propietario único descritos en [docs/database/005_setup_owner_auth.md](docs/database/005_setup_owner_auth.md).
-- [ ] Verificar en Supabase que solo la cuenta propietaria puede acceder y que `anon` no tiene permisos efectivos antes del nuevo despliegue.
-- [ ] Probar operaciones de modificación y borrado con una copia de datos o un entorno separado antes de usarlas en producción.
+## Modelo y limitaciones
 
-## Roadmap
+- `assets` representa una posición individual en un broker; `investment_assets` es el catálogo maestro.
+- La exposición consolidada suma las posiciones vinculadas al mismo activo. Los objetivos pertenecen al activo maestro, no a cada broker.
+- No se copian automáticamente objetivos antiguos ni se fusionan nombres/tickers ambiguos.
+- Los valores se interpretan como EUR; no existe conversión automática de divisa. Verifica manualmente la moneda de cada precio antes de usar los pesos.
+- La exposición indirecta dentro de fondos (look-through) no se calcula.
+- Los snapshots nuevos guardan desglose; los registros antiguos no se recalculan retroactivamente.
+- La exportación JSON contiene datos patrimoniales en claro: guárdala en un lugar privado.
 
-### Fase 2 — Terminar el ciclo de gestión de datos
-Lo mínimo para que esto sea *usable* de verdad día a día, no solo una demo:
-- [x] Editar una posición existente (probado por el usuario en producción)
-- [ ] Eliminar una posición (implementado localmente; pendiente revisar acceso/RLS y validar antes de producción)
-- [ ] Editar/eliminar un snapshot por error
-- [ ] Confirmación antes de borrar snapshots (la confirmación de posiciones ya está implementada; pendiente validación)
-- [ ] Mostrar un resultado claro después de cada operación y no perder cambios ante un error de red
-- [x] Exportar un respaldo manual de posiciones y snapshots antes de permitir borrados habituales (probado por el usuario en producción; guardar el archivo en un lugar privado)
+## Stack
 
-### Fase 3 — Reflejar la política de inversión de verdad
-Acercar la herramienta a cómo gestionas de verdad, no a un CRUD genérico:
-- [ ] Definir objetivos una sola vez por activo consolidado, manteniendo cada posición y broker por separado. El objetivo de Amazon debe confirmarse: el 17% antiguo de una fila no es un objetivo global aprobado.
-- [ ] Diseñar la migración de datos sin pérdida: crear un catálogo de activos/objetivos y vincular cada posición actual; revisar manualmente filas sin ticker, tickers repetidos ambiguos y objetivos antiguos antes de migrar.
-- [ ] Mantener la clasificación estratégica y el objetivo en el activo consolidado; sumar la cantidad/valor de sus posiciones en todos los brokers para calcular peso real.
-- [ ] Confirmar que los precios manuales están expresados en EUR o añadir divisa/conversión por posición antes de confiar en pesos consolidados; hoy el cálculo asume EUR.
-- [ ] Acordar la clave de identidad del activo (ISIN cuando exista; ticker/mercado como alternativa) y no fusionar activos automáticamente solo por coincidencia de nombre.
-- [ ] Especificar que la exposición indirecta a través de fondos queda fuera del cálculo hasta incorporar datos de composición y una regla explícita de look-through.
-- [ ] Reemplazar la comparativa temporal por categoría —sus objetivos de fila actuales no equivalen a objetivos por empresa— por una comparativa consolidada de activos y categorías con semántica definida.
-- [ ] Campo de "tesis de inversión" por posición del Satélite de Convicción (máx. 5 empresas), con fecha de última revisión
-- [ ] Aviso visual cuando una posición del satélite lleva más de un trimestre sin revisión (tu propia regla de revisión trimestral obligatoria)
-- [ ] Registro de aportaciones periódicas a Activos Duros (la aportación semanal diferencial), separado del valor de mercado, para distinguir "cuánto he metido" de "cuánto vale ahora"
-
-#### Impacto previsto en base de datos (SQL preparado; no ejecutado)
-- Añadir una tabla maestra `investment_assets` con identidad estable, nombre, ticker/ISIN, categoría y `target_weight` global opcional.
-- Mantener `assets` como posiciones por broker; el inventario de columnas de Supabase ya muestra `assets.investment_asset_id` (UUID), por lo que primero hay que confirmar si existe la tabla maestra y si la columna tiene una FK válida. No volver a añadir el campo a ciegas.
-- Inventario de datos de solo lectura recibido: hay 0 activos maestros y 14 posiciones, todas sin vincular. No se deben crear los maestros agrupando automáticamente por nombre/ticker ni copiar/sumar los objetivos antiguos por fila; primero hay que revisar el mapa y asignar el nuevo objetivo global deliberadamente.
-- La exposición consolidada será la suma del valor de las filas `assets` vinculadas al mismo activo; el peso real será esa suma dividida por el valor de la cartera.
-- Migrar en etapas: respaldo, inventario de filas, mapeo manual de duplicados/objetivos, referencia nullable, verificación de sumas y solo entonces retirar el objetivo antiguo de las posiciones.
-- No alterar snapshots existentes: preservar su desglose histórico y definir desde qué fecha el nuevo modelo se refleja en ellos.
-- Verificar las políticas RLS para todas las tablas nuevas antes de desplegar; no conceder acceso anónimo más amplio por conveniencia.
-- El borrador transaccional está en [docs/database/001_consolidated_assets_dry_run.sql](docs/database/001_consolidated_assets_dry_run.sql). Empieza con `ROLLBACK`; no cambia la base de datos hasta ejecutarlo en Supabase y aprobar explícitamente el `COMMIT`.
-- El SQL de ensayo revoca el rol `anon` de las cuatro tablas y aplica CRUD solo a la cuenta propietaria autenticada por UID. Requiere crear primero el usuario y reemplazar el UID en el script, siguiendo [docs/database/005_setup_owner_auth.md](docs/database/005_setup_owner_auth.md).
-- `IF NOT EXISTS` hace reejecutable la instalación completa compatible, pero no repara tablas parciales o divergentes; revisar los objetos ya existentes antes de repetir o aplicar la migración.
-- Comprobación de solo lectura recibida el 2026-09-29: `assets.id`, `assets.investment_asset_id` y `portfolio_snapshots.id` son UUID; `assets.updated_at` existe. Aún faltan tabla/columnas de `investment_assets`, FK real, constraints, políticas RLS y privilegios efectivos.
-
-#### Navegación prevista (decidir después del modelo)
-- Mantener el dashboard como resumen general.
-- Añadir una vista **Activos y objetivos** para editar objetivos globales y consultar la exposición consolidada.
-- Mantener **Posiciones** para el detalle operativo por broker.
-- Mantener **Histórico** para snapshots y evolución patrimonial.
-- Empezar con navegación sencilla por páginas/rutas; usar pestañas solo para sub-vistas relacionadas, no para esconder el detalle ni duplicar formularios.
-
-### Fase 4 — Menos trabajo manual (con cuidado)
-Aquí es donde la automatización empieza a tentar — se añade solo si se puede revisar y desactivar:
-- [ ] Actualización automática de `current_price` vía API de cotizaciones (con opción de forzar un valor manual si la API falla o desconfías del dato)
-- [ ] Guardar y mostrar la fecha y el origen de cada precio para distinguir datos recientes de valores introducidos manualmente
-- [ ] Snapshot automático semanal/mensual (cron job), sin perder el botón manual
-- [ ] Multi-moneda si algún broker opera en USD
-
-### Fase 5 — Pulido de uso diario
-- [ ] Instalable como PWA (icono en el móvil, pantalla completa, sin barra de navegador)
-- [x] Tema oscuro fijado para el dashboard
-- [x] Menú de navegación para Dashboard, Activos y objetivos, Posiciones e Histórico (rutas creadas; páginas funcionales pendientes)
-- [ ] Selector de modo oscuro/claro
-- [ ] Acceso autenticado para el único propietario y políticas RLS de mínimo privilegio; no hace falta diseñar cuentas multiusuario. La autenticación debe acompañar a RLS, no sustituirlo.
-- [ ] Revisar permisos mínimos de Supabase y evitar que una clave pública permita cambios no autorizados
-
-### Fase 6 — La parte soñadora, cuando todo lo anterior sea aburrido de estable
-- [ ] Proyección a 15-25 años según aportaciones y rentabilidad histórica asumida (con los supuestos siempre visibles, nunca una caja negra)
-- [ ] Exportar un resumen de la cartera en el formato de la alineación de 11 jugadores, como borrador para tus artículos/hilos
-- [ ] Alertas de rebalanceo cuando un peso se desvía por encima de un umbral definido por ti
-
-## Filosofía de iteración
-
-Cada fase se implementa **una casilla a la vez**, se prueba en producción con datos reales (no en local con datos de mentira), y no se empieza la siguiente casilla hasta confirmar que la anterior funciona sin errores. Si algo automatiza una decisión, debe quedar siempre a la vista el dato crudo debajo — nunca solo el resultado ya cocinado. Las revisiones de la política de inversión (próximas: dic. 2026, mar. 2027) son buenos puntos naturales para parar y revisar si el dashboard sigue reflejando cómo gestionas de verdad, o si se ha quedado desactualizado respecto a la política.
+- Next.js 16 App Router, React 19 y TypeScript.
+- Supabase Auth y Postgres con Row Level Security.
+- Tailwind CSS 4 y Recharts.
+- Vercel; el repositorio está conectado a despliegue automático desde `main`.
 
 ## Desarrollo local
+
+Requisitos: Node.js compatible con el proyecto y un archivo local `.env.local` que contenga `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`. No guardes ese archivo en Git.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Necesitas un `.env.local` con:
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+Validación antes de publicar:
 
+```bash
+npm run lint
+npm run build
+```
 
-Despliegue: automático en Vercel con cada push a `main`.
+## Seguridad operativa
+
+- El estado de acceso y las comprobaciones continuas se documentan en [docs/database/005_owner_access_status.md](docs/database/005_owner_access_status.md).
+- [docs/database/002_inspect_supabase_read_only.sql](docs/database/002_inspect_supabase_read_only.sql) permite volver a inspeccionar esquema, RLS, políticas y grants.
+- [docs/database/001_consolidated_assets_dry_run.sql](docs/database/001_consolidated_assets_dry_run.sql) conserva el SQL de la instalación inicial y acaba en `ROLLBACK`. **No lo ejecutes**: el `COMMIT` inicial ya se aplicó; cualquier cambio futuro requiere una migración nueva basada en el esquema vigente.
+- El UID del propietario no se guarda en el repositorio. El UID no es una contraseña, pero tampoco se debe publicar innecesariamente.
+- Después de cambios de permisos, vuelve a ejecutar el diagnóstico de solo lectura y prueba tanto la sesión propietaria como el acceso sin sesión antes de dar por seguro el despliegue.
+
+## Próximas mejoras
+
+Prioridad recomendada, en pasos pequeños y comprobables:
+
+1. Refinar la identidad renacentista/rococó en las pantallas restantes y revisar la experiencia móvil/accesible.
+2. Añadir visibilidad a divisas y origen/fecha del precio antes de confiar en comparativas cuando haya activos no denominados en EUR.
+3. Revisar la calidad de vínculos y objetivos consolidados, sin alterar snapshots históricos.
+4. Mejorar el histórico y las operaciones de edición/borrado con confirmación y mensajes inequívocos.
+5. Evaluar cotizaciones, aportaciones periódicas o proyecciones solo cuando sus datos y supuestos puedan auditarse.
+
+El historial de cambios y validaciones está en [CHANGELOG.md](CHANGELOG.md).

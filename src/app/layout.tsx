@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cartera | Panel patrimonial",
-  description: "Panel personal para el seguimiento manual del patrimonio y las posiciones de inversión.",
+  title: "Aureum | Cartera patrimonial",
+  description: "Registro privado del patrimonio, con criterio, disciplina y perspectiva de largo plazo.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

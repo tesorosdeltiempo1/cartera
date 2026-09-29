@@ -2,8 +2,33 @@
 
 :root {
   color-scheme: dark;
-  --background: #081117;
-  --foreground: #e8eff2;
+  --background: #101713;
+  --foreground: #eee6d5;
+  --color-slate-950: #101713;
+  --color-slate-900: #18211b;
+  --color-slate-800: #263129;
+  --color-slate-100: #eee6d5;
+  --color-slate-200: #e2d8c3;
+  --color-slate-300: #c8bea8;
+  --color-slate-400: #aaa38f;
+  --color-slate-500: #837d6c;
+  --color-slate-600: #686352;
+  --color-teal-100: #f1dfb1;
+  --color-teal-200: #e6ca83;
+  --color-teal-300: #c9a85d;
+  --color-teal-400: #a88742;
+  --color-cyan-200: #dfc887;
+  --color-cyan-300: #c9ad66;
+  --color-amber-200: #e5b991;
+  --color-amber-300: #bd8254;
+  --color-violet-200: #d4c6a2;
+  --color-violet-300: #aa9561;
+  --color-orange-200: #e2aa75;
+  --color-orange-300: #b87542;
+  --color-emerald-200: #b7c89b;
+  --color-emerald-300: #849b65;
+  --color-white: #f1eadb;
+  --font-display: "Palatino Linotype", "Book Antiqua", Georgia, serif;
 }
 
 @theme inline {
@@ -22,13 +47,134 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  background-image: radial-gradient(ellipse at 50% -25%, rgb(24 73 73 / 18%), transparent 60%);
+  background-image:
+    radial-gradient(ellipse at 50% -25%, rgb(174 139 69 / 11%), transparent 58%),
+    radial-gradient(ellipse at 100% 60%, rgb(55 76 57 / 13%), transparent 44%);
   background-attachment: fixed;
 }
 
+body::before {
+  position: fixed;
+  z-index: 40;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #9a7a3c 18%, #dfc47e 50%, #9a7a3c 82%, transparent);
+  content: "";
+  pointer-events: none;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+
+.brand-wordmark {
+  font-family: var(--font-display);
+  letter-spacing: 0.14em;
+}
+
+.brand-mark {
+  color: var(--color-teal-300);
+  filter: drop-shadow(0 2px 8px rgb(201 168 93 / 16%));
+}
+
+.login-card {
+  position: relative;
+  overflow: hidden;
+  border: 3px double rgb(201 168 93 / 34%);
+  border-radius: 2.4rem 0.75rem 2.4rem 0.75rem;
+  outline: 1px solid rgb(201 168 93 / 9%);
+  outline-offset: -8px;
+  background-image:
+    linear-gradient(145deg, rgb(201 168 93 / 7%), transparent 42%),
+    radial-gradient(ellipse at 50% 0%, rgb(201 168 93 / 6%), transparent 62%);
+}
+
+.login-card::after {
+  position: absolute;
+  right: -2.8rem;
+  bottom: -3.5rem;
+  width: 12rem;
+  height: 12rem;
+  border: 1px solid rgb(201 168 93 / 12%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 12px rgb(201 168 93 / 2%), 0 0 0 24px rgb(201 168 93 / 2%);
+  content: "";
+  pointer-events: none;
+}
+
+main :is(section, article)[class*="rounded-2xl"][class*="border"] {
+  border-radius: 1.5rem 0.55rem 1.5rem 0.55rem;
+  outline: 1px solid rgb(201 168 93 / 7%);
+  outline-offset: -5px;
+  box-shadow: inset 0 0 0 1px rgb(201 168 93 / 5%);
+}
+
+main :is(section, article)[class*="bg-slate-900"] {
+  position: relative;
+  border-color: rgb(201 168 93 / 14%);
+  background-image:
+    linear-gradient(145deg, rgb(201 168 93 / 4%), transparent 38%),
+    radial-gradient(ellipse at 100% 0%, rgb(201 168 93 / 3%), transparent 42%);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 12%), inset 0 0 0 1px rgb(201 168 93 / 5%);
+}
+
+main article[class*="rounded-2xl"][class*="border"] {
+  border-color: rgb(201 168 93 / 15%);
+  background-image: linear-gradient(145deg, rgb(201 168 93 / 4%), transparent 55%);
+}
+
+main button[class*="rounded"] {
+  border-radius: 0.7rem 0.35rem 0.7rem 0.35rem;
+}
+
+nav a[class*="rounded"] {
+  border-radius: 0.75rem 0.35rem 0.75rem 0.35rem;
+}
+
+main :is(input, select, textarea)[class*="rounded"] {
+  border-radius: 0.8rem 0.35rem 0.8rem 0.35rem;
+}
+
+main > header {
+  border-left: 1px solid rgb(201 168 93 / 42%);
+  padding-left: 1rem;
+}
+
+.brand-wordmark::before,
+.brand-wordmark::after {
+  color: rgb(201 168 93 / 75%);
+  font-family: var(--font-display);
+  font-size: 0.9em;
+  font-weight: 400;
+}
+
+.brand-wordmark::before {
+  margin-right: 0.55em;
+  content: "❧";
+}
+
+.brand-wordmark::after {
+  margin-left: 0.55em;
+  content: "❧";
+}
+
+table thead {
+  letter-spacing: 0.09em;
+}
+
+input,
+select,
+textarea {
+  color-scheme: dark;
+}
+
 ::selection {
-  color: #071313;
-  background: #7ee7ce;
+  color: #17160f;
+  background: #d4bb7c;
 }
 
 button,
@@ -40,7 +186,7 @@ select {
 button:focus-visible,
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid #5eead4;
+  outline: 2px solid #d4bb7c;
   outline-offset: 2px;
 }
 

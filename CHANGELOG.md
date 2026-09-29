@@ -2,6 +2,23 @@
 
 Este archivo recoge las iteraciones funcionales y visuales por separado del README. Las fechas indican cuándo se implementó cada cambio; no implican por sí mismas que esté desplegado ni validado en producción.
 
+## 2026-09-29 — Superficies renacentistas y ornamentación rococó
+
+- A petición del usuario se mantiene la paleta tinta/mármol/oro y se reemplaza la sensación de cards de app moderna por marcos dobles, filetes interiores, esquinas alternas y pequeños motivos de filigrana.
+- La ornamentación se aplica a paneles principales y elementos interactivos; las tablas conservan desplazamiento horizontal y los formularios se apilan en móvil.
+- Revisión visual local en Posiciones, escritorio y viewport de 390 px. Esta iteración está en workspace local; no se ha desplegado.
+
+## 2026-09-29 — Acceso del propietario confirmado y nueva identidad visual
+
+- El propietario confirmó que pudo iniciar sesión en producción con su correo y contraseña y que sus datos se conservaron y cargaron correctamente.
+- El diagnóstico de Supabase posterior al `COMMIT` muestra RLS habilitado en las cuatro tablas de cartera, una política `cartera_owner_all` dirigida a `authenticated` con `public.is_cartera_owner()`, grants CRUD a `authenticated` y ninguna concesión de tabla a `anon` en el resultado inspeccionado.
+- Los registros públicos están desactivados. `FORCE ROW LEVEL SECURITY` aparece desactivado; la aplicación accede mediante los roles cliente de Supabase, sujetos a grants y políticas RLS.
+- Actualizados README y guía operativa: el SQL de 001 queda como plantilla histórica de ensayo, no como migración pendiente para volver a ejecutar.
+- Primera iteración visual grecorromana: tinta verde profunda, mármol cálido, oro antiguo, serif editorial y emblema arquitectónico Aureum. Se armonizaron navegación, login y gráficos; se eliminó una textura diagonal que restaba sobriedad.
+- Revisión visual del acceso en navegador de escritorio y viewport móvil de 390 × 844; campos y acción principal quedan visibles sin scroll horizontal.
+- Validación local: `npm run lint`, `npm run build` y `git diff --check` completados correctamente.
+- La autenticación de UI y RLS se consideran confirmadas por la prueba aportada por el propietario; no se afirma una auditoría externa completa ni se recomienda compartir datos sensibles.
+
 ## 2026-09-29 — Navegación inicial desplegada
 
 - Se publicó el `NavBar` y las rutas `/activos`, `/posiciones` y `/historico`, que por ahora muestran placeholders.
@@ -43,7 +60,7 @@ Este archivo recoge las iteraciones funcionales y visuales por separado del READ
 - `/posiciones` permite registrar y editar posiciones; `/historico` muestra snapshots y permite borrar con confirmación.
 - La autenticación de propietario único se añadió al frontend; las páginas de datos consultan Supabase solo tras iniciar sesión. El formulario no fusiona automáticamente activos.
 - El respaldo incorpora el catálogo consolidado y usa formato versión 2.
-- Validación de código pendiente. No desplegar aún: Supabase tiene que ejecutar la migración y RLS de propietario según `docs/database/005_setup_owner_auth.md`.
+- Estado de aquella iteración: código local antes de ejecutar la migración; el estado vigente y la confirmación posterior constan al inicio de este changelog y en `docs/database/005_owner_access_status.md`.
 - El objetivo global de Amazon queda sin decidir: el `17%` existente solo estaba en una posición de broker y no se traslada automáticamente.
 - El dashboard y la nueva consolidación asumen que los precios de posición están expresados en EUR; no se inferirá ni convertirá divisa automáticamente. Verificar valores USD, como el instrumento de oro identificado en el inventario, antes de confiar en los pesos.
 

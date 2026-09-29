@@ -2,7 +2,7 @@
 
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
-const COLORS = ['#5ec8f8', '#f6b83c', '#c090f5', '#fb923c', '#00d9a3']
+const COLORS = ['#c9ad66', '#bd8254', '#aa9561', '#b87542', '#849b65']
 
 type Slice = { category: string; value: number }
 
@@ -21,10 +21,10 @@ export default function PortfolioChart({ data }: { data: Slice[] }) {
           </Pie>
           <Tooltip
             formatter={(value) => (Number(value) || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
-            contentStyle={{ backgroundColor: '#101b24', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#e8eff2' }}
-            itemStyle={{ color: '#e8eff2' }}
+            contentStyle={{ backgroundColor: '#18211b', border: '1px solid rgba(201,168,93,0.24)', borderRadius: 12, color: '#eee6d5' }}
+            itemStyle={{ color: '#eee6d5' }}
           />
-          <Legend wrapperStyle={{ color: '#a7b5bf', fontSize: 12 }} />
+          <Legend wrapperStyle={{ color: '#aaa38f', fontSize: 12 }} />
         </PieChart>
       </ResponsiveContainer>
     </div>

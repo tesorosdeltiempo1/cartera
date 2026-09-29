@@ -120,8 +120,8 @@ export default function DashboardClient() {
     <main className="mx-auto min-h-screen w-full max-w-7xl px-4 py-6 text-slate-100 sm:px-6 sm:py-10 lg:px-8">
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-teal-200">Patrimonio personal</p>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">Dashboard</h1>
+          <p className="brand-wordmark text-xs font-semibold uppercase text-teal-200">Aureum · Patrimonio personal</p>
+          <h1 className="mt-1 text-3xl text-white sm:text-4xl">Resumen patrimonial</h1>
         </div>
         <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-300">
           <span className="mr-2 inline-block size-1.5 rounded-full bg-teal-300" />Seguimiento manual
