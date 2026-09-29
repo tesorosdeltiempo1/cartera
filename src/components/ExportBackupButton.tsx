@@ -2,15 +2,15 @@
 
 import { useState } from 'react'
 
-type BackupRecord = Record<string, unknown>
-
 type Props = {
-  assets: BackupRecord[]
-  snapshots: BackupRecord[]
+  assets: unknown[]
+  snapshots: unknown[]
+  investmentAssets: unknown[]
+  snapshotAssets: unknown[]
   disabled?: boolean
 }
 
-export default function ExportBackupButton({ assets, snapshots, disabled = false }: Props) {
+export default function ExportBackupButton({ assets, snapshots, investmentAssets, snapshotAssets, disabled = false }: Props) {
   const [status, setStatus] = useState('')
 
   function handleExport() {
@@ -18,11 +18,13 @@ export default function ExportBackupButton({ assets, snapshots, disabled = false
       const exportedAt = new Date()
       const backup = {
         app: 'Cartera',
-        formatVersion: 1,
+        formatVersion: 3,
         exportedAt: exportedAt.toISOString(),
         tables: {
           assets,
+          investment_assets: investmentAssets,
           portfolio_snapshots: snapshots,
+          portfolio_snapshot_assets: snapshotAssets,
         },
       }
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8' })
@@ -32,7 +34,7 @@ export default function ExportBackupButton({ assets, snapshots, disabled = false
       anchor.download = `cartera-respaldo-${exportedAt.toISOString().slice(0, 10)}.json`
       anchor.click()
       window.setTimeout(() => URL.revokeObjectURL(url), 1000)
-      setStatus(`Copia generada: ${assets.length} posiciones y ${snapshots.length} snapshots.`)
+      setStatus(`Copia generada: ${assets.length} posiciones, ${investmentAssets.length} activos, ${snapshots.length} snapshots y ${snapshotAssets.length} detalles.`)
     } catch {
       setStatus('No se pudo generar la copia. Inténtalo de nuevo.')
     }
@@ -48,7 +50,7 @@ export default function ExportBackupButton({ assets, snapshots, disabled = false
       >
         Descargar respaldo
       </button>
-      <p aria-live="polite" className="text-right text-xs text-slate-400">{status || 'JSON · incluye posiciones e histórico'}</p>
+      <p aria-live="polite" className="text-right text-xs text-slate-400">{status || 'JSON · posiciones, activos e histórico'}</p>
     </div>
   )
 }

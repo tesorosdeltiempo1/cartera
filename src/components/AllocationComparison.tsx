@@ -32,7 +32,7 @@ export default function AllocationComparison({ data, positionsWithTarget, totalP
         <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-teal-200">Política de inversión</p>
         <h2 id="allocation-title" className="font-semibold text-white">Peso real vs. objetivo</h2>
         <p className="mt-1 text-sm text-slate-400">
-          Objetivo informado en {positionsWithTarget} de {totalPositions} posiciones. La desviación solo se calcula cuando todas las posiciones de una categoría tienen objetivo.
+          Objetivo global informado en {positionsWithTarget} de {totalPositions} activos consolidados. La desviación solo se calcula cuando todos los activos de una categoría tienen objetivo.
         </p>
       </div>
 

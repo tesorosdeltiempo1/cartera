@@ -2,7 +2,7 @@
 
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
-const COLORS = ['#5ec8f8', '#f6b83c', '#c090f5', '#00d9a3']
+const COLORS = ['#5ec8f8', '#f6b83c', '#c090f5', '#fb923c', '#00d9a3']
 
 type Slice = { category: string; value: number }
 

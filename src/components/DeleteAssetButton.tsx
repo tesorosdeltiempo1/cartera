@@ -1,11 +1,10 @@
 'use client'
 
 import { useId, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { notifyPortfolioChanged } from '@/lib/portfolioEvents'
 
 export default function DeleteAssetButton({ assetId, assetName }: { assetId: string; assetName: string }) {
-  const router = useRouter()
   const dialogId = useId()
   const [confirming, setConfirming] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -29,7 +28,7 @@ export default function DeleteAssetButton({ assetId, assetName }: { assetId: str
       }
 
       setConfirming(false)
-      router.refresh()
+      notifyPortfolioChanged()
     } catch {
       setErrorMessage('No se pudo eliminar la posición. Comprueba la conexión e inténtalo de nuevo.')
     } finally {

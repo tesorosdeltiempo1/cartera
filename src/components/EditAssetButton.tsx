@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { notifyPortfolioChanged } from '@/lib/portfolioEvents'
 
 type Asset = {
   id: string
@@ -14,6 +14,7 @@ type Asset = {
   avg_price: number | null
   current_price: number | null
   target_weight: number | null
+  investment_asset_id?: string | null
 }
 
 type FormValues = {
@@ -27,7 +28,7 @@ type FormValues = {
   target_weight: string
 }
 
-const CATEGORIES = ['Núcleo Pasivo', 'Satélite Convicción', 'Seguridad y Liquidez', 'Especulativo']
+const CATEGORIES = ['Núcleo Pasivo', 'Satélite Convicción', 'Seguridad y Liquidez', 'Activos Duros', 'Especulativo']
 
 function toFormValues(asset: Asset): FormValues {
   return {
@@ -47,7 +48,6 @@ function optionalNumber(value: string) {
 }
 
 export default function EditAssetButton({ asset }: { asset: Asset }) {
-  const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -69,16 +69,17 @@ export default function EditAssetButton({ asset }: { asset: Asset }) {
     setErrorMessage('')
 
     try {
-      const { data, error } = await supabase.from('assets').update({
+      const updatedValues = {
         name: form.name.trim(),
         ticker: form.ticker.trim() || null,
-        category: form.category,
         broker: form.broker.trim() || null,
         quantity: Number(form.quantity),
         avg_price: optionalNumber(form.avg_price),
         current_price: optionalNumber(form.current_price),
         target_weight: optionalNumber(form.target_weight),
-      }).eq('id', asset.id).select('id').single()
+        ...(!asset.investment_asset_id ? { category: form.category } : {}),
+      }
+      const { data, error } = await supabase.from('assets').update(updatedValues).eq('id', asset.id).select('id').single()
 
       if (error || !data) {
         setErrorMessage(`No se pudo guardar el cambio: ${error?.message ?? 'no se encontró la posición actualizada'}`)
@@ -86,7 +87,7 @@ export default function EditAssetButton({ asset }: { asset: Asset }) {
       }
 
       setEditing(false)
-      router.refresh()
+      notifyPortfolioChanged()
     } catch {
       setErrorMessage('No se pudo guardar el cambio. Comprueba la conexión e inténtalo de nuevo.')
     } finally {
@@ -126,12 +127,19 @@ export default function EditAssetButton({ asset }: { asset: Asset }) {
               Ticker
               <input name="ticker" value={form.ticker} onChange={handleChange} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
             </label>
-            <label className="grid gap-1 text-sm">
-              Categoría
-              <select name="category" value={form.category} onChange={handleChange} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white">
-                {CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
-              </select>
-            </label>
+            {asset.investment_asset_id ? (
+              <div className="grid gap-1 text-sm text-slate-300">
+                Categoría estratégica
+                <p className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-slate-400">{form.category} · definida por el activo consolidado</p>
+              </div>
+            ) : (
+              <label className="grid gap-1 text-sm">
+                Categoría
+                <select name="category" value={form.category} onChange={handleChange} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white">
+                  {CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+                </select>
+              </label>
+            )}
             <label className="grid gap-1 text-sm">
               Broker
               <input name="broker" value={form.broker} onChange={handleChange} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
@@ -149,8 +157,8 @@ export default function EditAssetButton({ asset }: { asset: Asset }) {
               <input name="current_price" value={form.current_price} onChange={handleChange} type="number" min="0" step="any" className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
             </label>
             <label className="grid gap-1 text-sm">
-              Peso objetivo (%)
-              <input name="target_weight" value={form.target_weight} onChange={handleChange} type="number" min="0" step="any" className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
+              Peso objetivo antiguo por posición (%)
+              <input name="target_weight" value={form.target_weight} onChange={handleChange} type="number" min="0" max="100" step="any" className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
             </label>
 
             {errorMessage && (
