@@ -26,7 +26,7 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - El dashboard usa EUR como moneda base. La migración 006 ya añadió moneda/fecha/fuente de precio y FX; las posiciones previas tienen esos nuevos campos sin clasificar hasta revisión manual.
 - Los snapshots antiguos se conservan y no se recalculan al editar posiciones.
 - El respaldo es exportación JSON; aún no existe un flujo de restauración.
-- El código local incluye una primera implementación de `/operaciones`, lógica de ledger y `007_transaction_ledger.sql`. No forma parte de la línea base confirmada en producción; la migración 007 no está aprobada ni aplicada.
+- La migración 007 está aplicada y el diagnóstico 002 confirmó sus tablas, RLS, policies y permisos; el código de `/operaciones` está validado localmente, pendiente de este despliegue.
 - El detalle de la dirección clásica Aureum y su validación está en [CHANGELOG.md](../CHANGELOG.md).
 - El procedimiento de trabajo, la arquitectura actual y las precauciones de datos están en [GUIA_DE_TRABAJO.md](GUIA_DE_TRABAJO.md).
 
@@ -84,9 +84,9 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - Mejorar estados de carga, vacío, error y recuperación/reintento de forma consistente.
 - Añadir filtros/búsqueda de posiciones si el volumen real lo justifica.
 
-**Iniciativa local pendiente de revisión:** el árbol de trabajo contiene un ledger append-only para registrar operaciones y saldos de efectivo. La ruta `/operaciones` limita a 250 las transacciones consultadas y calcula caja y resultado realizado sobre ese subconjunto; por encima de ese umbral los totales son incompletos. Antes de adoptar, mover los agregados al cálculo completo del ledger, limitar solo la lista visible y probar con más de 250 movimientos. Además, revisar y probar el RPC transaccional, las reglas de coste base/ventas, permisos y RLS con datos ficticios; respaldar y obtener aprobación explícita antes de aplicar la migración 007. No desplegar una interfaz que dependa del nuevo esquema antes de verificarlo. El punto de partida del ledger no reconstruye operaciones previas.
+**Ledger listo para desplegar:** el propietario aplicó 007 y el diagnóstico 002 confirmó tablas, RLS, policies y grants de funciones. Dashboard y `/operaciones` usan `get_portfolio_ledger_summary` para agregar el historial completo; 250 filas solo limitan la lista reciente. La exportación pagina y comprueba recuentos; los snapshots usan un RPC transaccional. `npm run lint` y `npm run build` pasan. Tras el despliegue, confirmar acceso autenticado, carga, exportación y snapshot. El punto de partida del ledger no reconstruye operaciones anteriores.
 
-**Integridad de snapshots:** el cliente guarda el resumen y el detalle en dos solicitudes; si falla el detalle, intenta retirar el resumen, pero esa compensación también puede fallar. Hacer el guardado atómico en servidor o documentar y probar cómo detectar y recuperar snapshots parciales antes de depender del desglose de caja.
+**Integridad de snapshots:** `save_portfolio_snapshot` inserta resumen y detalle en una transacción; el flujo de la app queda pendiente de comprobación tras el despliegue.
 
 **Criterio de salida:** operaciones críticas verificadas de extremo a extremo en entorno de prueba, sin pérdida accidental y con confirmación posterior.
 

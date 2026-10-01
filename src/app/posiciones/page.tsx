@@ -24,6 +24,8 @@ type Position = {
   fx_rate_to_eur: number | null
   fx_as_of: string | null
   fx_source: string | null
+  cost_basis_eur: number | null
+  ledger_started_at: string | null
 }
 type AssetLabel = { id: string; name: string }
 

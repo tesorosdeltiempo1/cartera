@@ -9,6 +9,16 @@ type Props = {
   totalValue: number
   breakdown: { category: string; value: number }[]
   disabled?: boolean
+  cashBreakdown: {
+    cash_account_id: string
+    broker: string
+    currency: string
+    balance: number
+    fx_rate_to_eur: number
+    fx_as_of: string | null
+    fx_source: string | null
+    value_eur: number
+  }[]
   snapshotAssets: {
     investment_asset_id: string | null
     asset_name: string
@@ -19,7 +29,7 @@ type Props = {
   }[]
 }
 
-export default function SaveSnapshotButton({ totalValue, breakdown, snapshotAssets, disabled = false }: Props) {
+export default function SaveSnapshotButton({ totalValue, breakdown, snapshotAssets, cashBreakdown, disabled = false }: Props) {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -28,25 +38,14 @@ export default function SaveSnapshotButton({ totalValue, breakdown, snapshotAsse
     setMessage('')
     const breakdownObj = Object.fromEntries(breakdown.map((b) => [b.category, b.value]))
     try {
-      const { data, error } = await supabase.from('portfolio_snapshots').insert({
-        total_value: totalValue,
-        breakdown: breakdownObj,
-      }).select('id').single()
+      const { data, error } = await supabase.rpc('save_portfolio_snapshot', {
+        p_total_value: totalValue,
+        p_breakdown: breakdownObj,
+        p_cash_breakdown: cashBreakdown,
+        p_snapshot_assets: snapshotAssets,
+      })
       if (error) throw error
       if (!data) throw new Error('No se recibió el identificador del snapshot.')
-
-      if (snapshotAssets.length > 0) {
-        const { error: detailError } = await supabase.from('portfolio_snapshot_assets').insert(
-          snapshotAssets.map((asset) => ({ ...asset, snapshot_id: data.id })),
-        )
-        if (detailError) {
-          const { error: rollbackError } = await supabase.from('portfolio_snapshots').delete().eq('id', data.id)
-          if (rollbackError) {
-            throw new Error(`Se guardó el total, pero no el detalle (${detailError.message}); no se pudo retirar automáticamente el registro parcial (${rollbackError.message}).`)
-          }
-          throw new Error(`No se guardó el detalle por activo y se retiró el snapshot incompleto: ${detailError.message}`)
-        }
-      }
       setMessage('Snapshot guardado.')
       notifyPortfolioChanged()
     } catch (error) {

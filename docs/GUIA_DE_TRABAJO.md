@@ -20,13 +20,13 @@ La línea base confirmada en producción incluye acceso de propietario con Supab
 
 El P0 de moneda y procedencia está desplegado y su migración se informó aplicada. La valoración usa EUR como base, pero las posiciones antiguas siguen pendientes de clasificación individual. El P0 no se considera cerrado hasta verificar cada precio, moneda y cambio pertinente y confirmar snapshots futuros. No se deben reinterpretar las cifras antiguas ni recalcular snapshots.
 
-En el árbol de trabajo actual hay una implementación local de `/operaciones`, lógica de ledger y el borrador de migración `007_transaction_ledger.sql`. No está confirmada en producción y la migración 007 no se debe ejecutar como parte de esta guía sin revisión, respaldo, pruebas y aprobación explícita del propietario. Iniciar el ledger fija un punto de partida actual; no reconstruye compras anteriores.
+La migración 007 ya está aplicada y el diagnóstico 002 confirmó tablas, RLS, policies y permisos de funciones. El código de `/operaciones` está validado localmente y queda pendiente de publicarse/desplegarse. Iniciar el ledger fija un punto de partida actual; no reconstruye compras anteriores.
 
-La revisión local encontró un bloqueo de exactitud: `/operaciones` lee como máximo 250 transacciones y usa ese mismo conjunto para calcular saldos de efectivo y resultado realizado. Cuando hay más de 250 movimientos, esos totales omiten los más antiguos. El dashboard, en cambio, solicita el historial completo. Antes de desplegar, los agregados deben calcularse sobre todo el ledger (por ejemplo, mediante una función de servidor/RPC) y el límite debe afectar solo a las filas visibles; hay que probar explícitamente un historial superior a 250 movimientos.
+El dashboard y `/operaciones` calculan caja y rentabilidad mediante `get_portfolio_ledger_summary`; el límite de 250 queda solo para la lista de movimientos recientes. El respaldo pagina las tablas y comprueba recuentos; el snapshot se guarda en una llamada transaccional. `npm run lint` y `npm run build` pasan. Tras el despliegue, queda comprobar los flujos de la aplicación; no se han creado operaciones ni snapshots de prueba sobre datos reales.
 
-La revisión del código no equivale a validar la migración en PostgreSQL. La migración 007 y sus funciones de seguridad deben ensayarse en una base aislada, además de revisar concurrencia, cálculos de compra/venta, snapshots y permisos. No se ha escrito en Supabase ni se han alterado datos reales.
+La inspección compartida confirma el esquema y los permisos de PostgreSQL, pero no sustituye la validación de los flujos de la aplicación. No se han creado operaciones ni snapshots de prueba sobre datos reales.
 
-El guardado de snapshots inserta primero el resumen y después sus filas de detalle en solicitudes separadas. Si falla la segunda solicitud, la interfaz intenta borrar el resumen; si esa compensación también falla, puede persistir un snapshot parcial. Antes de depender de snapshots con desglose de caja, conviene hacer ambos pasos atómicos en servidor o definir y probar una detección y recuperación inequívoca de registros parciales.
+El guardado de resumen y detalle usa `save_portfolio_snapshot` en una transacción; comprueba su comportamiento con un snapshot cuando estés listo para iniciar el histórico.
 
 Los estados anteriores son una fotografía documental: comprobar el despliegue y el estado de Supabase antes de ejecutar cualquier operación real. El estado operativo de acceso está en [database/005_owner_access_status.md](database/005_owner_access_status.md).
 
@@ -40,7 +40,7 @@ Los estados anteriores son una fotografía documental: comprobar el despliegue y
 | `src/lib/currencies.ts` | Opciones de moneda utilizadas por los formularios. |
 | `src/lib/supabase.ts` | Cliente Supabase del navegador; sus permisos siguen dependiendo de Auth, grants y RLS. |
 | `src/lib/portfolioEvents.ts` | Notificación local para refrescar vistas tras cambios de cartera. |
-| `src/lib/ledger.ts` | Cálculos y tipos del ledger local; todavía sujetos a validación junto con la migración 007. |
+| `src/lib/ledger.ts` | Cálculos y tipos del ledger de operaciones. |
 | `docs/ROADMAP.md` | Prioridades, límites y criterios de aceptación del producto. |
 | `docs/database/` | Inspecciones de solo lectura, inventarios privados y scripts/migraciones SQL con estados distintos. |
 
@@ -66,16 +66,11 @@ npm run build
 
 Para desarrollo local, configura `.env.local` con `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`. No guardes secretos ni datos de cartera en Git.
 
-## Cómo cambiar Supabase con seguridad
+## Supabase ahora
 
-1. Inspeccionar el esquema vigente con [002_inspect_supabase_read_only.sql](database/002_inspect_supabase_read_only.sql). Una consulta de catálogo verifica configuración, pero no sustituye una prueba de autorización en la aplicación.
-2. Descargar y proteger un respaldo fuera del repositorio. La exportación JSON contiene datos patrimoniales sin cifrar y todavía no existe una restauración automática probada.
-3. Preparar una migración nueva, aditiva cuando sea posible, compatible con las filas actuales y con comprobaciones de RLS, policies, grants, constraints y rollback. Documentar precondiciones y consecuencias antes de pedir su ejecución.
-4. Ensayar con datos ficticios o una base aislada. No usar producción para descubrir si una migración funciona.
-5. Solicitar revisión y confirmación del propietario antes de cualquier escritura en producción. Ejecutar solo la migración acordada y una única vez.
-6. Volver a ejecutar la inspección de solo lectura y probar la app sin sesión y con la sesión del propietario. Registrar qué se verificó y qué queda pendiente.
+El propietario aplicó 007 y compartió el diagnóstico 002; tablas, RLS, policies y permisos requeridos aparecen presentes. No vuelvas a ejecutar `007_transaction_ledger.sql`.
 
-`001_consolidated_assets_dry_run.sql` es el registro de la migración inicial ya aplicada; no debe repetirse. `006_position_price_provenance.sql` se informó aplicada. `007_transaction_ledger.sql` es un borrador local pendiente: inspeccionarlo no equivale a aprobarlo o ejecutarlo.
+El siguiente paso es publicar el código desde `main` y esperar a que Vercel termine el despliegue. Después, inicia sesión y confirma que abren Dashboard y Operaciones. No compartas credenciales ni datos patrimoniales.
 
 ## Qué significa terminar
 

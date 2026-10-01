@@ -2,6 +2,19 @@
 
 Este archivo recoge las iteraciones funcionales y visuales por separado del README. Las fechas indican cuándo se implementó cada cambio; no implican por sí mismas que esté desplegado ni validado en producción.
 
+## 2026-10-01 — Ledger de operaciones listo para desplegar
+
+- La migración 007 fue ejecutada por el propietario; el diagnóstico 002 confirma tablas, columnas, RLS/policies y permisos `EXECUTE` solo para `authenticated`.
+- Dashboard y Operaciones usan el RPC de resumen completo; el límite de 250 afecta solo a la lista reciente. Los snapshots se guardan con un RPC transaccional y la exportación pagina las tablas y verifica sus recuentos.
+- `npm run lint` y `npm run build` completados. Código pendiente de push/despliegue; aún falta comprobación funcional autenticada en producción.
+
+## 2026-09-30 — Lenguaje sencillo para moneda y procedencia
+
+- Reemplazado el campo técnico de moneda por una lista con nombres cotidianos y códigos tal como aparecen en el broker; incluye una entrada para otras monedas.
+- Los orígenes de precio y cambio son opciones habituales; solo se escribe texto libre al elegir «Otra».
+- El tipo de cambio ahora pregunta «¿Cuántos euros vale una unidad de USD?» e incluye un ejemplo de entrada. La fecha del cambio sigue la del precio si el usuario confirma que son el mismo día; en caso contrario se pide por separado.
+- La ficha común se reutiliza en alta y edición para mantener iguales etiquetas, validaciones y comportamiento. Cambios locales, sin escritura ni despliegue a producción.
+
 ## 2026-09-29 — Superficies renacentistas y ornamentación rococó
 
 - A petición del usuario se mantiene la paleta tinta/mármol/oro y se reemplaza la sensación de cards de app moderna por marcos dobles, filetes interiores, esquinas alternas y pequeños motivos de filigrana.

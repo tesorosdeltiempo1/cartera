@@ -12,6 +12,16 @@
 
 El propietario informó que la migración 006 de moneda/procedencia terminó con `Success. No rows returned`. La inspección 002 confirma las seis columnas añadidas a `assets`, `valuation_detail` en `portfolio_snapshot_assets`, sus constraints, RLS activo en las cuatro tablas, grants CRUD a `authenticated`, policies del propietario y ningún grant de tabla a `anon`. Las filas previas quedan con moneda/precio/FX sin clasificar; el nuevo cliente puede mostrarlas como pendientes sin sumarlas a EUR ni permitir snapshots incompletos. Después de desplegar la UI, revísalas individualmente.
 
+## Inspección compartida por el propietario — 2026-10-01
+
+El resultado completo del diagnóstico 002 confirma que las columnas y constraints de moneda/procedencia siguen presentes. En las cuatro tablas actuales (`assets`, `investment_assets`, `portfolio_snapshots` y `portfolio_snapshot_assets`), RLS está habilitado y aparece `cartera_owner_all` para `authenticated`; el informe no muestra grants para `anon` ni `PUBLIC`. `FORCE ROW LEVEL SECURITY` continúa desactivado.
+
+## Migración 007 confirmada — 2026-10-01
+
+Después de que el propietario ejecutara la migración 007, el diagnóstico 002 muestra `portfolio_cash_accounts`, `portfolio_transactions`, `assets.cost_basis_eur`, `assets.ledger_started_at` y `portfolio_snapshots.cash_breakdown`. Las seis tablas inspeccionadas tienen RLS habilitado; las dos tablas del ledger tienen policy `cartera_owner_select`, y las tres funciones (`record_portfolio_operation`, `get_portfolio_ledger_summary`, `save_portfolio_snapshot`) muestran `EXECUTE` solo para `authenticated`. Las tablas del ledger muestran solo grant `SELECT` a `authenticated`; el resultado no muestra grants a `anon` ni `PUBLIC`.
+
+La migración está aplicada y la inspección de esquema/permisos es correcta. Este resultado no prueba por sí solo los flujos de la aplicación; el código requiere despliegue y comprobación posterior de inicio de sesión, resumen, respaldo y snapshots. No vuelvas a ejecutar la migración 007.
+
 ## Comprobación de solo lectura
 
 Para volver a inspeccionar la base de datos, ejecuta [002_inspect_supabase_read_only.sql](002_inspect_supabase_read_only.sql) en Supabase SQL Editor. No modifica filas ni estructura. Comprueba que:

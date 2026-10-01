@@ -6,7 +6,7 @@ import DeleteSnapshotButton from '@/components/DeleteSnapshotButton'
 import { supabase } from '@/lib/supabase'
 import { formatCurrency, type SnapshotValuationDetail } from '@/lib/valuation'
 
-type Snapshot = { id: string; snapshot_date: string; total_value: number; breakdown: Record<string, number> | null }
+type Snapshot = { id: string; snapshot_date: string; total_value: number; breakdown: Record<string, number> | null; cash_breakdown: { broker: string; currency: string; balance: number; fx_rate_to_eur: number; fx_as_of: string | null; fx_source: string | null; value_eur: number }[] | null }
 type SnapshotAsset = { snapshot_id: string; asset_name: string; category: string; value: number; target_weight: number | null; valuation_detail: SnapshotValuationDetail[] | null }
 
 function eur(value: number) {
@@ -69,13 +69,15 @@ export default function HistoricoPage() {
             <tbody className="divide-y divide-white/[0.06]">{snapshots.map((snapshot) => {
               const details = snapshotAssets.filter((detail) => detail.snapshot_id === snapshot.id)
               const valuationInputs = details.flatMap((detail) => detail.valuation_detail ?? [])
+              const cashRows = snapshot.cash_breakdown ?? []
               return <tr key={snapshot.id}>
                 <td className="px-5 py-4 text-slate-200">{new Date(`${snapshot.snapshot_date}T00:00:00`).toLocaleDateString('es-ES')}</td>
                 <td className="px-4 py-4 text-right tabular-nums font-medium text-white">{eur(snapshot.total_value)}</td>
                 <td className="px-4 py-4 text-xs leading-5 text-slate-400">
-                  {details.length > 0
+                  {details.length > 0 || cashRows.length > 0
                     ? <>
                         <p>{details.map((detail) => `${detail.asset_name}: ${eur(Number(detail.value))}`).join(' · ')}</p>
+                    {cashRows.length > 0 && <p className="mt-1">Efectivo: {cashRows.map((row) => `${row.broker} ${formatCurrency(Number(row.balance), row.currency)} ≈ ${eur(Number(row.value_eur))}`).join(' · ')}</p>}
                         {valuationInputs.length > 0 && <details className="mt-2 text-slate-300">
                           <summary className="cursor-pointer text-teal-200">Ver precios y conversiones guardados</summary>
                           <ul className="mt-2 grid gap-2">

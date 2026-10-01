@@ -10,6 +10,7 @@ const links = [
   { href: '/', label: 'Dashboard' },
   { href: '/activos', label: 'Activos y objetivos' },
   { href: '/posiciones', label: 'Posiciones' },
+  { href: '/operaciones', label: 'Operaciones' },
   { href: '/historico', label: 'Histórico' },
 ]
 

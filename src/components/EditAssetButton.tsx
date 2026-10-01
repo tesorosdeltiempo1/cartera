@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { notifyPortfolioChanged } from '@/lib/portfolioEvents'
 import { isCurrencyCodeSupported } from '@/lib/valuation'
+import PriceReferenceFields from '@/components/PriceReferenceFields'
 
 type Asset = {
   id: string
@@ -22,6 +23,8 @@ type Asset = {
   fx_rate_to_eur: number | null
   fx_as_of: string | null
   fx_source: string | null
+  cost_basis_eur: number | null
+  ledger_started_at: string | null
 }
 
 type FormValues = {
@@ -82,6 +85,10 @@ export default function EditAssetButton({ asset }: { asset: Asset }) {
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }))
   }
 
+  function handlePriceReferenceChange(field: 'currency' | 'price_as_of' | 'price_source' | 'fx_rate_to_eur' | 'fx_as_of' | 'fx_source', value: string) {
+    setForm((current) => ({ ...current, [field]: value }))
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setLoading(true)
@@ -89,16 +96,20 @@ export default function EditAssetButton({ asset }: { asset: Asset }) {
 
     try {
       const currency = form.currency.trim().toUpperCase()
-      if (!isCurrencyCodeSupported(currency)) {
-        setErrorMessage('Indica una moneda ISO 4217 reconocida, por ejemplo EUR o USD.')
+      if (currency === '__OTHER__' || form.price_source === '__custom__' || form.fx_source === '__custom__') {
+        setErrorMessage('Completa el código de otra moneda o indica dónde consultaste el dato.')
         return
       }
-      if (form.current_price.trim() && (!form.price_as_of || !form.price_source.trim())) {
+      if (!isCurrencyCodeSupported(currency)) {
+        setErrorMessage('Selecciona una moneda de la lista o escribe un código reconocido.')
+        return
+      }
+      if (form.current_price.trim() && (!form.price_as_of || !form.price_source.trim() || form.price_source === '__custom__')) {
         setErrorMessage('Para el precio actual, indica también la fecha y el origen.')
         return
       }
       const fxRate = optionalNumber(form.fx_rate_to_eur)
-      if (form.current_price.trim() && currency !== 'EUR' && (fxRate === null || !Number.isFinite(fxRate) || fxRate <= 0 || !form.fx_as_of || !form.fx_source.trim())) {
+      if (form.current_price.trim() && currency !== 'EUR' && (fxRate === null || !Number.isFinite(fxRate) || fxRate <= 0 || !form.fx_as_of || !form.fx_source.trim() || form.fx_source === '__custom__')) {
         setErrorMessage('Para valorar en EUR una posición no denominada en EUR, indica tasa EUR por unidad, fecha y origen del cambio.')
         return
       }
@@ -181,49 +192,32 @@ export default function EditAssetButton({ asset }: { asset: Asset }) {
             )}
             <label className="grid gap-1 text-sm">
               Broker
-              <input name="broker" value={form.broker} onChange={handleChange} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
+              <input name="broker" value={form.broker} onChange={handleChange} disabled={Boolean(asset.ledger_started_at)} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white disabled:opacity-60" />
             </label>
             <label className="grid gap-1 text-sm">
               Cantidad
-              <input name="quantity" value={form.quantity} onChange={handleChange} type="number" min="0" step="any" required className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
+              <input name="quantity" value={form.quantity} onChange={handleChange} type="number" min="0" step="any" required readOnly={Boolean(asset.ledger_started_at)} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white read-only:opacity-60" />
             </label>
             <label className="grid gap-1 text-sm">
               Precio medio de compra
-              <input name="avg_price" value={form.avg_price} onChange={handleChange} type="number" min="0" step="any" className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
+              <input name="avg_price" value={form.avg_price} onChange={handleChange} type="number" min="0" step="any" readOnly={Boolean(asset.ledger_started_at)} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white read-only:opacity-60" />
             </label>
             <label className="grid gap-1 text-sm">
               Precio actual
               <input name="current_price" value={form.current_price} onChange={handleChange} type="number" min="0" step="any" className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
             </label>
-            <label className="grid gap-1 text-sm">
-              Moneda (ISO 4217)
-              <input name="currency" value={form.currency} onChange={handleChange} maxLength={3} pattern="[A-Za-z]{3}" placeholder="EUR o USD" required className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-            </label>
-            {form.current_price.trim() && <>
-              <label className="grid gap-1 text-sm">
-                Fecha del precio
-                <input name="price_as_of" value={form.price_as_of} onChange={handleChange} type="date" required className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-              </label>
-              <label className="grid gap-1 text-sm">
-                Origen del precio
-                <input name="price_source" value={form.price_source} onChange={handleChange} placeholder="p. ej. broker" required className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-              </label>
-            </>}
-            {form.currency.trim().toUpperCase() !== 'EUR' && <>
-              <label className="grid gap-1 text-sm">
-                EUR por 1 {form.currency.toUpperCase()}
-                <input name="fx_rate_to_eur" value={form.fx_rate_to_eur} onChange={handleChange} type="number" min="0" step="any" required className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-              </label>
-              <label className="grid gap-1 text-sm">
-                Fecha del cambio
-                <input name="fx_as_of" value={form.fx_as_of} onChange={handleChange} type="date" required className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-              </label>
-              <label className="grid gap-1 text-sm">
-                Origen del cambio
-                <input name="fx_source" value={form.fx_source} onChange={handleChange} placeholder="p. ej. BCE" required className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-              </label>
-            </>}
-            <p className="col-span-full text-xs leading-5 text-slate-400">El precio medio y el actual usan la moneda indicada. La conversión se introduce manualmente como EUR por unidad de moneda; se conserva su fecha y origen.</p>
+            <PriceReferenceFields
+              hasCurrentPrice={form.current_price.trim() !== ''}
+              currencyLocked={Boolean(asset.ledger_started_at)}
+              currency={form.currency}
+              priceAsOf={form.price_as_of}
+              priceSource={form.price_source}
+              fxRateToEur={form.fx_rate_to_eur}
+              fxAsOf={form.fx_as_of}
+              fxSource={form.fx_source}
+              onChange={handlePriceReferenceChange}
+            />
+            <p className="col-span-full text-xs leading-5 text-slate-400">El precio medio y el actual se expresan en la moneda indicada arriba. El precio medio es solo informativo; la valoración usa el precio actual.</p>
             <label className="grid gap-1 text-sm">
               Peso objetivo antiguo por posición (%)
               <input name="target_weight" value={form.target_weight} onChange={handleChange} type="number" min="0" max="100" step="any" className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />

@@ -8,6 +8,7 @@ import SaveSnapshotButton from '@/components/SaveSnapshotButton'
 import TrackRecordChart from '@/components/TrackRecordChart'
 import { supabase } from '@/lib/supabase'
 import { getPositionValuation, getSnapshotValuationDetail, type SnapshotValuationDetail } from '@/lib/valuation'
+import { normalizeLedgerSummary, summarizePositionReturns, type LedgerSummary, type LedgerSummaryResponse } from '@/lib/ledger'
 
 type Category = 'Núcleo Pasivo' | 'Satélite Convicción' | 'Seguridad y Liquidez' | 'Activos Duros' | 'Especulativo'
 type Position = {
@@ -27,10 +28,13 @@ type Position = {
   fx_rate_to_eur: number | null
   fx_as_of: string | null
   fx_source: string | null
+  cost_basis_eur: number | null
+  ledger_started_at: string | null
 }
 type InvestmentAsset = { id: string; name: string; category: Category; target_weight: number | null }
 type Snapshot = { id: string; snapshot_date: string; total_value: number; breakdown: Record<string, number> }
 type SnapshotAsset = { snapshot_id: string; investment_asset_id: string | null; asset_name: string; category: Category; value: number; target_weight: number | null; valuation_detail: SnapshotValuationDetail[] }
+type SnapshotCash = { cash_account_id: string; broker: string; currency: string; balance: number; fx_rate_to_eur: number; fx_as_of: string | null; fx_source: string | null; value_eur: number }
 
 const CATEGORIES: Category[] = ['Núcleo Pasivo', 'Satélite Convicción', 'Seguridad y Liquidez', 'Activos Duros', 'Especulativo']
 const CATEGORY_STYLES: Record<Category, string> = {
@@ -53,24 +57,25 @@ export default function DashboardClient() {
   const [positions, setPositions] = useState<Position[]>([])
   const [investmentAssets, setInvestmentAssets] = useState<InvestmentAsset[]>([])
   const [snapshots, setSnapshots] = useState<Snapshot[]>([])
-  const [snapshotAssets, setSnapshotAssets] = useState<SnapshotAsset[]>([])
+  const [ledgerSummary, setLedgerSummary] = useState<LedgerSummary>({ transaction_count: 0, realized_total_eur: 0, realized_by_position: [], cash_accounts: [] })
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
 
   const loadDashboard = useCallback(async () => {
     try {
-      const [positionsResult, investmentsResult, snapshotsResult, snapshotAssetsResult] = await Promise.all([
+      const [positionsResult, investmentsResult, snapshotsResult, ledgerSummaryResult] = await Promise.all([
         supabase.from('assets').select('*').order('category').order('name'),
         supabase.from('investment_assets').select('*').order('name'),
         supabase.from('portfolio_snapshots').select('*').order('snapshot_date'),
-        supabase.from('portfolio_snapshot_assets').select('*'),
+        supabase.rpc('get_portfolio_ledger_summary'),
       ])
-      const failed = positionsResult.error ?? investmentsResult.error ?? snapshotsResult.error ?? snapshotAssetsResult.error
+      const failed = positionsResult.error ?? investmentsResult.error ?? snapshotsResult.error ?? ledgerSummaryResult.error
       if (failed) throw failed
+      if (!ledgerSummaryResult.data) throw new Error('No se recibió el resumen del ledger.')
       setPositions((positionsResult.data ?? []) as Position[])
       setInvestmentAssets((investmentsResult.data ?? []) as InvestmentAsset[])
       setSnapshots((snapshotsResult.data ?? []) as Snapshot[])
-      setSnapshotAssets((snapshotAssetsResult.data ?? []) as SnapshotAsset[])
+      setLedgerSummary(normalizeLedgerSummary(ledgerSummaryResult.data as LedgerSummaryResponse))
       setErrorMessage('')
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'No se pudieron cargar los datos. Comprueba la sesión y la configuración de Supabase.')
@@ -86,9 +91,12 @@ export default function DashboardClient() {
     return () => window.removeEventListener('portfolio:changed', refresh)
   }, [loadDashboard])
 
+  const cashSummary = ledgerSummary.cash_accounts
+  const cashTotalEur = cashSummary.reduce((sum, account) => sum + account.balanceEur, 0)
   const totals = CATEGORIES.map((category) => ({
     category,
-    value: positions.filter((position) => position.category === category).reduce((sum, position) => sum + valueOf(position), 0),
+    value: positions.filter((position) => position.category === category).reduce((sum, position) => sum + valueOf(position), 0)
+      + (category === 'Seguridad y Liquidez' ? cashTotalEur : 0),
   }))
   const grandTotal = totals.reduce((sum, total) => sum + total.value, 0)
   const allocationData = CATEGORIES.map((category) => {
@@ -98,9 +106,9 @@ export default function DashboardClient() {
     )
     return {
       category,
-      actualWeight: grandTotal > 0 ? categoryPositions.reduce((sum, position) => sum + valueOf(position), 0) / grandTotal * 100 : 0,
+      actualWeight: grandTotal > 0 ? (categoryPositions.reduce((sum, position) => sum + valueOf(position), 0) + (category === 'Seguridad y Liquidez' ? cashTotalEur : 0)) / grandTotal * 100 : 0,
       targetWeight: categoryAssets.reduce((sum, asset) => sum + (asset.target_weight ?? 0), 0),
-      hasPositions: categoryAssets.length > 0,
+      hasPositions: categoryAssets.length > 0 || (category === 'Seguridad y Liquidez' && cashSummary.length > 0),
       targetComplete: categoryAssets.length > 0 && categoryAssets.every((asset) => asset.target_weight !== null),
     }
   })
@@ -108,6 +116,27 @@ export default function DashboardClient() {
   const unvaluedPositions = positions.filter((position) => !getPositionValuation(position).complete)
   const legacyPriceCount = unvaluedPositions.filter((position) => position.current_price !== null || position.avg_price !== null).length
   const masterTargetsCount = investmentAssets.filter((asset) => asset.target_weight !== null).length
+  const valuationByPosition = new Map(positions.map((position) => [position.id, getPositionValuation(position).valueEur]))
+  const positionReturns = summarizePositionReturns(
+    positions,
+    [],
+    valuationByPosition,
+    new Map(ledgerSummary.realized_by_position.map((item) => [item.position_id, item.realized_eur])),
+  )
+  const trackedReturns = positionReturns.filter((item) => item.tracked)
+  const realizedPnlEur = ledgerSummary.realized_total_eur
+  const unrealizedPnlEur = trackedReturns.reduce((sum, item) => sum + (item.unrealizedEur ?? 0), 0)
+  const totalPnlEur = realizedPnlEur + unrealizedPnlEur
+  const cashSnapshotRows: SnapshotCash[] = cashSummary.map((account) => ({
+    cash_account_id: account.id,
+    broker: account.broker,
+    currency: account.currency,
+    balance: account.balance,
+    fx_rate_to_eur: Number(account.current_fx_rate_to_eur),
+    fx_as_of: account.fx_as_of,
+    fx_source: account.fx_source,
+    value_eur: account.balanceEur,
+  }))
   const snapshotDetailRows: Omit<SnapshotAsset, 'snapshot_id'>[] = [
     ...investmentAssets.map((asset) => {
       const linkedPositions = positions.filter((position) => position.investment_asset_id === asset.id)
@@ -168,7 +197,7 @@ export default function DashboardClient() {
                 <p className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">{eur(grandTotal)}</p>
                 <p className="mt-3 text-sm text-slate-400">Precios y cambios fechados manualmente; no se consultan cotizaciones automáticas.</p>
               </div>
-              {grandTotal > 0 && <SaveSnapshotButton totalValue={grandTotal} breakdown={totals} snapshotAssets={snapshotDetailRows} disabled={unvaluedPositions.length > 0} />}
+              {grandTotal > 0 && <SaveSnapshotButton totalValue={grandTotal} breakdown={totals} snapshotAssets={snapshotDetailRows} cashBreakdown={cashSnapshotRows} disabled={unvaluedPositions.length > 0} />}
             </div>
           </section>
 
@@ -188,6 +217,24 @@ export default function DashboardClient() {
 
           {investmentAssets.length > 0 && unvaluedPositions.length === 0 && <AllocationComparison data={allocationData} positionsWithTarget={masterTargetsCount} totalPositions={investmentAssets.length} />}
 
+          <section aria-label="Rentabilidad del ledger" className="mb-6 grid gap-3 sm:grid-cols-3">
+            <article className="rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4">
+              <p className="text-xs text-slate-400">Ganancia / pérdida realizada</p>
+              <p className={`mt-2 text-xl tabular-nums ${realizedPnlEur >= 0 ? 'text-emerald-200' : 'text-rose-200'}`}>{eur(realizedPnlEur)}</p>
+              <p className="mt-1 text-xs text-slate-500">Ventas, dividendos, intereses y comisiones registradas desde el saldo inicial.</p>
+            </article>
+            <article className="rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4">
+              <p className="text-xs text-slate-400">Ganancia / pérdida no realizada</p>
+              <p className={`mt-2 text-xl tabular-nums ${unrealizedPnlEur >= 0 ? 'text-emerald-200' : 'text-rose-200'}`}>{eur(unrealizedPnlEur)}</p>
+              <p className="mt-1 text-xs text-slate-500">Solo posiciones con ledger iniciado y valor EUR confirmado.</p>
+            </article>
+            <article className="rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4">
+              <p className="text-xs text-slate-400">Resultado total del ledger</p>
+              <p className={`mt-2 text-xl tabular-nums ${totalPnlEur >= 0 ? 'text-emerald-200' : 'text-rose-200'}`}>{eur(totalPnlEur)}</p>
+              <p className="mt-1 text-xs text-slate-500">Realizado + no realizado; no incluye aportaciones/retiradas.</p>
+            </article>
+          </section>
+
           <section className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
             <article className="min-w-0 rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4 sm:p-5">
               <h2 className="font-semibold text-white">Distribución por categoría</h2>
@@ -206,7 +253,7 @@ export default function DashboardClient() {
               <h2 className="font-semibold text-white">Respaldo privado</h2>
               <p className="mt-1 text-sm text-slate-400">Descarga un JSON con posiciones, activos consolidados e histórico.</p>
             </div>
-            <ExportBackupButton assets={positions} snapshots={snapshots} investmentAssets={investmentAssets} snapshotAssets={snapshotAssets} disabled={loading || Boolean(errorMessage)} />
+              <ExportBackupButton disabled={loading || Boolean(errorMessage)} />
           </section>
 
           <footer className="py-8 text-center text-xs text-slate-600">Datos introducidos y revisados manualmente · Guarda el respaldo en un lugar privado · No es asesoramiento financiero</footer>
