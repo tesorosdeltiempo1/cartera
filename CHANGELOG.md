@@ -6,7 +6,7 @@ Este archivo recoge las iteraciones funcionales y visuales por separado del READ
 
 - La composición por categoría muestra el total EUR al centro y una leyenda con valor y porcentaje, con colores estables por categoría.
 - La evolución patrimonial usa área sutil, escala en EUR y fechas con año; el cursor muestra el importe y la fecha completa.
-- Sin métricas nuevas ni cambios en los datos; validación local pendiente.
+- Sin métricas nuevas ni cambios en los datos. `npm run lint` y `npm run build` pasan; falta revisión visual en navegador y confirmación de esta versión en producción.
 
 ## 2026-10-01 — Ledger desplegado y revisión de posiciones
 
