@@ -26,7 +26,7 @@ La migración está aplicada y la inspección de esquema/permisos es correcta. E
 
 El diagnóstico compartido por el propietario muestra `real_estate_assets`, `mortgage_liabilities` y `wealth_snapshots`, con sus columnas y constraints. RLS está habilitado en las tres; los inmuebles tienen policy de propietario para `authenticated` y las tablas hipotecarias/snapshots policy de lectura de propietario. Los grants de cliente son CRUD para `real_estate_assets` y solo `SELECT` para hipotecas y wealth snapshots. Las funciones `save_mortgage_liability`, `confirm_property_has_no_mortgage` y `save_wealth_snapshot` muestran `EXECUTE` solo para `authenticated`; no aparecen grants a `anon` ni `PUBLIC`.
 
-La migración 008 está aplicada y el diagnóstico de esquema/permisos coincide con el diseño. No la vuelvas a ejecutar. El código de `/patrimonio` se publicó en `main` en el commit `e0cef85`; falta confirmar el despliegue de Vercel y probar el flujo autenticado. No se han registrado inmuebles ni hipotecas de usuario según este diagnóstico, que consulta solo metadatos.
+La migración 008 está aplicada y el diagnóstico de esquema/permisos coincide con el diseño. No la vuelvas a ejecutar. El código de `/patrimonio` se publicó en `main` en el commit `e0cef85`; falta confirmar el despliegue de Vercel y probar el flujo autenticado. Esta consulta solo inspecciona metadatos, así que no permite saber cuántas filas de inmuebles o hipotecas existen.
 
 ## Comprobación de solo lectura
 
