@@ -9,7 +9,7 @@ with inspection as (
   from information_schema.tables t
   where t.table_schema = 'public'
     and t.table_type = 'BASE TABLE'
-    and t.table_name in ('assets', 'portfolio_snapshots', 'investment_assets', 'portfolio_snapshot_assets', 'portfolio_transactions', 'portfolio_cash_accounts')
+    and t.table_name in ('assets', 'portfolio_snapshots', 'investment_assets', 'portfolio_snapshot_assets', 'portfolio_transactions', 'portfolio_cash_accounts', 'real_estate_assets', 'mortgage_liabilities', 'wealth_snapshots')
 
   union all
 
@@ -19,7 +19,7 @@ with inspection as (
     c.column_name || ' · ' || c.data_type || ' (' || c.udt_name || ')'
   from information_schema.columns c
   where c.table_schema = 'public'
-    and c.table_name in ('assets', 'portfolio_snapshots', 'investment_assets', 'portfolio_snapshot_assets', 'portfolio_transactions', 'portfolio_cash_accounts')
+    and c.table_name in ('assets', 'portfolio_snapshots', 'investment_assets', 'portfolio_snapshot_assets', 'portfolio_transactions', 'portfolio_cash_accounts', 'real_estate_assets', 'mortgage_liabilities', 'wealth_snapshots')
 
   union all
 
@@ -31,7 +31,7 @@ with inspection as (
   join pg_class tbl on tbl.oid = con.conrelid
   join pg_namespace ns on ns.oid = tbl.relnamespace
   where ns.nspname = 'public'
-    and tbl.relname in ('assets', 'portfolio_snapshots', 'investment_assets', 'portfolio_snapshot_assets', 'portfolio_transactions', 'portfolio_cash_accounts')
+    and tbl.relname in ('assets', 'portfolio_snapshots', 'investment_assets', 'portfolio_snapshot_assets', 'portfolio_transactions', 'portfolio_cash_accounts', 'real_estate_assets', 'mortgage_liabilities', 'wealth_snapshots')
 
   union all
 
@@ -43,7 +43,7 @@ with inspection as (
   join pg_namespace ns on ns.oid = tbl.relnamespace
   where ns.nspname = 'public'
     and tbl.relkind = 'r'
-    and tbl.relname in ('assets', 'portfolio_snapshots', 'investment_assets', 'portfolio_snapshot_assets', 'portfolio_transactions', 'portfolio_cash_accounts')
+    and tbl.relname in ('assets', 'portfolio_snapshots', 'investment_assets', 'portfolio_snapshot_assets', 'portfolio_transactions', 'portfolio_cash_accounts', 'real_estate_assets', 'mortgage_liabilities', 'wealth_snapshots')
 
   union all
 
@@ -56,7 +56,7 @@ with inspection as (
       ' · check=' || coalesce(p.with_check, '-')
   from pg_policies p
   where p.schemaname = 'public'
-    and p.tablename in ('assets', 'portfolio_snapshots', 'investment_assets', 'portfolio_snapshot_assets', 'portfolio_transactions', 'portfolio_cash_accounts')
+    and p.tablename in ('assets', 'portfolio_snapshots', 'investment_assets', 'portfolio_snapshot_assets', 'portfolio_transactions', 'portfolio_cash_accounts', 'real_estate_assets', 'mortgage_liabilities', 'wealth_snapshots')
 
   union all
 
@@ -66,7 +66,7 @@ with inspection as (
     g.grantee || ' · ' || g.privilege_type
   from information_schema.role_table_grants g
   where g.table_schema = 'public'
-    and g.table_name in ('assets', 'portfolio_snapshots', 'investment_assets', 'portfolio_snapshot_assets', 'portfolio_transactions', 'portfolio_cash_accounts')
+    and g.table_name in ('assets', 'portfolio_snapshots', 'investment_assets', 'portfolio_snapshot_assets', 'portfolio_transactions', 'portfolio_cash_accounts', 'real_estate_assets', 'mortgage_liabilities', 'wealth_snapshots')
     and g.grantee in ('anon', 'authenticated', 'PUBLIC')
 
   union all
@@ -77,7 +77,7 @@ with inspection as (
     r.grantee || ' · ' || r.privilege_type
   from information_schema.routine_privileges r
   where r.specific_schema = 'public'
-    and r.routine_name in ('record_portfolio_operation', 'get_portfolio_ledger_summary', 'save_portfolio_snapshot')
+    and r.routine_name in ('record_portfolio_operation', 'get_portfolio_ledger_summary', 'save_portfolio_snapshot', 'save_mortgage_liability', 'confirm_property_has_no_mortgage', 'save_wealth_snapshot')
     and r.grantee in ('anon', 'authenticated', 'PUBLIC')
 )
 select kind, object_name, details

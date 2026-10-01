@@ -39,6 +39,7 @@ La autenticación de la interfaz no sustituye RLS. No habilitar registro públic
 - Producción guarda desglose en snapshots. La nueva versión P0 adjunta inputs de valoración reproducibles a snapshots futuros; ningún snapshot histórico se recalcula.
 - La exportación JSON contiene datos patrimoniales en claro: guárdala en un lugar privado.
 - La migración 007 está aplicada y verificada en Supabase. El propietario confirmó que `/operaciones` ya está desplegada y funciona correctamente.
+- La migración 008 de inmuebles, hipotecas y snapshots de patrimonio también está aplicada y verificada. La nueva ruta `/patrimonio` está validada localmente y queda pendiente de publicación.
 
 ## Stack
 
@@ -68,7 +69,7 @@ npm run build
 - El estado de acceso y las comprobaciones continuas se documentan en [docs/database/005_owner_access_status.md](docs/database/005_owner_access_status.md).
 - [docs/database/002_inspect_supabase_read_only.sql](docs/database/002_inspect_supabase_read_only.sql) permite volver a inspeccionar esquema, RLS, políticas y grants.
 - [docs/database/001_consolidated_assets_dry_run.sql](docs/database/001_consolidated_assets_dry_run.sql) conserva el SQL de la instalación inicial y acaba en `ROLLBACK`. **No lo ejecutes**: el `COMMIT` inicial ya se aplicó; cualquier cambio futuro requiere una migración nueva basada en el esquema vigente.
-- El propietario informa que [docs/database/006_position_price_provenance.sql](docs/database/006_position_price_provenance.sql) se ejecutó correctamente. **No despliegues el cliente nuevo** hasta verificar columnas/restricciones y clasificar los datos existentes.
+- [docs/database/006_position_price_provenance.sql](docs/database/006_position_price_provenance.sql) está aplicada y sus columnas/restricciones se verificaron. Las posiciones heredadas siguen requiriendo clasificación manual; mientras tanto, la app las excluye de subtotales EUR confirmados y no permite snapshots incompletos.
 - El UID del propietario no se guarda en el repositorio. El UID no es una contraseña, pero tampoco se debe publicar innecesariamente.
 - Después de cambios de permisos, vuelve a ejecutar el diagnóstico de solo lectura y prueba tanto la sesión propietaria como el acceso sin sesión antes de dar por seguro el despliegue.
 

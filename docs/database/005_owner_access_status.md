@@ -22,6 +22,12 @@ Después de que el propietario ejecutara la migración 007, el diagnóstico 002 
 
 La migración está aplicada y la inspección de esquema/permisos es correcta. Este resultado no prueba por sí solo los flujos de la aplicación; el código requiere despliegue y comprobación posterior de inicio de sesión, resumen, respaldo y snapshots. No vuelvas a ejecutar la migración 007.
 
+## Migración 008 confirmada — 2026-10-01
+
+El diagnóstico compartido por el propietario muestra `real_estate_assets`, `mortgage_liabilities` y `wealth_snapshots`, con sus columnas y constraints. RLS está habilitado en las tres; los inmuebles tienen policy de propietario para `authenticated` y las tablas hipotecarias/snapshots policy de lectura de propietario. Los grants de cliente son CRUD para `real_estate_assets` y solo `SELECT` para hipotecas y wealth snapshots. Las funciones `save_mortgage_liability`, `confirm_property_has_no_mortgage` y `save_wealth_snapshot` muestran `EXECUTE` solo para `authenticated`; no aparecen grants a `anon` ni `PUBLIC`.
+
+La migración 008 está aplicada y el diagnóstico de esquema/permisos coincide con el diseño. No la vuelvas a ejecutar. La ruta nueva aún requiere despliegue y verificación funcional autenticada; no se han registrado inmuebles ni hipotecas de usuario según este diagnóstico, que consulta solo metadatos.
+
 ## Comprobación de solo lectura
 
 Para volver a inspeccionar la base de datos, ejecuta [002_inspect_supabase_read_only.sql](002_inspect_supabase_read_only.sql) en Supabase SQL Editor. No modifica filas ni estructura. Comprueba que:

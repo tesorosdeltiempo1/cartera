@@ -38,18 +38,21 @@ export default function ExportBackupButton({ disabled = false }: { disabled?: bo
     setLoading(true)
     setStatus('Preparando el respaldo…')
     try {
-      const [assets, investmentAssets, snapshots, snapshotAssets, cashAccounts, transactions] = await Promise.all([
+      const [assets, investmentAssets, snapshots, snapshotAssets, cashAccounts, transactions, realEstateAssets, mortgageLiabilities, wealthSnapshots] = await Promise.all([
         fetchAllRows((from, to) => supabase.from('assets').select('*', { count: 'exact' }).order('id').range(from, to)),
         fetchAllRows((from, to) => supabase.from('investment_assets').select('*', { count: 'exact' }).order('id').range(from, to)),
         fetchAllRows((from, to) => supabase.from('portfolio_snapshots').select('*', { count: 'exact' }).order('id').range(from, to)),
         fetchAllRows((from, to) => supabase.from('portfolio_snapshot_assets').select('*', { count: 'exact' }).order('id').range(from, to)),
         fetchAllRows((from, to) => supabase.from('portfolio_cash_accounts').select('*', { count: 'exact' }).order('id').range(from, to)),
         fetchAllRows((from, to) => supabase.from('portfolio_transactions').select('*', { count: 'exact' }).order('id').range(from, to)),
+        fetchAllRows((from, to) => supabase.from('real_estate_assets').select('*', { count: 'exact' }).order('id').range(from, to)),
+        fetchAllRows((from, to) => supabase.from('mortgage_liabilities').select('*', { count: 'exact' }).order('id').range(from, to)),
+        fetchAllRows((from, to) => supabase.from('wealth_snapshots').select('*', { count: 'exact' }).order('id').range(from, to)),
       ])
       const exportedAt = new Date()
       const backup = {
         app: 'Cartera',
-        formatVersion: 5,
+        formatVersion: 6,
         exportedAt: exportedAt.toISOString(),
         tables: {
           assets,
@@ -58,6 +61,9 @@ export default function ExportBackupButton({ disabled = false }: { disabled?: bo
           portfolio_snapshot_assets: snapshotAssets,
           portfolio_cash_accounts: cashAccounts,
           portfolio_transactions: transactions,
+          real_estate_assets: realEstateAssets,
+          mortgage_liabilities: mortgageLiabilities,
+          wealth_snapshots: wealthSnapshots,
         },
       }
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8' })
@@ -67,7 +73,7 @@ export default function ExportBackupButton({ disabled = false }: { disabled?: bo
       anchor.download = `cartera-respaldo-${exportedAt.toISOString().slice(0, 10)}.json`
       anchor.click()
       window.setTimeout(() => URL.revokeObjectURL(url), 1000)
-      setStatus(`Copia generada: ${assets.length} posiciones, ${investmentAssets.length} activos, ${snapshots.length} snapshots, ${transactions.length} operaciones y ${cashAccounts.length} cuentas de efectivo.`)
+      setStatus(`Copia generada: ${assets.length} posiciones, ${investmentAssets.length} activos, ${transactions.length} operaciones, ${realEstateAssets.length} inmuebles, ${mortgageLiabilities.length} hipotecas y ${wealthSnapshots.length} cortes patrimoniales.`)
     } catch (error) {
       setStatus(error instanceof Error ? `No se pudo generar el respaldo: ${error.message}` : 'No se pudo generar la copia. Inténtalo de nuevo.')
     } finally {

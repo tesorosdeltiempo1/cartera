@@ -20,7 +20,7 @@ La línea base confirmada en producción incluye acceso de propietario con Supab
 
 El P0 de moneda y procedencia está desplegado y su migración se informó aplicada. La valoración usa EUR como base, pero las posiciones antiguas siguen pendientes de clasificación individual. El P0 no se considera cerrado hasta verificar cada precio, moneda y cambio pertinente y confirmar snapshots futuros. No se deben reinterpretar las cifras antiguas ni recalcular snapshots.
 
-La migración 007 ya está aplicada y el diagnóstico 002 confirmó tablas, RLS, policies y permisos de funciones. El código de `/operaciones` está validado localmente y queda pendiente de publicarse/desplegarse. Iniciar el ledger fija un punto de partida actual; no reconstruye compras anteriores.
+La migración 007 ya está aplicada y el propietario confirmó que `/operaciones` está desplegada y funciona. Iniciar el ledger fija un punto de partida actual; no reconstruye compras anteriores.
 
 El dashboard y `/operaciones` calculan caja y rentabilidad mediante `get_portfolio_ledger_summary`; el límite de 250 queda solo para la lista de movimientos recientes. El respaldo pagina las tablas y comprueba recuentos; el snapshot se guarda en una llamada transaccional. `npm run lint` y `npm run build` pasan. Tras el despliegue, queda comprobar los flujos de la aplicación; no se han creado operaciones ni snapshots de prueba sobre datos reales.
 
@@ -70,7 +70,11 @@ Para desarrollo local, configura `.env.local` con `NEXT_PUBLIC_SUPABASE_URL` y `
 
 El propietario aplicó 007 y compartió el diagnóstico 002; tablas, RLS, policies y permisos requeridos aparecen presentes. No vuelvas a ejecutar `007_transaction_ledger.sql`.
 
-El propietario confirmó que el ledger está desplegado y funciona. En Posiciones, usa los filtros `Pendientes` y `Valoradas` y busca por nombre, ticker o broker para completar la revisión P0; no deduzcas monedas ni cambies valores sin confirmarlos en el broker.
+El propietario confirmó que el ledger está desplegado y funciona. También aplicó la migración 008; el diagnóstico 002 confirmó tablas, RLS, policies y permisos para inmuebles e hipotecas. No vuelvas a ejecutar `007_transaction_ledger.sql` ni `008_real_estate_wealth.sql`.
+
+La ruta `/patrimonio` pasa lint y build localmente y está lista para publicarse. Después del despliegue, inicia sesión y confirma que abre la pantalla. No registres datos reales hasta probar primero el flujo con valores ficticios.
+
+En Posiciones, usa los filtros `Pendientes` y `Valoradas` y busca por nombre, ticker o broker para completar la revisión P0; no deduzcas monedas ni cambies valores sin confirmarlos en el broker.
 
 ## Qué significa terminar
 

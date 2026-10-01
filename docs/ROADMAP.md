@@ -26,7 +26,7 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - El dashboard usa EUR como moneda base. La migración 006 ya añadió moneda/fecha/fuente de precio y FX; las posiciones previas tienen esos nuevos campos sin clasificar hasta revisión manual.
 - Los snapshots antiguos se conservan y no se recalculan al editar posiciones.
 - El respaldo es exportación JSON; aún no existe un flujo de restauración.
-- La migración 007 está aplicada y el diagnóstico 002 confirmó sus tablas, RLS, policies y permisos; el propietario confirmó que `/operaciones` está desplegada y funciona.
+- Las migraciones 007 y 008 están aplicadas y sus tablas, RLS, policies y permisos fueron confirmados con el diagnóstico 002. `/operaciones` está desplegada; `/patrimonio` pasa lint/build y está listo para publicarse.
 - El detalle de la dirección clásica Aureum y su validación está en [CHANGELOG.md](../CHANGELOG.md).
 - El procedimiento de trabajo, la arquitectura actual y las precauciones de datos están en [GUIA_DE_TRABAJO.md](GUIA_DE_TRABAJO.md).
 
@@ -119,7 +119,7 @@ Solo cuando la base de datos y el histórico sean consistentes:
 
 ### Propuesta de expansión — Tracker patrimonial completo
 
-**Estado:** propuesta para priorizar; todavía no es una decisión de esquema ni una autorización para migrar producción.
+**Estado:** aprobada por el propietario para desarrollo. La migración 008 está aplicada y verificada; la primera implementación está validada localmente y pendiente de push/despliegue.
 
 **Visión:** pasar de seguir inversiones y caja a mostrar una imagen fiel del patrimonio neto familiar, incluyendo inmuebles y deudas, con fechas y procedencia claras. Mantener la interfaz centrada en pocas cifras comprensibles; no convertirla en un sistema contable ni en asesor financiero.
 
@@ -135,9 +135,9 @@ Solo cuando la base de datos y el histórico sean consistentes:
 
 **Secuencia recomendada**
 
-1. **Definir el balance:** acordar con ejemplos ficticios qué significa patrimonio neto, cómo se tratan copropiedad y deuda compartida, y qué campos son obligatorios. Cerrar antes el P0 de divisas y ensayar restauración del respaldo (P1).
-2. **Inmuebles y patrimonio neto:** crear un registro sencillo de inmueble y valoración manual fechada con procedencia. Añadirlo al snapshot y mostrar valor bruto, parte del propietario y valoración pendiente/stale. Sin rentas, proyecciones ni integraciones bancarias en esta entrega.
-3. **Hipotecas y equity:** añadir el saldo del préstamo, participación de deuda y vínculo al inmueble. Presentar activos, deuda y equity de forma conciliable; no simular amortizaciones ni tasas futuras.
+1. **Balance inicial:** `008_real_estate_wealth.sql` crea el registro de inmuebles, hipotecas y snapshots de patrimonio. La app guarda valoración manual fechada, participación de propiedad y participación de deuda; no incorpora rentas, proyecciones ni integraciones bancarias.
+2. **Prueba y despliegue:** el propietario aplicó 008 y verificó tablas/RLS/RPCs con el diagnóstico 002. Publicar `/patrimonio` y probar con datos ficticios antes de registrar cifras reales.
+3. **Hipotecas y equity:** presentar valor atribuible, deuda atribuible y patrimonio neto conciliables; no simular amortizaciones ni tasas futuras.
 4. **Flujos reales:** clasificar alquileres, mantenimiento, impuestos, intereses y amortizaciones en el ledger existente. Una operación actualiza movimiento de caja y saldo de deuda relacionado en la misma transacción. Las previsiones recurrentes quedan fuera hasta definir cómo distinguir lo previsto de lo efectivamente pagado.
 5. **Vista wealth tracker:** resumir patrimonio neto y su evolución; ofrecer desglose breve de inversiones, efectivo, inmuebles y deuda. Mostrar junto a cada valoración su fecha y si está incompleta o desactualizada.
 
