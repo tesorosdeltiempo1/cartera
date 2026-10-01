@@ -72,7 +72,7 @@ El propietario aplicó 007 y compartió el diagnóstico 002; tablas, RLS, polici
 
 El propietario confirmó que el ledger está desplegado y funciona. También aplicó la migración 008; el diagnóstico 002 confirmó tablas, RLS, policies y permisos para inmuebles e hipotecas. No vuelvas a ejecutar `007_transaction_ledger.sql` ni `008_real_estate_wealth.sql`.
 
-La ruta `/patrimonio` pasa lint y build localmente y está lista para publicarse. Después del despliegue, inicia sesión y confirma que abre la pantalla. No registres datos reales hasta probar primero el flujo con valores ficticios.
+La ruta `/patrimonio` se publicó en `main` en el commit `e0cef85`; espera a que Vercel termine. Después, inicia sesión y confirma que abre la pantalla. Prueba el flujo con valores ficticios antes de registrar datos reales.
 
 En Posiciones, usa los filtros `Pendientes` y `Valoradas` y busca por nombre, ticker o broker para completar la revisión P0; no deduzcas monedas ni cambies valores sin confirmarlos en el broker.
 

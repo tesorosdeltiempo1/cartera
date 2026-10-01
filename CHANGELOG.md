@@ -6,7 +6,7 @@ Este archivo recoge las iteraciones funcionales y visuales por separado del READ
 
 - Aprobado el desarrollo de una primera vista de patrimonio con inmuebles, hipotecas, participación atribuible, valoración manual y snapshots separados del histórico de cartera.
 - El propietario aplicó la migración aditiva 008; el diagnóstico 002 confirma tablas, RLS, policies y permisos de funciones.
-- La ruta `/patrimonio`, formularios y resumen neto pasan `npm run lint` y `npm run build`; la aplicación queda pendiente de push y comprobación funcional en producción.
+- La ruta `/patrimonio`, formularios y resumen neto pasan `npm run lint` y `npm run build`; publicado en `main` como `e0cef85`, pendiente de confirmación funcional en producción.
 - Rentas, gastos y amortizaciones quedan fuera de esta fase.
 
 ## 2026-10-01 — Gráficos patrimoniales más legibles

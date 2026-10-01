@@ -39,7 +39,7 @@ La autenticación de la interfaz no sustituye RLS. No habilitar registro públic
 - Producción guarda desglose en snapshots. La nueva versión P0 adjunta inputs de valoración reproducibles a snapshots futuros; ningún snapshot histórico se recalcula.
 - La exportación JSON contiene datos patrimoniales en claro: guárdala en un lugar privado.
 - La migración 007 está aplicada y verificada en Supabase. El propietario confirmó que `/operaciones` ya está desplegada y funciona correctamente.
-- La migración 008 de inmuebles, hipotecas y snapshots de patrimonio también está aplicada y verificada. La nueva ruta `/patrimonio` está validada localmente y queda pendiente de publicación.
+- La migración 008 de inmuebles, hipotecas y snapshots de patrimonio está aplicada y verificada. `/patrimonio` se publicó en `main` con `e0cef85`; falta confirmar el despliegue de Vercel.
 
 ## Stack
 
