@@ -2,11 +2,11 @@
 
 Este archivo recoge las iteraciones funcionales y visuales por separado del README. Las fechas indican cuándo se implementó cada cambio; no implican por sí mismas que esté desplegado ni validado en producción.
 
-## 2026-10-01 — Ledger de operaciones listo para desplegar
+## 2026-10-01 — Ledger desplegado y revisión de posiciones
 
-- La migración 007 fue ejecutada por el propietario; el diagnóstico 002 confirma tablas, columnas, RLS/policies y permisos `EXECUTE` solo para `authenticated`.
-- Dashboard y Operaciones usan el RPC de resumen completo; el límite de 250 afecta solo a la lista reciente. Los snapshots se guardan con un RPC transaccional y la exportación pagina las tablas y verifica sus recuentos.
-- `npm run lint` y `npm run build` completados. Código pendiente de push/despliegue; aún falta comprobación funcional autenticada en producción.
+- El propietario confirmó que el ledger está desplegado y funciona correctamente.
+- Posiciones incorpora filtros `Todas`, `Pendientes` y `Valoradas`, recuentos y búsqueda por posición, ticker, broker o activo consolidado.
+- La revisión manual conserva el control del usuario: no infiere ni modifica moneda, precio o cambio.
 
 ## 2026-09-30 — Lenguaje sencillo para moneda y procedencia
 

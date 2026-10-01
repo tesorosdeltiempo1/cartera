@@ -38,7 +38,7 @@ La autenticación de la interfaz no sustituye RLS. No habilitar registro públic
 - La exposición indirecta dentro de fondos (look-through) no se calcula.
 - Producción guarda desglose en snapshots. La nueva versión P0 adjunta inputs de valoración reproducibles a snapshots futuros; ningún snapshot histórico se recalcula.
 - La exportación JSON contiene datos patrimoniales en claro: guárdala en un lugar privado.
-- La migración 007 está aplicada y verificada en Supabase. La ruta `/operaciones` forma parte de esta publicación; estará disponible cuando Vercel termine el despliegue desde `main`.
+- La migración 007 está aplicada y verificada en Supabase. El propietario confirmó que `/operaciones` ya está desplegada y funciona correctamente.
 
 ## Stack
 

@@ -84,7 +84,7 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - Mejorar estados de carga, vacío, error y recuperación/reintento de forma consistente.
 - Añadir filtros/búsqueda de posiciones si el volumen real lo justifica.
 
-**Ledger listo para desplegar:** el propietario aplicó 007 y el diagnóstico 002 confirmó tablas, RLS, policies y grants de funciones. Dashboard y `/operaciones` usan `get_portfolio_ledger_summary` para agregar el historial completo; 250 filas solo limitan la lista reciente. La exportación pagina y comprueba recuentos; los snapshots usan un RPC transaccional. `npm run lint` y `npm run build` pasan. Tras el despliegue, confirmar acceso autenticado, carga, exportación y snapshot. El punto de partida del ledger no reconstruye operaciones anteriores.
+**Ledger desplegado:** el propietario confirmó que `/operaciones` funciona en producción. La migración 007 está aplicada y el diagnóstico 002 confirmó tablas, RLS, policies y grants de funciones. Dashboard y `/operaciones` usan `get_portfolio_ledger_summary` para agregar el historial completo; 250 filas solo limitan la lista reciente. La exportación pagina y comprueba recuentos; los snapshots usan un RPC transaccional. El punto de partida del ledger no reconstruye operaciones anteriores.
 
 **Integridad de snapshots:** `save_portfolio_snapshot` inserta resumen y detalle en una transacción; el flujo de la app queda pendiente de comprobación tras el despliegue.
 

@@ -70,7 +70,7 @@ Para desarrollo local, configura `.env.local` con `NEXT_PUBLIC_SUPABASE_URL` y `
 
 El propietario aplicó 007 y compartió el diagnóstico 002; tablas, RLS, policies y permisos requeridos aparecen presentes. No vuelvas a ejecutar `007_transaction_ledger.sql`.
 
-El siguiente paso es publicar el código desde `main` y esperar a que Vercel termine el despliegue. Después, inicia sesión y confirma que abren Dashboard y Operaciones. No compartas credenciales ni datos patrimoniales.
+El propietario confirmó que el ledger está desplegado y funciona. En Posiciones, usa los filtros `Pendientes` y `Valoradas` y busca por nombre, ticker o broker para completar la revisión P0; no deduzcas monedas ni cambies valores sin confirmarlos en el broker.
 
 ## Qué significa terminar
 
