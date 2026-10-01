@@ -84,7 +84,9 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - Mejorar estados de carga, vacío, error y recuperación/reintento de forma consistente.
 - Añadir filtros/búsqueda de posiciones si el volumen real lo justifica.
 
-**Iniciativa local pendiente de revisión:** el árbol de trabajo contiene un ledger append-only para registrar operaciones y saldos de efectivo. Antes de adoptarlo, revisar y probar el RPC transaccional, las reglas de coste base/ventas, permisos y RLS con datos ficticios; respaldar y obtener aprobación explícita antes de aplicar la migración 007. No desplegar una interfaz que dependa del nuevo esquema antes de verificarlo. El punto de partida del ledger no reconstruye operaciones previas.
+**Iniciativa local pendiente de revisión:** el árbol de trabajo contiene un ledger append-only para registrar operaciones y saldos de efectivo. La ruta `/operaciones` limita a 250 las transacciones consultadas y calcula caja y resultado realizado sobre ese subconjunto; por encima de ese umbral los totales son incompletos. Antes de adoptar, mover los agregados al cálculo completo del ledger, limitar solo la lista visible y probar con más de 250 movimientos. Además, revisar y probar el RPC transaccional, las reglas de coste base/ventas, permisos y RLS con datos ficticios; respaldar y obtener aprobación explícita antes de aplicar la migración 007. No desplegar una interfaz que dependa del nuevo esquema antes de verificarlo. El punto de partida del ledger no reconstruye operaciones previas.
+
+**Integridad de snapshots:** el cliente guarda el resumen y el detalle en dos solicitudes; si falla el detalle, intenta retirar el resumen, pero esa compensación también puede fallar. Hacer el guardado atómico en servidor o documentar y probar cómo detectar y recuperar snapshots parciales antes de depender del desglose de caja.
 
 **Criterio de salida:** operaciones críticas verificadas de extremo a extremo en entorno de prueba, sin pérdida accidental y con confirmación posterior.
 

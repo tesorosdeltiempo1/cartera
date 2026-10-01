@@ -22,6 +22,12 @@ El P0 de moneda y procedencia está desplegado y su migración se informó aplic
 
 En el árbol de trabajo actual hay una implementación local de `/operaciones`, lógica de ledger y el borrador de migración `007_transaction_ledger.sql`. No está confirmada en producción y la migración 007 no se debe ejecutar como parte de esta guía sin revisión, respaldo, pruebas y aprobación explícita del propietario. Iniciar el ledger fija un punto de partida actual; no reconstruye compras anteriores.
 
+La revisión local encontró un bloqueo de exactitud: `/operaciones` lee como máximo 250 transacciones y usa ese mismo conjunto para calcular saldos de efectivo y resultado realizado. Cuando hay más de 250 movimientos, esos totales omiten los más antiguos. El dashboard, en cambio, solicita el historial completo. Antes de desplegar, los agregados deben calcularse sobre todo el ledger (por ejemplo, mediante una función de servidor/RPC) y el límite debe afectar solo a las filas visibles; hay que probar explícitamente un historial superior a 250 movimientos.
+
+La revisión del código no equivale a validar la migración en PostgreSQL. La migración 007 y sus funciones de seguridad deben ensayarse en una base aislada, además de revisar concurrencia, cálculos de compra/venta, snapshots y permisos. No se ha escrito en Supabase ni se han alterado datos reales.
+
+El guardado de snapshots inserta primero el resumen y después sus filas de detalle en solicitudes separadas. Si falla la segunda solicitud, la interfaz intenta borrar el resumen; si esa compensación también falla, puede persistir un snapshot parcial. Antes de depender de snapshots con desglose de caja, conviene hacer ambos pasos atómicos en servidor o definir y probar una detección y recuperación inequívoca de registros parciales.
+
 Los estados anteriores son una fotografía documental: comprobar el despliegue y el estado de Supabase antes de ejecutar cualquier operación real. El estado operativo de acceso está en [database/005_owner_access_status.md](database/005_owner_access_status.md).
 
 ## Estructura del proyecto
