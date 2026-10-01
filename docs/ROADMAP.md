@@ -1,6 +1,6 @@
 # Roadmap de producto — Aureum
 
-**Revisión:** 2026-09-29  
+**Revisión:** 2026-10-01
 **Estado:** autenticación y RLS aplicados; acceso del propietario confirmado en producción.  
 **Horizonte:** una mejora por iteración, con evidencia verificable y sin cambios silenciosos sobre datos reales.
 
@@ -26,7 +26,9 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - El dashboard usa EUR como moneda base. La migración 006 ya añadió moneda/fecha/fuente de precio y FX; las posiciones previas tienen esos nuevos campos sin clasificar hasta revisión manual.
 - Los snapshots antiguos se conservan y no se recalculan al editar posiciones.
 - El respaldo es exportación JSON; aún no existe un flujo de restauración.
+- El código local incluye una primera implementación de `/operaciones`, lógica de ledger y `007_transaction_ledger.sql`. No forma parte de la línea base confirmada en producción; la migración 007 no está aprobada ni aplicada.
 - El detalle de la dirección clásica Aureum y su validación está en [CHANGELOG.md](../CHANGELOG.md).
+- El procedimiento de trabajo, la arquitectura actual y las precauciones de datos están en [GUIA_DE_TRABAJO.md](GUIA_DE_TRABAJO.md).
 
 ## Prioridades
 
@@ -81,6 +83,8 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - Probar operaciones destructivas primero con datos de prueba y usuario propietario; no usar cambios reales como prueba de interfaz.
 - Mejorar estados de carga, vacío, error y recuperación/reintento de forma consistente.
 - Añadir filtros/búsqueda de posiciones si el volumen real lo justifica.
+
+**Iniciativa local pendiente de revisión:** el árbol de trabajo contiene un ledger append-only para registrar operaciones y saldos de efectivo. Antes de adoptarlo, revisar y probar el RPC transaccional, las reglas de coste base/ventas, permisos y RLS con datos ficticios; respaldar y obtener aprobación explícita antes de aplicar la migración 007. No desplegar una interfaz que dependa del nuevo esquema antes de verificarlo. El punto de partida del ledger no reconstruye operaciones previas.
 
 **Criterio de salida:** operaciones críticas verificadas de extremo a extremo en entorno de prueba, sin pérdida accidental y con confirmación posterior.
 

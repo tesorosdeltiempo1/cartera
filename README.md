@@ -34,10 +34,11 @@ La autenticación de la interfaz no sustituye RLS. No habilitar registro públic
 - `assets` representa una posición individual en un broker; `investment_assets` es el catálogo maestro.
 - La exposición consolidada suma las posiciones vinculadas al mismo activo. Los objetivos pertenecen al activo maestro, no a cada broker.
 - No se copian automáticamente objetivos antiguos ni se fusionan nombres/tickers ambiguos.
-- **Producción actual** sigue interpretando como EUR los precios registrados. La migración de campos ya está aplicada; el cliente local P0 marca los registros antiguos sin clasificar, conserva sus cifras visibles y los excluye de importes EUR hasta verificarlos.
+- El P0 de moneda y procedencia está desplegado y la migración de campos se informó aplicada. Las posiciones heredadas siguen pendientes de clasificación individual: no se infiere su moneda ni se incluyen como importes EUR confirmados hasta verificarlas. El P0 permanece abierto hasta revisar los datos y confirmar valoraciones y snapshots futuros.
 - La exposición indirecta dentro de fondos (look-through) no se calcula.
 - Producción guarda desglose en snapshots. La nueva versión P0 adjunta inputs de valoración reproducibles a snapshots futuros; ningún snapshot histórico se recalcula.
 - La exportación JSON contiene datos patrimoniales en claro: guárdala en un lugar privado.
+- El ledger de operaciones y la migración 007 existen solo como trabajo local no confirmado en producción; no ejecutes esa migración ni confíes en la ruta `/operaciones` como disponible en producción.
 
 ## Stack
 
@@ -74,5 +75,7 @@ npm run build
 ## Roadmap
 
 La migración de divisa/procedencia está aplicada y verificada en Supabase. La interfaz nueva mantiene visibles los valores heredados sin moneda, pero no los presenta como euros; faltará revisarlos individualmente antes de recuperar el total confirmado y guardar nuevos snapshots. No se infieren monedas ni se recalculan snapshots pasados. El plan por fases, criterios de aceptación y flujo de publicación está en [docs/ROADMAP.md](docs/ROADMAP.md).
+
+La [guía de trabajo y operación](docs/GUIA_DE_TRABAJO.md) resume la visión, la estructura del código y los pasos para implementar, validar y publicar cambios con seguridad.
 
 El historial de cambios y validaciones está en [CHANGELOG.md](CHANGELOG.md).
