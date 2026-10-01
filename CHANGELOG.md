@@ -2,6 +2,12 @@
 
 Este archivo recoge las iteraciones funcionales y visuales por separado del README. Las fechas indican cuándo se implementó cada cambio; no implican por sí mismas que esté desplegado ni validado en producción.
 
+## 2026-10-01 — Gráficos patrimoniales más legibles
+
+- La composición por categoría muestra el total EUR al centro y una leyenda con valor y porcentaje, con colores estables por categoría.
+- La evolución patrimonial usa área sutil, escala en EUR y fechas con año; el cursor muestra el importe y la fecha completa.
+- Sin métricas nuevas ni cambios en los datos; validación local pendiente.
+
 ## 2026-10-01 — Ledger desplegado y revisión de posiciones
 
 - El propietario confirmó que el ledger está desplegado y funciona correctamente.

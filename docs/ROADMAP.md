@@ -96,6 +96,8 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - Restringir adornos a paneles y acciones; conservar tablas legibles, densidad útil y responsive.
 - Revisar contraste, navegación por teclado, foco visible, etiquetas, lectores de pantalla y `prefers-reduced-motion`.
 - Mantener números tabulares y jerarquía visual clara para distinguir dato, objetivo, desviación y advertencia.
+- Refinar los gráficos existentes antes de añadir nuevos: mostrar denominador, valor y peso por categoría; hacer legibles en euros los ejes y fechas del histórico.
+- Evitar leyendas automáticas y decoración que compita con los datos; preservar una lectura cómoda en móvil.
 
 **Criterio de salida:** revisión de cada ruta en móvil y escritorio; ninguna ornamentación reduce la legibilidad, el contraste o la facilidad de completar tareas.
 
