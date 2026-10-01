@@ -40,6 +40,7 @@ La autenticación de la interfaz no sustituye RLS. No habilitar registro públic
 - La exportación JSON contiene datos patrimoniales en claro: guárdala en un lugar privado.
 - La migración 007 está aplicada y verificada en Supabase. El propietario confirmó que `/operaciones` ya está desplegada y funciona correctamente.
 - La migración 008 de inmuebles, hipotecas y snapshots de patrimonio está aplicada y verificada. `/patrimonio` se publicó en `main` con `e0cef85`; falta confirmar el despliegue de Vercel.
+- La migración 009 de alquileres, gastos y pagos hipotecarios está aplicada y verificada. El formulario de flujos queda pendiente de push/despliegue.
 
 ## Stack
 

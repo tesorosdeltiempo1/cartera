@@ -70,9 +70,9 @@ Para desarrollo local, configura `.env.local` con `NEXT_PUBLIC_SUPABASE_URL` y `
 
 El propietario aplicó 007 y compartió el diagnóstico 002; tablas, RLS, policies y permisos requeridos aparecen presentes. No vuelvas a ejecutar `007_transaction_ledger.sql`.
 
-El propietario confirmó que el ledger está desplegado y funciona. También aplicó la migración 008; el diagnóstico 002 confirmó tablas, RLS, policies y permisos para inmuebles e hipotecas. No vuelvas a ejecutar `007_transaction_ledger.sql` ni `008_real_estate_wealth.sql`.
+El propietario confirmó que el ledger está desplegado y funciona. También aplicó las migraciones 008 y 009; el diagnóstico 002 confirmó sus tablas, columnas, RLS, policies y permisos de `record_property_cash_flow`. No vuelvas a ejecutar las migraciones 007, 008 ni 009.
 
-La ruta `/patrimonio` se publicó en `main` en el commit `e0cef85`; espera a que Vercel termine. Después, inicia sesión y confirma que abre la pantalla. Prueba el flujo con valores ficticios antes de registrar datos reales.
+La ruta `/patrimonio` está desplegada. El formulario de flujos pasó lint/build y queda pendiente de publicarse y probarse con un movimiento ficticio antes de registrar datos reales.
 
 En Posiciones, usa los filtros `Pendientes` y `Valoradas` y busca por nombre, ticker o broker para completar la revisión P0; no deduzcas monedas ni cambies valores sin confirmarlos en el broker.
 

@@ -2,6 +2,13 @@
 
 Este archivo recoge las iteraciones funcionales y visuales por separado del README. Las fechas indican cuándo se implementó cada cambio; no implican por sí mismas que esté desplegado ni validado en producción.
 
+## 2026-10-01 — Flujos inmobiliarios migrados
+
+- Añadida migración 009 para registrar alquileres, gastos y pagos hipotecarios en el ledger de caja existente.
+- El pago hipotecario conserva total/principal/interés; el principal reduce la deuda en la misma transacción y los flujos inmobiliarios no se mezclan con el P&L bursátil.
+- El propietario aplicó 009; el diagnóstico 002 confirma columnas, constraints, RLS/policy y `EXECUTE` solo para `authenticated`.
+- Formulario e historial local pasan lint/build; falta publicar y probar con un movimiento ficticio en producción.
+
 ## 2026-10-01 — Balance inmobiliario aprobado y migrado
 
 - Aprobado el desarrollo de una primera vista de patrimonio con inmuebles, hipotecas, participación atribuible, valoración manual y snapshots separados del histórico de cartera.

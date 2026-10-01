@@ -2,19 +2,46 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { MortgageForm, RealEstateForm } from '@/components/RealEstateForms'
+import PropertyCashFlowForm from '@/components/PropertyCashFlowForm'
 import SaveWealthSnapshotButton from '@/components/SaveWealthSnapshotButton'
 import TrackRecordChart from '@/components/TrackRecordChart'
+import { notifyPortfolioChanged } from '@/lib/portfolioEvents'
 import { supabase } from '@/lib/supabase'
 import { formatCurrency, getPositionValuation, type PositionPriceData } from '@/lib/valuation'
 import { normalizeLedgerSummary, type LedgerSummary, type LedgerSummaryResponse } from '@/lib/ledger'
 import { getMortgageValuation, getPropertyValuation, summarizeWealth, type MortgageLiability, type RealEstateAsset, type WealthSnapshot } from '@/lib/wealth'
 
 type PropertyType = RealEstateAsset['property_type']
+type PropertyCashFlow = {
+  id: string
+  property_id: string
+  mortgage_id: string | null
+  operation_type: 'rental_income' | 'property_expense' | 'mortgage_payment'
+  operation_date: string
+  amount: number | null
+  principal_amount: number
+  currency: string
+  flow_category: string | null
+  notes: string | null
+}
+
 const propertyTypeLabels: Record<PropertyType, string> = {
   home: 'Vivienda',
   rental: 'Vivienda alquilada',
   land: 'Terreno',
   other: 'Otro inmueble',
+}
+const cashFlowLabels: Record<PropertyCashFlow['operation_type'], string> = {
+  rental_income: 'Alquiler cobrado',
+  property_expense: 'Gasto del inmueble',
+  mortgage_payment: 'Pago hipotecario',
+}
+const expenseCategoryLabels: Record<string, string> = {
+  maintenance: 'Mantenimiento',
+  tax: 'Impuestos',
+  insurance: 'Seguro',
+  community: 'Comunidad',
+  other: 'Otro gasto',
 }
 
 function eur(value: number) {
@@ -35,6 +62,7 @@ export default function PatrimonioPage() {
   const [ledgerSummary, setLedgerSummary] = useState<LedgerSummary>({ transaction_count: 0, realized_total_eur: 0, realized_by_position: [], cash_accounts: [] })
   const [properties, setProperties] = useState<RealEstateAsset[]>([])
   const [mortgages, setMortgages] = useState<MortgageLiability[]>([])
+  const [propertyCashFlows, setPropertyCashFlows] = useState<PropertyCashFlow[]>([])
   const [snapshots, setSnapshots] = useState<WealthSnapshot[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
@@ -45,20 +73,22 @@ export default function PatrimonioPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [positionsResult, summaryResult, propertiesResult, mortgagesResult, snapshotsResult] = await Promise.all([
+      const [positionsResult, summaryResult, propertiesResult, mortgagesResult, cashFlowsResult, snapshotsResult] = await Promise.all([
         supabase.from('assets').select('quantity,current_price,currency,price_as_of,price_source,fx_rate_to_eur,fx_as_of,fx_source'),
         supabase.rpc('get_portfolio_ledger_summary'),
         supabase.from('real_estate_assets').select('*').order('name'),
         supabase.from('mortgage_liabilities').select('*').order('name'),
+        supabase.from('portfolio_transactions').select('*').not('property_id', 'is', null).order('operation_date', { ascending: false }).order('created_at', { ascending: false }).limit(100),
         supabase.from('wealth_snapshots').select('*').order('snapshot_date', { ascending: false }),
       ])
-      const failed = positionsResult.error ?? summaryResult.error ?? propertiesResult.error ?? mortgagesResult.error ?? snapshotsResult.error
+      const failed = positionsResult.error ?? summaryResult.error ?? propertiesResult.error ?? mortgagesResult.error ?? cashFlowsResult.error ?? snapshotsResult.error
       if (failed) throw failed
       if (!summaryResult.data) throw new Error('No se recibió el resumen de caja.')
       setPositions((positionsResult.data ?? []) as PositionPriceData[])
       setLedgerSummary(normalizeLedgerSummary(summaryResult.data as LedgerSummaryResponse))
       setProperties((propertiesResult.data ?? []) as RealEstateAsset[])
       setMortgages((mortgagesResult.data ?? []) as MortgageLiability[])
+      setPropertyCashFlows((cashFlowsResult.data ?? []) as PropertyCashFlow[])
       setSnapshots((snapshotsResult.data ?? []) as WealthSnapshot[])
       setErrorMessage('')
     } catch (error) {
@@ -248,6 +278,41 @@ export default function PatrimonioPage() {
           <div className="mt-4 max-w-5xl"><MortgageForm properties={properties} onSaved={() => void load()} /></div>
         </details>
       </section>}
+
+      <section className="mb-8">
+        <div className="mb-3 border-b border-white/10 pb-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-200">Caja inmobiliaria</p>
+          <h2 className="mt-1 text-lg text-white">Alquileres, gastos y cuotas</h2>
+          <p className="mt-1 text-sm text-slate-400">Los movimientos se suman a la caja existente. Solo el principal reduce la deuda; intereses y gastos no alteran la valoración del inmueble.</p>
+        </div>
+        {properties.length > 0 ? <details className="border-b border-white/10 pb-4">
+          <summary className="w-fit cursor-pointer text-sm font-medium text-teal-100">Registrar movimiento</summary>
+          <div className="mt-4">
+            <PropertyCashFlowForm
+              properties={properties}
+              mortgages={mortgages}
+              cashAccounts={ledgerSummary.cash_accounts}
+              onSaved={() => notifyPortfolioChanged()}
+            />
+          </div>
+        </details> : <p className="border-b border-white/10 py-4 text-sm text-slate-400">Añade un inmueble para registrar sus movimientos.</p>}
+        {propertyCashFlows.length > 0 ? <div className="divide-y divide-white/10">
+          {propertyCashFlows.slice(0, 12).map((flow) => {
+            const amount = Number(flow.amount ?? 0)
+            const principal = Number(flow.principal_amount)
+            const interest = amount - principal
+            const income = flow.operation_type === 'rental_income'
+            return <article key={flow.id} className="flex flex-wrap items-start justify-between gap-3 py-3">
+              <div>
+                <p className="text-sm font-medium text-slate-200">{cashFlowLabels[flow.operation_type]} · {propertyById.get(flow.property_id)?.name ?? 'Inmueble'}</p>
+                <p className="mt-1 text-xs text-slate-500">{formatDate(flow.operation_date)}{flow.flow_category ? ` · ${expenseCategoryLabels[flow.flow_category] ?? flow.flow_category}` : ''}{flow.notes ? ` · ${flow.notes}` : ''}</p>
+                {flow.operation_type === 'mortgage_payment' && <p className="mt-1 text-xs text-slate-400">Principal {formatCurrency(principal, flow.currency)} · intereses {formatCurrency(interest, flow.currency)}</p>}
+              </div>
+              <p className={`tabular-nums text-sm ${income ? 'text-emerald-200' : 'text-amber-100'}`}>{income ? '+' : '−'}{formatCurrency(amount, flow.currency)}</p>
+            </article>
+          })}
+        </div> : <p className="py-5 text-sm text-slate-400">Aún no hay movimientos inmobiliarios registrados.</p>}
+      </section>
 
       <section className="mb-8">
         <div className="mb-3 border-b border-white/10 pb-3">

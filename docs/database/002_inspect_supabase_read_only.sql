@@ -77,7 +77,7 @@ with inspection as (
     r.grantee || ' · ' || r.privilege_type
   from information_schema.routine_privileges r
   where r.specific_schema = 'public'
-    and r.routine_name in ('record_portfolio_operation', 'get_portfolio_ledger_summary', 'save_portfolio_snapshot', 'save_mortgage_liability', 'confirm_property_has_no_mortgage', 'save_wealth_snapshot')
+    and r.routine_name in ('record_portfolio_operation', 'get_portfolio_ledger_summary', 'save_portfolio_snapshot', 'save_mortgage_liability', 'confirm_property_has_no_mortgage', 'save_wealth_snapshot', 'record_property_cash_flow')
     and r.grantee in ('anon', 'authenticated', 'PUBLIC')
 )
 select kind, object_name, details

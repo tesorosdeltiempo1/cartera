@@ -28,6 +28,12 @@ El diagnóstico compartido por el propietario muestra `real_estate_assets`, `mor
 
 La migración 008 está aplicada y el diagnóstico de esquema/permisos coincide con el diseño. No la vuelvas a ejecutar. El código de `/patrimonio` se publicó en `main` en el commit `e0cef85`; falta confirmar el despliegue de Vercel y probar el flujo autenticado. Esta consulta solo inspecciona metadatos, así que no permite saber cuántas filas de inmuebles o hipotecas existen.
 
+## Migración 009 confirmada — 2026-10-01
+
+El resultado compartido confirma las cuatro columnas de flujo añadidas a `portfolio_transactions`, la constraint que admite `rental_income`, `property_expense` y `mortgage_payment`, y la RPC `record_property_cash_flow`. La tabla conserva RLS y policy de lectura del propietario; el resultado no muestra grants a `anon` ni `PUBLIC`, y la función muestra `EXECUTE` solo para `authenticated`.
+
+La migración 009 está aplicada y el diagnóstico de esquema/permisos coincide con el diseño. No la vuelvas a ejecutar. La interfaz de flujos sigue pendiente de publicarse y probarse.
+
 ## Comprobación de solo lectura
 
 Para volver a inspeccionar la base de datos, ejecuta [002_inspect_supabase_read_only.sql](002_inspect_supabase_read_only.sql) en Supabase SQL Editor. No modifica filas ni estructura. Comprueba que:
