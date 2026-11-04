@@ -8,7 +8,7 @@ Este archivo recoge las iteraciones funcionales y visuales por separado del READ
 - Las migraciones 010–012 se aplicaron en Supabase; la comprobación de solo lectura confirmó los objetos, RLS de planes y permisos de `authenticated`/`anon` esperados.
 - Se guardó el snapshot del 22-oct-2026 a partir de totales agregados por broker/cuenta del informe v3. No se crearon posiciones ni se modificaron valoraciones actuales; el registro no incluye inmuebles ni hipotecas.
 - El Plan 2026–2030 se conserva como política vigente.
-- El commit `77a63ec` se desplegó desde `main`; Vercel lo marcó `Ready`. El smoke test de `/historico` en el dominio de producción mostró la pantalla privada de acceso. No se usaron credenciales: queda pendiente validar las funciones autenticadas como propietario.
+- El commit `77a63ec` se desplegó desde `main`; Vercel lo marcó `Ready`. En `/historico`, una sesión propietaria ya activa cargó el formulario agregado. No se enviaron datos ni se modificó producción; queda pendiente probar el guardado con una operación de prueba controlada.
 
 ## 2026-11-04 — Pruebas repetibles y actualización de seguridad (local)
 
