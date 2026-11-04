@@ -7,6 +7,7 @@ Este archivo recoge las iteraciones funcionales y visuales por separado del READ
 - La exportación JSON ahora exige respuesta de datos y conteo exactos en todas las páginas; si el total falta, cambia o no coincide, cancela en vez de ofrecer una copia incompleta.
 - Se evita iniciar exportaciones o guardar snapshots históricos dos veces por envíos rápidos; `/historico` permite reintentar la lectura y descarta respuestas antiguas cuando hay cargas concurrentes.
 - `npm test` pasa 10/10; lint, build de producción y `git diff --check` pasan. Vercel marcó `dd7d07b` como `Ready`; `/`, `/historico`, `/operaciones` y `/patrimonio` responden HTTP 200. No se usaron credenciales ni se escribieron datos.
+- Límite conocido: el respaldo pagina tablas por separado. Los conteos detectan cambios de cardinalidad, pero no garantizan una instantánea transaccional ante cambios concurrentes que mantengan el mismo total.
 
 ## 2026-11-04 — Snapshots históricos agregados (desplegado en producción)
 

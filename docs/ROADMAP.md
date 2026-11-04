@@ -64,6 +64,7 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - Diseñar importación con previsualización, validación de versión/esquema, detección de duplicados y confirmación final; nunca sobrescribir por defecto.
 - Verificar que la exportación no se pueda generar como si estuviera completa cuando falló una de las consultas.
 - La exportación paginada exige datos y conteo exacto estable para cada tabla; pruebas cubren paginación, falta de datos/conteo, cambios de total y resultados parciales. Restauración sigue pendiente.
+- La exportación lee tablas por separado y no fija una instantánea transaccional; un reemplazo concurrente que mantenga el mismo conteo puede pasar inadvertido. Diseñar una fuente coherente de respaldo antes de implementar restauración.
 - Mantener los archivos de respaldo fuera del repositorio y protegidos localmente.
 
 **Criterio de salida:** restauración ensayada en entorno aislado, conteos y totales reconciliados y errores de filas identificados antes de aplicar.
