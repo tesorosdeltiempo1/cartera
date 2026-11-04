@@ -111,6 +111,7 @@ El snapshot del 22-oct se basa en los totales por broker/cuenta del informe v3 y
 - Mantener números tabulares y jerarquía visual clara para distinguir dato, objetivo, desviación y advertencia.
 - Refinar los gráficos existentes antes de añadir nuevos: mostrar denominador, valor y peso por categoría; hacer legibles en euros los ejes y fechas del histórico.
 - Evitar leyendas automáticas y decoración que compita con los datos; preservar una lectura cómoda en móvil.
+- Primera iteración: la HOME prioriza un total patrimonial monumental en una placa de mármol CSS y agrupa el análisis en desplegables; la navegación también queda en un menú compacto. Revisar foco, contraste y distribución móvil en sesión autenticada antes de dar P4 por cerrado.
 
 **Criterio de salida:** revisión de cada ruta en móvil y escritorio; ninguna ornamentación reduce la legibilidad, el contraste o la facilidad de completar tareas.
 

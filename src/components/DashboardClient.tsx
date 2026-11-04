@@ -38,11 +38,11 @@ type SnapshotCash = { cash_account_id: string; broker: string; currency: string;
 
 const CATEGORIES: Category[] = ['Núcleo Pasivo', 'Satélite Convicción', 'Seguridad y Liquidez', 'Activos Duros', 'Especulativo']
 const CATEGORY_STYLES: Record<Category, string> = {
-  'Núcleo Pasivo': 'border-cyan-300/20 bg-cyan-300/10 text-cyan-200',
-  'Satélite Convicción': 'border-amber-300/20 bg-amber-300/10 text-amber-200',
-  'Seguridad y Liquidez': 'border-violet-300/20 bg-violet-300/10 text-violet-200',
-  'Activos Duros': 'border-orange-300/20 bg-orange-300/10 text-orange-200',
-  Especulativo: 'border-emerald-300/20 bg-emerald-300/10 text-emerald-200',
+  'Núcleo Pasivo': 'border-sky-900/15 bg-sky-900/5 text-sky-950',
+  'Satélite Convicción': 'border-amber-900/15 bg-amber-900/5 text-amber-950',
+  'Seguridad y Liquidez': 'border-violet-900/15 bg-violet-900/5 text-violet-950',
+  'Activos Duros': 'border-orange-900/15 bg-orange-900/5 text-orange-950',
+  Especulativo: 'border-emerald-900/15 bg-emerald-900/5 text-emerald-950',
 }
 
 function valueOf(position: Position) {
@@ -161,102 +161,121 @@ export default function DashboardClient() {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-7xl px-4 py-6 text-slate-100 sm:px-6 sm:py-10 lg:px-8">
-      <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="brand-wordmark text-xs font-semibold uppercase text-teal-200">Aureum · Patrimonio personal</p>
-          <h1 className="mt-1 text-3xl text-white sm:text-4xl">Resumen patrimonial</h1>
-        </div>
-        <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-300">
-          <span className="mr-2 inline-block size-1.5 rounded-full bg-teal-300" />Seguimiento manual
-        </div>
-      </header>
-
       {errorMessage && <div role="alert" className="mb-6 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">No se pudieron cargar los datos: {errorMessage}</div>}
-      {unlinkedCount > 0 && (
-        <div className="mb-6 rounded-xl border border-amber-300/20 bg-amber-300/[0.07] px-4 py-3 text-sm leading-6 text-amber-100">
-          Hay {unlinkedCount} posiciones sin vincular a un activo consolidado. La comparación por activo solo incluye posiciones vinculadas y no representa todavía toda la cartera.
-        </div>
-      )}
-        {unvaluedPositions.length > 0 && (
-            <div role="status" className="mb-6 rounded-xl border border-amber-300/20 bg-amber-300/[0.07] px-4 py-3 text-sm leading-6 text-amber-100">
-              <p>{unvaluedPositions.length} {unvaluedPositions.length === 1 ? 'posición requiere' : 'posiciones requieren'} confirmar moneda, precio fechado y tipo de cambio si aplica. Sus cifras originales siguen disponibles en Posiciones, pero no se suman como euros ni entran en snapshots nuevos.</p>
-              {legacyPriceCount > 0 && <p className="mt-1 text-amber-100/80">Hay {legacyPriceCount} {legacyPriceCount === 1 ? 'precio heredado' : 'precios heredados'} sin moneda confirmada. No sumamos esas cifras entre sí porque podrían estar expresadas en monedas distintas.</p>}
-              <a href="/posiciones" className="mt-2 inline-flex font-semibold text-teal-100 underline decoration-teal-100/40 underline-offset-4">Revisar posiciones →</a>
-          </div>
-        )}
-
       {loading ? (
         <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-8 text-sm text-slate-400" aria-live="polite">Cargando cartera…</div>
       ) : (
         <>
-          <section className="relative mb-6 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-800/90 via-slate-900 to-[#102a2a] p-6 shadow-2xl shadow-black/20 sm:p-8">
-            <div className="pointer-events-none absolute -right-16 -top-28 size-80 rounded-full bg-teal-300/[0.07] blur-3xl" />
-            <div className="relative flex flex-wrap items-end justify-between gap-6">
-              <div>
-                <p className="mb-2 text-sm text-slate-400">{unvaluedPositions.length ? 'Subtotal EUR · valoraciones confirmadas' : 'Valor total estimado en EUR'}</p>
-                <p className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">{eur(grandTotal)}</p>
-                <p className="mt-3 text-sm text-slate-400">Precios y cambios fechados manualmente; no se consultan cotizaciones automáticas.</p>
+          <section className="marble-panel relative mb-5 overflow-hidden p-6 sm:p-9 lg:p-12">
+            <div className="relative z-10">
+              <p className="brand-wordmark text-[10px] font-bold uppercase tracking-[0.24em] text-stone-600">Aureum · Patrimonio personal</p>
+              <h1 className="mt-5 max-w-3xl font-display text-3xl leading-tight text-stone-900 sm:text-5xl">La medida de tu legado</h1>
+              <div className="mt-8 border-y border-stone-900/15 py-6 sm:py-8">
+                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-stone-600">
+                  {unvaluedPositions.length ? 'Subtotal confirmado · EUR' : 'Patrimonio registrado · EUR'}
+                </p>
+                <p className="marble-total tabular-nums">{eur(grandTotal)}</p>
               </div>
-              {grandTotal > 0 && <SaveSnapshotButton totalValue={grandTotal} breakdown={totals} snapshotAssets={snapshotDetailRows} cashBreakdown={cashSnapshotRows} disabled={unvaluedPositions.length > 0} />}
+              <div className="mt-5 flex flex-wrap items-end justify-between gap-5">
+                <p className="max-w-md text-xs leading-5 text-stone-600 sm:text-sm">
+                  Valoración manual · sin cotizaciones automáticas
+                  {snapshots.length > 0 && <span className="block">Último corte: {new Date(`${snapshots.at(-1)?.snapshot_date}T00:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
+                </p>
+                {grandTotal > 0 && <SaveSnapshotButton totalValue={grandTotal} breakdown={totals} snapshotAssets={snapshotDetailRows} cashBreakdown={cashSnapshotRows} disabled={unvaluedPositions.length > 0} />}
+              </div>
             </div>
           </section>
 
-          <section aria-label="Distribución por categoría de posición" className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            {totals.map((total) => (
-              <article key={total.category} className="rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4 sm:p-5">
-                <div className="mb-4 flex items-start justify-between gap-2">
-                  <p className="text-sm leading-5 text-slate-400">{total.category}</p>
-                  <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${CATEGORY_STYLES[total.category]}`}>
-                    {grandTotal > 0 ? `${(total.value / grandTotal * 100).toFixed(1)}%` : '0,0%'}
-                  </span>
-                </div>
-                <p className="text-lg font-semibold tracking-tight text-white">{eur(total.value)}</p>
-              </article>
-            ))}
-          </section>
+          {(unlinkedCount > 0 || unvaluedPositions.length > 0) && (
+            <details className="marble-tile mb-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 text-sm font-semibold text-stone-800">
+                <span>Revisión de datos · {unlinkedCount + unvaluedPositions.length} alertas</span><span className="disclosure-mark" aria-hidden="true" />
+              </summary>
+              <div className="grid gap-3 border-t border-stone-900/10 px-4 py-4 text-sm leading-6 text-stone-700">
+                {unlinkedCount > 0 && <p>{unlinkedCount} posiciones sin vincular a un activo consolidado; la comparación por activo no representa toda la cartera.</p>}
+                {unvaluedPositions.length > 0 && <div>
+                  <p>{unvaluedPositions.length} posiciones requieren confirmar moneda, precio fechado y tipo de cambio. Sus cifras originales siguen disponibles en Posiciones, pero no se suman como euros ni entran en snapshots nuevos.</p>
+                  {legacyPriceCount > 0 && <p className="mt-1">{legacyPriceCount} precios heredados no tienen moneda confirmada y podrían estar en monedas distintas.</p>}
+                  <a href="/posiciones" className="mt-2 inline-flex font-semibold text-stone-950 underline decoration-stone-500/50 underline-offset-4">Revisar posiciones →</a>
+                </div>}
+              </div>
+            </details>
+          )}
 
-          {investmentAssets.length > 0 && unvaluedPositions.length === 0 && <AllocationComparison data={allocationData} positionsWithTarget={masterTargetsCount} totalPositions={investmentAssets.length} />}
+          <div className="grid gap-3">
+            <details className="marble-tile">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5">
+                <span><span className="block font-semibold text-stone-900">Composición</span><span className="mt-1 block text-xs text-stone-600">Distribución, objetivos y porcentajes</span></span><span className="disclosure-mark" aria-hidden="true" />
+              </summary>
+              <div className="grid gap-4 border-t border-stone-900/10 p-4 sm:p-5">
+                <section aria-label="Distribución por categoría de posición" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                  {totals.map((total) => (
+                    <article key={total.category} className="marble-tile marble-tile-inset p-4">
+                      <div className="mb-4 flex items-start justify-between gap-2">
+                        <p className="text-sm leading-5 text-stone-600">{total.category}</p>
+                        <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${CATEGORY_STYLES[total.category]}`}>
+                          {grandTotal > 0 ? `${(total.value / grandTotal * 100).toFixed(1)}%` : '0,0%'}
+                        </span>
+                      </div>
+                      <p className="text-lg font-semibold tracking-tight text-stone-900">{eur(total.value)}</p>
+                    </article>
+                  ))}
+                </section>
+                {investmentAssets.length > 0 && unvaluedPositions.length === 0 && <AllocationComparison data={allocationData} positionsWithTarget={masterTargetsCount} totalPositions={investmentAssets.length} />}
+                <article className="marble-tile marble-tile-inset min-w-0 p-4 sm:p-5">
+                  <h2 className="font-semibold text-stone-900">Distribución por categoría</h2>
+                  <p className="mt-1 text-sm text-stone-600">{unvaluedPositions.length ? 'Solo valoraciones EUR confirmadas; las posiciones pendientes se excluyen.' : 'Valor actual registrado por clase estratégica de posición'}</p>
+                  <PortfolioChart data={totals} />
+                </article>
+              </div>
+            </details>
 
-          <section aria-label="Rentabilidad del ledger" className="mb-6 grid gap-3 sm:grid-cols-3">
-            <article className="rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4">
-              <p className="text-xs text-slate-400">Ganancia / pérdida realizada</p>
-              <p className={`mt-2 text-xl tabular-nums ${realizedPnlEur >= 0 ? 'text-emerald-200' : 'text-rose-200'}`}>{eur(realizedPnlEur)}</p>
-              <p className="mt-1 text-xs text-slate-500">Ventas, dividendos, intereses y comisiones registradas desde el saldo inicial.</p>
-            </article>
-            <article className="rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4">
-              <p className="text-xs text-slate-400">Ganancia / pérdida no realizada</p>
-              <p className={`mt-2 text-xl tabular-nums ${unrealizedPnlEur >= 0 ? 'text-emerald-200' : 'text-rose-200'}`}>{eur(unrealizedPnlEur)}</p>
-              <p className="mt-1 text-xs text-slate-500">Solo posiciones con ledger iniciado y valor EUR confirmado.</p>
-            </article>
-            <article className="rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4">
-              <p className="text-xs text-slate-400">Resultado total del ledger</p>
-              <p className={`mt-2 text-xl tabular-nums ${totalPnlEur >= 0 ? 'text-emerald-200' : 'text-rose-200'}`}>{eur(totalPnlEur)}</p>
-              <p className="mt-1 text-xs text-slate-500">Realizado + no realizado; no incluye aportaciones/retiradas.</p>
-            </article>
-          </section>
+            <details className="marble-tile">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5">
+                <span><span className="block font-semibold text-stone-900">Rentabilidad</span><span className="mt-1 block text-xs text-stone-600">Resultados realizados y pendientes</span></span><span className="disclosure-mark" aria-hidden="true" />
+              </summary>
+              <section aria-label="Rentabilidad del ledger" className="grid gap-3 border-t border-stone-900/10 p-4 sm:grid-cols-3 sm:p-5">
+                <article className="marble-tile marble-tile-inset p-4">
+                  <p className="text-xs text-stone-600">Ganancia / pérdida realizada</p>
+                  <p className={`mt-2 text-xl tabular-nums ${realizedPnlEur >= 0 ? 'text-emerald-800' : 'text-rose-800'}`}>{eur(realizedPnlEur)}</p>
+                  <p className="mt-1 text-xs text-stone-600">Ventas, dividendos, intereses y comisiones desde el saldo inicial.</p>
+                </article>
+                <article className="marble-tile marble-tile-inset p-4">
+                  <p className="text-xs text-stone-600">Ganancia / pérdida no realizada</p>
+                  <p className={`mt-2 text-xl tabular-nums ${unrealizedPnlEur >= 0 ? 'text-emerald-800' : 'text-rose-800'}`}>{eur(unrealizedPnlEur)}</p>
+                  <p className="mt-1 text-xs text-stone-600">Solo posiciones con ledger iniciado y valor EUR confirmado.</p>
+                </article>
+                <article className="marble-tile marble-tile-inset p-4">
+                  <p className="text-xs text-stone-600">Resultado total del ledger</p>
+                  <p className={`mt-2 text-xl tabular-nums ${totalPnlEur >= 0 ? 'text-emerald-800' : 'text-rose-800'}`}>{eur(totalPnlEur)}</p>
+                  <p className="mt-1 text-xs text-stone-600">Realizado + no realizado; excluye aportaciones y retiradas.</p>
+                </article>
+              </section>
+            </details>
 
-          <section className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <article className="min-w-0 rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4 sm:p-5">
-              <h2 className="font-semibold text-white">Distribución por categoría</h2>
-              <p className="mt-1 text-sm text-slate-400">{unvaluedPositions.length ? 'Solo valoraciones EUR confirmadas; las posiciones pendientes se excluyen.' : 'Valor actual registrado por clase estratégica de posición'}</p>
-              <PortfolioChart data={totals} />
-            </article>
-            <article className="min-w-0 rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4 sm:p-5">
-              <h2 className="font-semibold text-white">Evolución del patrimonio</h2>
-              <p className="mt-1 text-sm text-slate-400">Snapshots guardados manualmente</p>
-              {snapshots.length > 0 ? <TrackRecordChart data={snapshots} /> : <div className="flex min-h-64 items-center text-sm text-slate-400">Guarda un snapshot para iniciar el histórico.</div>}
-            </article>
-          </section>
+            <details className="marble-tile">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5">
+                <span><span className="block font-semibold text-stone-900">Evolución</span><span className="mt-1 block text-xs text-stone-600">{snapshots.length} snapshots registrados</span></span><span className="disclosure-mark" aria-hidden="true" />
+              </summary>
+              <section className="min-w-0 border-t border-stone-900/10 p-4 sm:p-5">
+                <h2 className="font-semibold text-stone-900">Evolución del patrimonio</h2>
+                <p className="mt-1 text-sm text-stone-600">Snapshots guardados manualmente</p>
+                {snapshots.length > 0 ? <TrackRecordChart data={snapshots} /> : <div className="flex min-h-64 items-center text-sm text-stone-600">Guarda un snapshot para iniciar el histórico.</div>}
+              </section>
+            </details>
 
-          <section className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4 sm:p-5">
-            <div>
-              <h2 className="font-semibold text-white">Respaldo privado</h2>
-              <p className="mt-1 text-sm text-slate-400">Descarga un JSON con posiciones, activos consolidados e histórico.</p>
-            </div>
-              <ExportBackupButton disabled={loading || Boolean(errorMessage)} />
-          </section>
+            <details className="marble-tile">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5">
+                <span><span className="block font-semibold text-stone-900">Respaldo privado</span><span className="mt-1 block text-xs text-stone-600">Descarga tus datos patrimoniales</span></span><span className="disclosure-mark" aria-hidden="true" />
+              </summary>
+              <section className="flex flex-wrap items-center justify-between gap-4 border-t border-stone-900/10 p-4 sm:p-5">
+                <p className="text-sm text-stone-600">JSON · posiciones, activos, operaciones, inmuebles e histórico.</p>
+                <ExportBackupButton disabled={loading || Boolean(errorMessage)} />
+              </section>
+            </details>
+          </div>
 
-          <footer className="py-8 text-center text-xs text-slate-600">Datos introducidos y revisados manualmente · Guarda el respaldo en un lugar privado · No es asesoramiento financiero</footer>
+          <footer className="py-8 text-center text-xs text-slate-500">Datos revisados manualmente · Guarda el respaldo en privado · No es asesoramiento financiero</footer>
         </>
       )}
     </main>

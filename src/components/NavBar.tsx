@@ -18,6 +18,7 @@ const links = [
 export default function NavBar({ email }: { email: string }) {
   const pathname = usePathname()
   const [signingOut, setSigningOut] = useState(false)
+  const activeLink = links.find((link) => link.href === pathname) ?? links[0]
 
   async function handleSignOut() {
     setSigningOut(true)
@@ -35,21 +36,29 @@ export default function NavBar({ email }: { email: string }) {
             <span className="text-[9px] uppercase tracking-[0.18em] text-slate-500">Patrimonio · Legado</span>
           </span>
         </Link>
-        <div className="order-3 flex w-full gap-1 overflow-x-auto pb-0.5 sm:order-none sm:w-auto sm:flex-1 sm:justify-center">
-          {links.map((link) => {
-            const active = pathname === link.href
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                aria-current={active ? 'page' : undefined}
-                className={`shrink-0 rounded-lg border px-3 py-2 transition ${active ? 'border-teal-300/30 bg-teal-300/10 text-teal-100' : 'border-transparent text-slate-400 hover:border-white/10 hover:bg-white/[0.04] hover:text-white'}`}
-              >
-                {link.label}
-              </Link>
-            )
-          })}
-        </div>
+        <details className="nav-menu order-3 sm:order-none">
+          <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl border border-teal-300/20 bg-white/[0.03] px-4 py-2.5 text-sm text-slate-200 transition hover:border-teal-300/40 hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-200">
+            <span className="grid size-5 content-center gap-1" aria-hidden="true"><span className="h-px bg-current" /><span className="h-px bg-current" /><span className="h-px bg-current" /></span>
+            <span>{activeLink.label}</span>
+            <span className="text-xs text-slate-500" aria-hidden="true">⌄</span>
+          </summary>
+          <div className="nav-menu-panel" aria-label="Secciones">
+            <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Explorar Aureum</p>
+            {links.map((link) => {
+              const active = pathname === link.href
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  aria-current={active ? 'page' : undefined}
+                  className={`block rounded-lg px-3 py-2.5 transition ${active ? 'bg-teal-300/10 text-teal-100' : 'text-slate-300 hover:bg-white/[0.06] hover:text-white'}`}
+                >
+                  {link.label}
+                </Link>
+              )
+            })}
+          </div>
+        </details>
         <div className="ml-auto flex items-center gap-3 text-xs text-slate-400 sm:ml-0">
           <span className="hidden max-w-40 truncate lg:inline" title={email}>{email}</span>
           <button
