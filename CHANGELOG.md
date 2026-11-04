@@ -2,6 +2,12 @@
 
 Este archivo recoge las iteraciones funcionales y visuales por separado del README. Las fechas indican cuándo se implementó cada cambio; no implican por sí mismas que esté desplegado ni validado en producción.
 
+## 2026-11-04 — Integridad de respaldos y recuperación del histórico (local)
+
+- La exportación JSON ahora exige respuesta de datos y conteo exactos en todas las páginas; si el total falta, cambia o no coincide, cancela en vez de ofrecer una copia incompleta.
+- Se evita iniciar exportaciones o guardar snapshots históricos dos veces por envíos rápidos; `/historico` permite reintentar la lectura y descarta respuestas antiguas cuando hay cargas concurrentes.
+- `npm test` pasa 10/10; lint, build de producción y `git diff --check` pasan. Smoke test local: `/historico` responde y presenta el acceso privado; no se usaron credenciales ni se escribieron datos.
+
 ## 2026-11-04 — Snapshots históricos agregados (desplegado en producción)
 
 - Añadida una captura histórica fechada por broker con fuente y validación de que el total coincide con el desglose; no crea posiciones ni modifica valoraciones actuales o snapshots anteriores.

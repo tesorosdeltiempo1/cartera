@@ -23,7 +23,7 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - Registros públicos desactivados y RLS/policies del propietario aplicados a las cuatro tablas de cartera, según diagnóstico compartido por el propietario.
 - Dashboard, catálogo de activos consolidados, posiciones por broker, histórico de snapshots y exportación JSON disponibles.
 - Despliegue automático desde `main` a Vercel.
-- La versión del commit `77a63ec` está desplegada en producción (`Ready`); una sesión propietaria ya activa cargó el formulario agregado en `/historico`. No se enviaron datos; queda pendiente probar el guardado con una operación de prueba controlada.
+- La versión del commit `77a63ec` está desplegada en producción (`Ready`); una sesión propietaria ya activa cargó el formulario agregado en `/historico`. No se enviaron datos; queda pendiente probar el guardado con una operación de prueba controlada. La siguiente mejora de respaldo/resiliencia está validada localmente, todavía no desplegada.
 - El dashboard usa EUR como moneda base. La migración 006 ya añadió moneda/fecha/fuente de precio y FX; las posiciones previas tienen esos nuevos campos sin clasificar hasta revisión manual.
 - Los snapshots antiguos se conservan y no se recalculan al editar posiciones.
 - El respaldo es exportación JSON; aún no existe un flujo de restauración.
@@ -63,6 +63,7 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - Documentar un procedimiento de recuperación manual probado con un conjunto ficticio.
 - Diseñar importación con previsualización, validación de versión/esquema, detección de duplicados y confirmación final; nunca sobrescribir por defecto.
 - Verificar que la exportación no se pueda generar como si estuviera completa cuando falló una de las consultas.
+- La exportación paginada exige datos y conteo exacto estable para cada tabla; pruebas cubren paginación, falta de datos/conteo, cambios de total y resultados parciales. Restauración sigue pendiente.
 - Mantener los archivos de respaldo fuera del repositorio y protegidos localmente.
 
 **Criterio de salida:** restauración ensayada en entorno aislado, conteos y totales reconciliados y errores de filas identificados antes de aplicar.
@@ -84,6 +85,7 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - Revisar edición y eliminación de posiciones y snapshots: confirmación contextual, resultado inequívoco, prevención de doble envío y manejo de errores de red.
 - Probar operaciones destructivas primero con datos de prueba y usuario propietario; no usar cambios reales como prueba de interfaz.
 - Mejorar estados de carga, vacío, error y recuperación/reintento de forma consistente.
+- `/historico` permite reintentar la carga; ignora respuestas obsoletas de consultas concurrentes. Los envíos rápidos de snapshot y respaldo se serializan para evitar duplicados.
 - Posiciones ya tiene filtros/búsqueda; `/operaciones` filtra los 250 movimientos recientes por texto y tipo, sin hacer pasar esa ventana por el historial completo.
 
 **Ledger desplegado:** el propietario confirmó que `/operaciones` funciona en producción. La migración 007 está aplicada y el diagnóstico 002 confirmó tablas, RLS, policies y grants de funciones. Dashboard y `/operaciones` usan `get_portfolio_ledger_summary` para agregar el historial completo; 250 filas solo limitan la lista reciente. La exportación pagina y comprueba recuentos; los snapshots usan un RPC transaccional. El punto de partida del ledger no reconstruye operaciones anteriores.

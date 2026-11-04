@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useRef, useState, type FormEvent } from 'react'
 import { prepareHistoricalSnapshot, type HistoricalSnapshotLine } from '@/lib/historicalSnapshot'
 import { notifyPortfolioChanged } from '@/lib/portfolioEvents'
 import { supabase } from '@/lib/supabase'
@@ -23,6 +23,7 @@ export default function HistoricalSnapshotForm() {
   const [lines, setLines] = useState(initialLines)
   const [sourceNote, setSourceNote] = useState('Informe de cartera v3 · 22-oct-2026; resumen agregado por broker, sin detalle por posición. Política vigente: Plan 2026-2030.')
   const [saving, setSaving] = useState(false)
+  const saveInProgress = useRef(false)
   const [message, setMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const preview = useMemo(() => {
@@ -47,6 +48,8 @@ export default function HistoricalSnapshotForm() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (saveInProgress.current) return
+    saveInProgress.current = true
     setSaving(true)
     setMessage('')
     setErrorMessage('')
@@ -72,6 +75,7 @@ export default function HistoricalSnapshotForm() {
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'No se pudo guardar el snapshot histórico.')
     } finally {
+      saveInProgress.current = false
       setSaving(false)
     }
   }

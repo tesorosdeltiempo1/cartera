@@ -1,40 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { fetchAllRows } from '@/lib/backup'
 import { supabase } from '@/lib/supabase'
-
-const PAGE_SIZE = 500
-
-async function fetchAllRows<T>(fetchPage: (from: number, to: number) => PromiseLike<{
-  data: T[] | null
-  error: { message: string } | null
-  count: number | null
-}>): Promise<T[]> {
-  const rows: T[] = []
-  let expectedCount: number | null = null
-
-  for (let from = 0; ; from += PAGE_SIZE) {
-    const { data, error, count } = await fetchPage(from, from + PAGE_SIZE - 1)
-    if (error) throw error
-    if (count !== null) {
-      if (expectedCount !== null && count !== expectedCount) throw new Error('Los datos cambiaron durante la exportación. Vuelve a intentarlo.')
-      expectedCount = count
-    }
-
-    const page = data ?? []
-    rows.push(...page)
-    if (page.length < PAGE_SIZE) {
-      if (expectedCount !== null && rows.length !== expectedCount) throw new Error('La exportación no recibió todas las filas; no se descargó un respaldo parcial.')
-      return rows
-    }
-  }
-}
 
 export default function ExportBackupButton({ disabled = false }: { disabled?: boolean }) {
   const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(false)
+  const exportInProgress = useRef(false)
 
   async function handleExport() {
+    if (exportInProgress.current) return
+    exportInProgress.current = true
     setLoading(true)
     setStatus('Preparando el respaldo…')
     try {
@@ -79,6 +56,7 @@ export default function ExportBackupButton({ disabled = false }: { disabled?: bo
     } catch (error) {
       setStatus(error instanceof Error ? `No se pudo generar el respaldo: ${error.message}` : 'No se pudo generar la copia. Inténtalo de nuevo.')
     } finally {
+      exportInProgress.current = false
       setLoading(false)
     }
   }

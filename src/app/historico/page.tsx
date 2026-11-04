@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import TrackRecordChart from '@/components/TrackRecordChart'
 import DeleteSnapshotButton from '@/components/DeleteSnapshotButton'
 import HistoricalSnapshotForm from '@/components/HistoricalSnapshotForm'
@@ -19,8 +19,12 @@ export default function HistoricoPage() {
   const [snapshotAssets, setSnapshotAssets] = useState<SnapshotAsset[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const requestId = useRef(0)
 
   const load = useCallback(async () => {
+    const currentRequestId = ++requestId.current
+    setLoading(true)
+    setErrorMessage('')
     try {
       const [snapshotsResult, detailsResult] = await Promise.all([
         supabase.from('portfolio_snapshots').select('*').order('snapshot_date', { ascending: false }),
@@ -28,21 +32,31 @@ export default function HistoricoPage() {
       ])
       const error = snapshotsResult.error ?? detailsResult.error
       if (error) throw error
+      if (currentRequestId !== requestId.current) return
       setSnapshots((snapshotsResult.data ?? []) as Snapshot[])
       setSnapshotAssets((detailsResult.data ?? []) as SnapshotAsset[])
-      setErrorMessage('')
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'No se pudo conectar para cargar el histórico.')
+      if (currentRequestId === requestId.current) {
+        setErrorMessage(error instanceof Error ? error.message : 'No se pudo conectar para cargar el histórico.')
+      }
     } finally {
-      setLoading(false)
+      if (currentRequestId === requestId.current) setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    const refresh = () => window.setTimeout(() => void load(), 0)
+    let timeout: number | undefined
+    const refresh = () => {
+      if (timeout !== undefined) window.clearTimeout(timeout)
+      timeout = window.setTimeout(() => void load(), 0)
+    }
     refresh()
     window.addEventListener('portfolio:changed', refresh)
-    return () => window.removeEventListener('portfolio:changed', refresh)
+    return () => {
+      if (timeout !== undefined) window.clearTimeout(timeout)
+      requestId.current += 1
+      window.removeEventListener('portfolio:changed', refresh)
+    }
   }, [load])
 
   const chartData = [...snapshots].reverse()
@@ -55,7 +69,10 @@ export default function HistoricoPage() {
         <p className="mt-2 text-sm text-slate-400">Los snapshots guardan el valor y el desglose disponibles en la fecha de registro; no se recalculan al editar posiciones.</p>
       </header>
 
-      {errorMessage && <p role="alert" className="mb-5 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">No se pudo cargar el histórico: {errorMessage}</p>}
+      {errorMessage && <div role="alert" className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">
+        <p>No se pudo cargar el histórico: {errorMessage}</p>
+        <button type="button" onClick={() => void load()} disabled={loading} className="rounded-lg border border-rose-200/20 px-3 py-2 font-medium hover:bg-rose-200/10 disabled:cursor-wait disabled:opacity-50">Reintentar</button>
+      </div>}
 
       <HistoricalSnapshotForm />
 

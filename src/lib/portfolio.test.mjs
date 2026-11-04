@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { getNextContributionDate } from './contributionPlans.ts'
+import { fetchAllRows } from './backup.ts'
 import { prepareHistoricalSnapshot } from './historicalSnapshot.ts'
 import { calculateSale, filterLedgerTransactions, summarizeCashAccounts, summarizePositionReturns } from './ledger.ts'
 
@@ -133,4 +134,27 @@ test('historical aggregate snapshots validate dates, unique brokers, and localiz
     { broker: ' broker ', amount: '20' },
   ], '2026-11-04'), /más de una vez/)
   assert.throws(() => prepareHistoricalSnapshot('2026-10-22', [{ broker: 'Broker', amount: '-1' }], '2026-11-04'), /importe válido/)
+})
+
+test('backup pagination exports every row and requires a stable exact count', async () => {
+  const rows = Array.from({ length: 501 }, (_, index) => index)
+  const requestedPages = []
+  const exported = await fetchAllRows(async (from, to) => {
+    requestedPages.push([from, to])
+    return { data: rows.slice(from, to + 1), count: rows.length, error: null }
+  })
+
+  assert.deepEqual(requestedPages, [[0, 499], [500, 999]])
+  assert.deepEqual(exported, rows)
+})
+
+test('backup pagination rejects missing counts, missing data, changed totals, and partial results', async () => {
+  await assert.rejects(fetchAllRows(async () => ({ data: [], count: null, error: null })), /verificar el total/)
+  await assert.rejects(fetchAllRows(async () => ({ data: null, count: 0, error: null })), /No se recibieron filas/)
+  await assert.rejects(fetchAllRows(async (from) => ({
+    data: from === 0 ? Array.from({ length: 500 }, (_, index) => index) : [500],
+    count: from === 0 ? 501 : 502,
+    error: null,
+  })), /cambiaron durante la exportación/)
+  await assert.rejects(fetchAllRows(async () => ({ data: [], count: 1, error: null })), /respaldo parcial/)
 })
