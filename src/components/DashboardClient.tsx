@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Image from 'next/image'
 import AllocationComparison from '@/components/AllocationComparison'
 import ExportBackupButton from '@/components/ExportBackupButton'
 import PortfolioChart from '@/components/PortfolioChart'
@@ -38,11 +39,11 @@ type SnapshotCash = { cash_account_id: string; broker: string; currency: string;
 
 const CATEGORIES: Category[] = ['Núcleo Pasivo', 'Satélite Convicción', 'Seguridad y Liquidez', 'Activos Duros', 'Especulativo']
 const CATEGORY_STYLES: Record<Category, string> = {
-  'Núcleo Pasivo': 'border-sky-900/15 bg-sky-900/5 text-sky-950',
-  'Satélite Convicción': 'border-amber-900/15 bg-amber-900/5 text-amber-950',
-  'Seguridad y Liquidez': 'border-violet-900/15 bg-violet-900/5 text-violet-950',
-  'Activos Duros': 'border-orange-900/15 bg-orange-900/5 text-orange-950',
-  Especulativo: 'border-emerald-900/15 bg-emerald-900/5 text-emerald-950',
+  'Núcleo Pasivo': 'border-cyan-300/20 bg-cyan-300/10 text-cyan-200',
+  'Satélite Convicción': 'border-amber-300/20 bg-amber-300/10 text-amber-200',
+  'Seguridad y Liquidez': 'border-violet-300/20 bg-violet-300/10 text-violet-200',
+  'Activos Duros': 'border-orange-300/20 bg-orange-300/10 text-orange-200',
+  Especulativo: 'border-emerald-300/20 bg-emerald-300/10 text-emerald-200',
 }
 
 function valueOf(position: Position) {
@@ -160,122 +161,140 @@ export default function DashboardClient() {
   ]
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-7xl px-4 py-6 text-slate-100 sm:px-6 sm:py-10 lg:px-8">
+    <main className="dashboard-home">
       {errorMessage && <div role="alert" className="mb-6 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">No se pudieron cargar los datos: {errorMessage}</div>}
       {loading ? (
         <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-8 text-sm text-slate-400" aria-live="polite">Cargando cartera…</div>
       ) : (
         <>
-          <section className="marble-panel relative mb-5 overflow-hidden p-6 sm:p-9 lg:p-12">
-            <div className="relative z-10">
-              <p className="brand-wordmark text-[10px] font-bold uppercase tracking-[0.24em] text-stone-600">Aureum · Patrimonio personal</p>
-              <h1 className="mt-5 max-w-3xl font-display text-3xl leading-tight text-stone-900 sm:text-5xl">La medida de tu legado</h1>
-              <div className="mt-8 border-y border-stone-900/15 py-6 sm:py-8">
-                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-stone-600">
-                  {unvaluedPositions.length ? 'Subtotal confirmado · EUR' : 'Patrimonio registrado · EUR'}
-                </p>
-                <p className="marble-total tabular-nums">{eur(grandTotal)}</p>
+          <section className="home-hero">
+            <Image
+              src="/colosseum-night.jpg"
+              alt="Coliseo de Roma iluminado durante la noche"
+              fill
+              priority
+              sizes="(max-width: 760px) 100vw, calc(100vw - 280px)"
+              className="home-hero-image"
+            />
+            <div className="home-hero-shade" />
+            <div className="home-hero-content">
+              <div className="home-hero-meta">
+                <span className="home-eyebrow"><span className="home-status-dot" />Registro patrimonial privado</span>
+                <span className="home-date">{new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}</span>
               </div>
-              <div className="mt-5 flex flex-wrap items-end justify-between gap-5">
-                <p className="max-w-md text-xs leading-5 text-stone-600 sm:text-sm">
-                  Valoración manual · sin cotizaciones automáticas
-                  {snapshots.length > 0 && <span className="block">Último corte: {new Date(`${snapshots.at(-1)?.snapshot_date}T00:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
-                </p>
-                {grandTotal > 0 && <SaveSnapshotButton totalValue={grandTotal} breakdown={totals} snapshotAssets={snapshotDetailRows} cashBreakdown={cashSnapshotRows} disabled={unvaluedPositions.length > 0} />}
+              <div className="home-hero-title">
+                <p className="home-kicker">FORTUNA · TEMPORE · FIDES</p>
+                <h1>Lo que construyes.<br /><span>Lo que permanece.</span></h1>
+              </div>
+              <div className="home-total-block">
+                <p className="home-total-label">{unvaluedPositions.length ? 'Capital valorado · EUR' : 'Patrimonio registrado · EUR'}</p>
+                <p className="home-total tabular-nums">{eur(grandTotal)}</p>
+                <div className="home-total-footer">
+                  <p>
+                    Valoración manual · sin cotizaciones automáticas
+                    {snapshots.length > 0 && <span className="block">Último corte · {new Date(`${snapshots.at(-1)?.snapshot_date}T00:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
+                  </p>
+                  {grandTotal > 0 && <SaveSnapshotButton totalValue={grandTotal} breakdown={totals} snapshotAssets={snapshotDetailRows} cashBreakdown={cashSnapshotRows} disabled={unvaluedPositions.length > 0} />}
+                </div>
               </div>
             </div>
+            <p className="hero-credit">
+              <a href="https://commons.wikimedia.org/wiki/File:Colosseum_at_night_-_wide_angle.JPG" target="_blank" rel="noreferrer">Coliseo de noche · Martin Falbisoner</a>
+              <span> · </span>
+              <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noreferrer">CC BY-SA 3.0</a>
+            </p>
           </section>
 
           {(unlinkedCount > 0 || unvaluedPositions.length > 0) && (
-            <details className="marble-tile mb-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 text-sm font-semibold text-stone-800">
-                <span>Revisión de datos · {unlinkedCount + unvaluedPositions.length} alertas</span><span className="disclosure-mark" aria-hidden="true" />
+            <details className="dashboard-disclosure">
+              <summary className="disclosure-summary">
+                <span><span className="disclosure-title">Revisión de datos</span><span className="disclosure-subtitle">{unlinkedCount + unvaluedPositions.length} alertas necesitan atención</span></span><span className="disclosure-mark" aria-hidden="true" />
               </summary>
-              <div className="grid gap-3 border-t border-stone-900/10 px-4 py-4 text-sm leading-6 text-stone-700">
+              <div className="disclosure-body">
                 {unlinkedCount > 0 && <p>{unlinkedCount} posiciones sin vincular a un activo consolidado; la comparación por activo no representa toda la cartera.</p>}
                 {unvaluedPositions.length > 0 && <div>
                   <p>{unvaluedPositions.length} posiciones requieren confirmar moneda, precio fechado y tipo de cambio. Sus cifras originales siguen disponibles en Posiciones, pero no se suman como euros ni entran en snapshots nuevos.</p>
                   {legacyPriceCount > 0 && <p className="mt-1">{legacyPriceCount} precios heredados no tienen moneda confirmada y podrían estar en monedas distintas.</p>}
-                  <a href="/posiciones" className="mt-2 inline-flex font-semibold text-stone-950 underline decoration-stone-500/50 underline-offset-4">Revisar posiciones →</a>
+                  <a href="/posiciones" className="mt-2 inline-flex font-semibold text-teal-200 underline decoration-teal-200/40 underline-offset-4">Revisar posiciones →</a>
                 </div>}
               </div>
             </details>
           )}
 
-          <div className="grid gap-3">
-            <details className="marble-tile">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5">
-                <span><span className="block font-semibold text-stone-900">Composición</span><span className="mt-1 block text-xs text-stone-600">Distribución, objetivos y porcentajes</span></span><span className="disclosure-mark" aria-hidden="true" />
+          <div className="dashboard-sections">
+            <details className="dashboard-disclosure">
+              <summary className="disclosure-summary">
+                <span><span className="disclosure-title">Composición</span><span className="disclosure-subtitle">Distribución, objetivos y porcentajes</span></span><span className="disclosure-mark" aria-hidden="true" />
               </summary>
-              <div className="grid gap-4 border-t border-stone-900/10 p-4 sm:p-5">
+              <div className="disclosure-body">
                 <section aria-label="Distribución por categoría de posición" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
                   {totals.map((total) => (
-                    <article key={total.category} className="marble-tile marble-tile-inset p-4">
+                    <article key={total.category} className="dashboard-stat-card">
                       <div className="mb-4 flex items-start justify-between gap-2">
-                        <p className="text-sm leading-5 text-stone-600">{total.category}</p>
+                        <p className="text-sm leading-5 text-slate-400">{total.category}</p>
                         <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${CATEGORY_STYLES[total.category]}`}>
                           {grandTotal > 0 ? `${(total.value / grandTotal * 100).toFixed(1)}%` : '0,0%'}
                         </span>
                       </div>
-                      <p className="text-lg font-semibold tracking-tight text-stone-900">{eur(total.value)}</p>
+                      <p className="text-lg font-semibold tracking-tight text-white">{eur(total.value)}</p>
                     </article>
                   ))}
                 </section>
                 {investmentAssets.length > 0 && unvaluedPositions.length === 0 && <AllocationComparison data={allocationData} positionsWithTarget={masterTargetsCount} totalPositions={investmentAssets.length} />}
-                <article className="marble-tile marble-tile-inset min-w-0 p-4 sm:p-5">
-                  <h2 className="font-semibold text-stone-900">Distribución por categoría</h2>
-                  <p className="mt-1 text-sm text-stone-600">{unvaluedPositions.length ? 'Solo valoraciones EUR confirmadas; las posiciones pendientes se excluyen.' : 'Valor actual registrado por clase estratégica de posición'}</p>
+                <article className="dashboard-inner-card min-w-0 p-4 sm:p-5">
+                  <h2 className="font-semibold text-white">Distribución por categoría</h2>
+                  <p className="mt-1 text-sm text-slate-400">{unvaluedPositions.length ? 'Solo valoraciones EUR confirmadas; las posiciones pendientes se excluyen.' : 'Valor actual registrado por clase estratégica de posición'}</p>
                   <PortfolioChart data={totals} />
                 </article>
               </div>
             </details>
 
-            <details className="marble-tile">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5">
-                <span><span className="block font-semibold text-stone-900">Rentabilidad</span><span className="mt-1 block text-xs text-stone-600">Resultados realizados y pendientes</span></span><span className="disclosure-mark" aria-hidden="true" />
+            <details className="dashboard-disclosure">
+              <summary className="disclosure-summary">
+                <span><span className="disclosure-title">Rentabilidad</span><span className="disclosure-subtitle">Resultados realizados y pendientes</span></span><span className="disclosure-mark" aria-hidden="true" />
               </summary>
-              <section aria-label="Rentabilidad del ledger" className="grid gap-3 border-t border-stone-900/10 p-4 sm:grid-cols-3 sm:p-5">
-                <article className="marble-tile marble-tile-inset p-4">
-                  <p className="text-xs text-stone-600">Ganancia / pérdida realizada</p>
-                  <p className={`mt-2 text-xl tabular-nums ${realizedPnlEur >= 0 ? 'text-emerald-800' : 'text-rose-800'}`}>{eur(realizedPnlEur)}</p>
-                  <p className="mt-1 text-xs text-stone-600">Ventas, dividendos, intereses y comisiones desde el saldo inicial.</p>
+              <section aria-label="Rentabilidad del ledger" className="disclosure-body grid gap-3 sm:grid-cols-3">
+                <article className="dashboard-stat-card p-4">
+                  <p className="text-xs text-slate-400">Ganancia / pérdida realizada</p>
+                  <p className={`mt-2 text-xl tabular-nums ${realizedPnlEur >= 0 ? 'text-emerald-200' : 'text-rose-200'}`}>{eur(realizedPnlEur)}</p>
+                  <p className="mt-1 text-xs text-slate-500">Ventas, dividendos, intereses y comisiones desde el saldo inicial.</p>
                 </article>
-                <article className="marble-tile marble-tile-inset p-4">
-                  <p className="text-xs text-stone-600">Ganancia / pérdida no realizada</p>
-                  <p className={`mt-2 text-xl tabular-nums ${unrealizedPnlEur >= 0 ? 'text-emerald-800' : 'text-rose-800'}`}>{eur(unrealizedPnlEur)}</p>
-                  <p className="mt-1 text-xs text-stone-600">Solo posiciones con ledger iniciado y valor EUR confirmado.</p>
+                <article className="dashboard-stat-card p-4">
+                  <p className="text-xs text-slate-400">Ganancia / pérdida no realizada</p>
+                  <p className={`mt-2 text-xl tabular-nums ${unrealizedPnlEur >= 0 ? 'text-emerald-200' : 'text-rose-200'}`}>{eur(unrealizedPnlEur)}</p>
+                  <p className="mt-1 text-xs text-slate-500">Solo posiciones con ledger iniciado y valor EUR confirmado.</p>
                 </article>
-                <article className="marble-tile marble-tile-inset p-4">
-                  <p className="text-xs text-stone-600">Resultado total del ledger</p>
-                  <p className={`mt-2 text-xl tabular-nums ${totalPnlEur >= 0 ? 'text-emerald-800' : 'text-rose-800'}`}>{eur(totalPnlEur)}</p>
-                  <p className="mt-1 text-xs text-stone-600">Realizado + no realizado; excluye aportaciones y retiradas.</p>
+                <article className="dashboard-stat-card p-4">
+                  <p className="text-xs text-slate-400">Resultado total del ledger</p>
+                  <p className={`mt-2 text-xl tabular-nums ${totalPnlEur >= 0 ? 'text-emerald-200' : 'text-rose-200'}`}>{eur(totalPnlEur)}</p>
+                  <p className="mt-1 text-xs text-slate-500">Realizado + no realizado; excluye aportaciones y retiradas.</p>
                 </article>
               </section>
             </details>
 
-            <details className="marble-tile">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5">
-                <span><span className="block font-semibold text-stone-900">Evolución</span><span className="mt-1 block text-xs text-stone-600">{snapshots.length} snapshots registrados</span></span><span className="disclosure-mark" aria-hidden="true" />
+            <details className="dashboard-disclosure">
+              <summary className="disclosure-summary">
+                <span><span className="disclosure-title">Evolución</span><span className="disclosure-subtitle">{snapshots.length} snapshots registrados</span></span><span className="disclosure-mark" aria-hidden="true" />
               </summary>
-              <section className="min-w-0 border-t border-stone-900/10 p-4 sm:p-5">
-                <h2 className="font-semibold text-stone-900">Evolución del patrimonio</h2>
-                <p className="mt-1 text-sm text-stone-600">Snapshots guardados manualmente</p>
-                {snapshots.length > 0 ? <TrackRecordChart data={snapshots} /> : <div className="flex min-h-64 items-center text-sm text-stone-600">Guarda un snapshot para iniciar el histórico.</div>}
+              <section className="disclosure-body min-w-0">
+                <h2 className="font-semibold text-white">Evolución del patrimonio</h2>
+                <p className="mt-1 text-sm text-slate-400">Snapshots guardados manualmente</p>
+                {snapshots.length > 0 ? <TrackRecordChart data={snapshots} /> : <div className="flex min-h-64 items-center text-sm text-slate-400">Guarda un snapshot para iniciar el histórico.</div>}
               </section>
             </details>
 
-            <details className="marble-tile">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 sm:p-5">
-                <span><span className="block font-semibold text-stone-900">Respaldo privado</span><span className="mt-1 block text-xs text-stone-600">Descarga tus datos patrimoniales</span></span><span className="disclosure-mark" aria-hidden="true" />
+            <details className="dashboard-disclosure">
+              <summary className="disclosure-summary">
+                <span><span className="disclosure-title">Respaldo privado</span><span className="disclosure-subtitle">Descarga tus datos patrimoniales</span></span><span className="disclosure-mark" aria-hidden="true" />
               </summary>
-              <section className="flex flex-wrap items-center justify-between gap-4 border-t border-stone-900/10 p-4 sm:p-5">
-                <p className="text-sm text-stone-600">JSON · posiciones, activos, operaciones, inmuebles e histórico.</p>
+              <section className="disclosure-body flex flex-wrap items-center justify-between gap-4">
+                <p className="text-sm text-slate-400">JSON · posiciones, activos, operaciones, inmuebles e histórico.</p>
                 <ExportBackupButton disabled={loading || Boolean(errorMessage)} />
               </section>
             </details>
           </div>
 
-          <footer className="py-8 text-center text-xs text-slate-500">Datos revisados manualmente · Guarda el respaldo en privado · No es asesoramiento financiero</footer>
+          <footer className="home-footer">Datos revisados manualmente · Guarda el respaldo en privado · No es asesoramiento financiero</footer>
         </>
       )}
     </main>

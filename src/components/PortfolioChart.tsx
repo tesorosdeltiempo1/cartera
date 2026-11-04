@@ -34,8 +34,8 @@ export default function PortfolioChart({ data }: { data: Slice[] }) {
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone-600">Total en EUR</span>
-          <span className="mt-1 max-w-36 text-sm font-semibold tabular-nums text-stone-900">{formatEuro(total)}</span>
+          <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-slate-400">Total en EUR</span>
+          <span className="mt-1 max-w-36 text-sm font-semibold tabular-nums text-slate-100">{formatEuro(total)}</span>
         </div>
       </div>
       <ul aria-label="Composición de cartera por categoría" className="grid content-center gap-1 px-2 sm:px-0">
@@ -44,13 +44,13 @@ export default function PortfolioChart({ data }: { data: Slice[] }) {
           const weight = item.value / total * 100
           return (
             <li key={item.category} className="flex items-center justify-between gap-4 border-b border-white/[0.06] py-2.5 last:border-0">
-              <span className="flex min-w-0 items-center gap-2.5 text-sm text-stone-700">
+              <span className="flex min-w-0 items-center gap-2.5 text-sm text-slate-300">
                 <span aria-hidden="true" className="size-2.5 shrink-0 rounded-sm" style={{ backgroundColor: COLORS[colorIndex % COLORS.length] }} />
                 <span className="truncate">{item.category}</span>
               </span>
               <span className="shrink-0 text-right tabular-nums">
-                <span className="block text-sm text-stone-900">{formatEuro(item.value)}</span>
-                <span className="block text-xs text-stone-600">{weight.toLocaleString('es-ES', { maximumFractionDigits: 1 })}%</span>
+                <span className="block text-sm text-slate-100">{formatEuro(item.value)}</span>
+                <span className="block text-xs text-slate-400">{weight.toLocaleString('es-ES', { maximumFractionDigits: 1 })}%</span>
               </span>
             </li>
           )

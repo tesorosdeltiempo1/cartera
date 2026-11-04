@@ -17,6 +17,13 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 5. **Accesibilidad antes que ornamento:** la identidad renacentista/rococó debe servir a la comprensión, no competir con ella.
 6. **Iteración pequeña:** cada entrega tiene alcance, criterio de aceptación y validación de producción explícitos.
 
+### Dirección visual de la interfaz
+
+- Priorizar superficies oscuras, contraste cálido y fotografía arquitectónica con licencia y atribución verificables.
+- Mantener en la HOME una sola cifra patrimonial dominante; revelar composición, rentabilidad, evolución y respaldo bajo demanda.
+- La navegación principal debe permanecer visible y ofrecer estados activos, acceso por teclado y etiquetas comprensibles también en pantallas estrechas.
+- Los cambios de presentación no alteran cálculos ni datos patrimoniales; validar con lint, pruebas, build y revisión visual autenticada cuando haya una sesión legítima disponible.
+
 ## Línea base confirmada
 
 - Login del único propietario con Supabase Auth; el propietario confirmó que puede entrar y ver sus datos.

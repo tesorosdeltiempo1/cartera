@@ -27,11 +27,11 @@ function barWidth(value: number) {
 
 export default function AllocationComparison({ data, positionsWithTarget, totalPositions }: Props) {
   return (
-    <section aria-labelledby="allocation-title" className="marble-tile marble-tile-inset p-4 sm:p-5">
+    <section aria-labelledby="allocation-title" className="dashboard-inner-card p-4 sm:p-5">
       <div className="mb-5">
-        <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">Política de inversión</p>
-        <h2 id="allocation-title" className="font-semibold text-stone-900">Peso real vs. objetivo</h2>
-        <p className="mt-1 text-sm text-stone-600">
+        <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Política de inversión</p>
+        <h2 id="allocation-title" className="font-semibold text-slate-100">Peso real vs. objetivo</h2>
+        <p className="mt-1 text-sm text-slate-400">
           Objetivo global informado en {positionsWithTarget} de {totalPositions} activos consolidados. La desviación solo se calcula cuando todos los activos de una categoría tienen objetivo.
         </p>
       </div>
@@ -42,32 +42,32 @@ export default function AllocationComparison({ data, positionsWithTarget, totalP
           const difference = item.actualWeight - item.targetWeight
 
           return (
-            <article key={item.category} className="marble-tile marble-tile-inset rounded-xl p-4">
+            <article key={item.category} className="rounded-xl border border-white/10 bg-slate-950/60 p-4">
               <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
-                <h3 className="text-sm font-medium text-stone-800">{item.category}</h3>
-                <span className={`text-xs font-medium ${complete ? Math.abs(difference) < 0.05 ? 'text-emerald-800' : 'text-amber-800' : 'text-stone-600'}`}>
+                <h3 className="text-sm font-medium text-slate-200">{item.category}</h3>
+                <span className={`text-xs font-medium ${complete ? Math.abs(difference) < 0.05 ? 'text-emerald-200' : 'text-amber-200' : 'text-slate-400'}`}>
                   {complete ? deviation(difference) : item.hasPositions ? 'Objetivo incompleto' : 'Sin posiciones'}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <div className="mb-1 flex justify-between gap-2 text-stone-600">
+                  <div className="mb-1 flex justify-between gap-2 text-slate-400">
                     <span>Peso real</span>
-                    <span className="tabular-nums text-stone-800">{percent(item.actualWeight)}</span>
+                    <span className="tabular-nums text-slate-200">{percent(item.actualWeight)}</span>
                   </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-stone-900/10" aria-hidden="true">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
                     <div className="h-full rounded-full bg-teal-300" style={{ width: barWidth(item.actualWeight) }} />
                   </div>
                 </div>
                 <div>
-                  <div className="mb-1 flex justify-between gap-2 text-stone-600">
+                  <div className="mb-1 flex justify-between gap-2 text-slate-400">
                     <span>Peso objetivo</span>
-                    <span className="tabular-nums text-stone-800">
+                    <span className="tabular-nums text-slate-200">
                       {!item.hasPositions ? '—' : complete ? percent(item.targetWeight) : `Parcial · ${percent(item.targetWeight)}`}
                     </span>
                   </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-stone-900/10" aria-hidden="true">
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
                     <div className="h-full rounded-full bg-violet-300" style={{ width: barWidth(item.targetWeight) }} />
                   </div>
                 </div>
@@ -77,7 +77,7 @@ export default function AllocationComparison({ data, positionsWithTarget, totalP
         })}
       </div>
 
-      <p className="mt-4 text-xs leading-5 text-stone-600">
+      <p className="mt-4 text-xs leading-5 text-slate-400">
         La desviación se expresa en puntos porcentuales (real menos objetivo). Es una comparación informativa, no una recomendación de compra o venta.
       </p>
     </section>

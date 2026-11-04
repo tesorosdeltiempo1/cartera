@@ -110,9 +110,9 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <>
+    <div className="app-shell">
       <NavBar email={session.user.email ?? ''} />
-      {children}
-    </>
+      <div className="app-content">{children}</div>
+    </div>
   )
 }

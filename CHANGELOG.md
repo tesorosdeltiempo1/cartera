@@ -2,6 +2,13 @@
 
 Este archivo recoge las iteraciones funcionales y visuales por separado del README. Las fechas indican cuándo se implementó cada cambio; no implican por sí mismas que esté desplegado ni validado en producción.
 
+## 2026-11-04 — Portada oscura y navegación lateral (local)
+
+- Sustituido el menú desplegable por una barra lateral persistente con estado activo y acceso de sesión; el contenido secundario de HOME permanece plegado.
+- La portada ahora combina una fotografía nocturna del Coliseo, una cifra patrimonial monumental y superficies oscuras en carbón, piedra y bronce. Gráficos y comparativas recuperan contraste oscuro; los cálculos no cambian.
+- La imagen se sirve desde `public/`, con crédito visible y licencia CC BY-SA 3.0 documentada en [ASSET_CREDITS.md](docs/ASSET_CREDITS.md); no se envían datos a un proveedor de imágenes.
+- `npm run lint`, `npm test` (10/10), `npm run build` y `git diff --check` pasan. No se modificaron datos financieros ni se probó una sesión autenticada; el cambio aún no se ha desplegado.
+
 ## 2026-11-04 — Portada brutalista de mármol (interfaz)
 
 - La navegación reúne las seis secciones en un menú desplegable que muestra la ruta activa.
