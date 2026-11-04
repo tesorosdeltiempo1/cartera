@@ -7,7 +7,7 @@ Este archivo recoge las iteraciones funcionales y visuales por separado del READ
 - La navegación reúne las seis secciones en un menú desplegable que muestra la ruta activa.
 - La HOME prioriza el total patrimonial en una cifra monumental sobre mármol con vetas y grietas; composición, rentabilidad, evolución, respaldo y alertas quedan en desplegables independientes.
 - Gráficos, objetivos y cifras usan tinta oscura sobre las nuevas superficies claras. No cambian cálculos ni se añaden recursos de imágenes externos.
-- La compilación de producción, lint y pruebas se ejecutan antes de publicar; la inspección autenticada queda pendiente si no hay sesión de propietario disponible.
+- `npm test` (10/10), lint, build y `git diff --check` pasan. Vercel marcó `63121fd` como `Ready`; las seis rutas responden HTTP 200. No fue posible inspeccionar el dashboard tras iniciar sesión en esta sesión; queda pendiente la revisión visual autenticada en móvil y escritorio.
 
 ## 2026-11-04 — Integridad de respaldos y recuperación del histórico (producción)
 
