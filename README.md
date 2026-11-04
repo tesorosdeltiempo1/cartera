@@ -81,3 +81,5 @@ La migración de divisa/procedencia está aplicada y verificada en Supabase. La 
 La [guía de trabajo y operación](docs/GUIA_DE_TRABAJO.md) resume la visión, la estructura del código y los pasos para implementar, validar y publicar cambios con seguridad.
 
 El historial de cambios y validaciones está en [CHANGELOG.md](CHANGELOG.md).
+
+Para el uso cotidiano de las seis secciones, valoración de datos, ledger, histórico y respaldos, consulta el [manual de uso](docs/MANUAL_DE_USO.md). Para el proceso de desarrollo y publicación, consulta la [guía de trabajo y operación](docs/GUIA_DE_TRABAJO.md).

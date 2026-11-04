@@ -2,6 +2,11 @@
 
 Este archivo recoge las iteraciones funcionales y visuales por separado del README. Las fechas indican cuándo se implementó cada cambio; no implican por sí mismas que esté desplegado ni validado en producción.
 
+## 2026-11-04 — Manual de uso de Aureum
+
+- Añadido [MANUAL_DE_USO.md](docs/MANUAL_DE_USO.md), que explica acceso, orden de configuración, seis secciones, valoración y divisas, ledger, inmuebles, cortes, respaldos, privacidad y límites de interpretación.
+- Enlazado el manual desde el README. Verificado que instrucciones y etiquetas corresponden a los formularios y reglas actuales; no se modificaron datos financieros ni producción.
+
 ## 2026-11-04 — Auditoría de marca, claridad y procedencia (local)
 
 - Unificada la dirección visual oscura, la jerarquía tipográfica y el tratamiento de formularios; se eliminan emojis y flechas ornamentales y se eleva el contraste de textos secundarios.
