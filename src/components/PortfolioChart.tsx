@@ -2,7 +2,7 @@
 
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 
-const COLORS = ['#c9ad66', '#bd8254', '#aa9561', '#b87542', '#849b65']
+const COLORS = ['#88aaa4', '#b59fc5', '#c4a66a', '#cb8d78', '#93a878']
 
 type Slice = { category: string; value: number }
 
@@ -17,7 +17,7 @@ export default function PortfolioChart({ data }: { data: Slice[] }) {
 
   return (
     <div className="grid w-full items-center gap-2 sm:grid-cols-[minmax(14rem,0.9fr)_minmax(0,1.1fr)]">
-      <div className="relative h-64 min-w-0 sm:h-72">
+      <div className="relative h-64 min-w-0 sm:h-72" role="img" aria-label={`Gráfico de anillo con ${chartData.length} categorías y un total de ${formatEuro(total)}.`}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie data={chartData} dataKey="value" nameKey="category" innerRadius="65%" outerRadius="88%" paddingAngle={3} stroke="none">
@@ -28,7 +28,7 @@ export default function PortfolioChart({ data }: { data: Slice[] }) {
             </Pie>
             <Tooltip
               formatter={(value) => formatEuro(Number(value) || 0)}
-              contentStyle={{ backgroundColor: '#18211b', border: '1px solid rgba(201,168,93,0.24)', borderRadius: 12, color: '#eee6d5' }}
+              contentStyle={{ backgroundColor: '#171a17', border: '1px solid rgba(205,211,202,0.16)', borderRadius: 6, color: '#eee6d5' }}
               itemStyle={{ color: '#eee6d5' }}
             />
           </PieChart>
@@ -38,7 +38,7 @@ export default function PortfolioChart({ data }: { data: Slice[] }) {
           <span className="mt-1 max-w-36 text-sm font-semibold tabular-nums text-slate-100">{formatEuro(total)}</span>
         </div>
       </div>
-      <ul aria-label="Composición de cartera por categoría" className="grid content-center gap-1 px-2 sm:px-0">
+      <ul aria-label="Composición de cartera por categoría; importes y porcentaje del total" className="grid content-center gap-1 px-2 sm:px-0">
         {chartData.map((item) => {
           const colorIndex = data.findIndex((datum) => datum.category === item.category)
           const weight = item.value / total * 100

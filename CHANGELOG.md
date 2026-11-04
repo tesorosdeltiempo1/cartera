@@ -2,6 +2,15 @@
 
 Este archivo recoge las iteraciones funcionales y visuales por separado del README. Las fechas indican cuándo se implementó cada cambio; no implican por sí mismas que esté desplegado ni validado en producción.
 
+## 2026-11-04 — Auditoría de marca, claridad y procedencia (local)
+
+- Unificada la dirección visual oscura, la jerarquía tipográfica y el tratamiento de formularios; se eliminan emojis y flechas ornamentales y se eleva el contraste de textos secundarios.
+- HOME identifica el total como cartera financiera y efectivo, enlaza el balance inmobiliario/deuda y evita presentarlo como patrimonio neto completo.
+- La comparación de objetivos explicita la cobertura y excluye de forma visible las posiciones sin activo consolidado. El histórico usa fechas proporcionales, escala desde cero y una lista accesible con los valores exactos.
+- Los formularios de alta muestran etiquetas persistentes y confirmación; el corte histórico ya no precarga brokers, fecha ni procedencia que puedan atribuirse por error.
+- Añadidas la [guía de marca](docs/BRAND_GUIDE.md) y la visión de producto/criterios visuales a [ROADMAP.md](docs/ROADMAP.md).
+- `npm run lint`, `npm test` (10/10), `npm run build` y `git diff --check` pasan. La vista local de acceso responde HTTP 200 y no desborda a 390 px. No se usaron credenciales, no se modificaron datos ni producción; falta la revisión visual del dashboard autenticado.
+
 ## 2026-11-04 — Portada oscura y navegación lateral (local)
 
 - Sustituido el menú desplegable por una barra lateral persistente con estado activo y acceso de sesión; el contenido secundario de HOME permanece plegado.

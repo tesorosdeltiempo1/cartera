@@ -211,7 +211,7 @@ function FxFields({ currency, fxRate, fxAsOf, fxSource, setFxRate, setFxAsOf, se
 }) {
   return <>
     <label className={labelClass}>EUR por 1 {currency}
-      <span className="text-xs text-slate-400">Ejemplo: 1 {currency} = 0,92 EUR → escribe 0,92.</span>
+      <span className="text-xs text-slate-400">Ejemplo: si 1 {currency} equivale a 0,92 EUR, introduce 0,92.</span>
       <input type="number" min="0.00000001" step="any" value={fxRate} onChange={(event) => setFxRate(event.target.value)} required className={inputClass} />
     </label>
     <label className={labelClass}>Fecha del cambio<input type="date" value={fxAsOf} onChange={(event) => setFxAsOf(event.target.value)} required className={inputClass} /></label>

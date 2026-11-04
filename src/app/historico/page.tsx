@@ -62,11 +62,11 @@ export default function HistoricoPage() {
   const chartData = [...snapshots].reverse()
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-7xl px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+    <main className="app-page">
       <header className="mb-7">
         <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-teal-200">Seguimiento temporal</p>
         <h1 className="text-2xl font-semibold text-white">Histórico de cartera</h1>
-        <p className="mt-2 text-sm text-slate-400">Los snapshots guardan el valor y el desglose disponibles en la fecha de registro; no se recalculan al editar posiciones.</p>
+        <p className="mt-2 text-sm text-slate-400">Cada corte conserva los valores y el desglose disponibles en esa fecha. Editar las posiciones actuales no reescribe el histórico.</p>
       </header>
 
       {errorMessage && <div role="alert" className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">
@@ -77,13 +77,13 @@ export default function HistoricoPage() {
       <HistoricalSnapshotForm />
 
       <section className="mb-6 rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4 sm:p-6">
-        <h2 className="font-semibold text-white">Evolución del patrimonio</h2>
-        {loading ? <p className="py-12 text-sm text-slate-400">Cargando snapshots…</p> : chartData.length ? <TrackRecordChart data={chartData} /> : <p className="py-12 text-sm text-slate-400">Aún no hay snapshots. Guarda uno desde el Dashboard.</p>}
+        <h2 className="font-semibold text-white">Valor registrado en cada corte</h2>
+        {loading ? <p className="py-12 text-sm text-slate-400">Cargando cortes…</p> : chartData.length ? <TrackRecordChart data={chartData} /> : <p className="py-12 text-sm text-slate-400">Aún no hay cortes. Puedes guardar uno desde el Resumen.</p>}
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-slate-900/70">
-        <div className="border-b border-white/[0.08] px-4 py-4 sm:px-6"><h2 className="font-semibold text-white">Registros guardados</h2><p className="mt-1 text-sm text-slate-400">{snapshots.length} {snapshots.length === 1 ? 'snapshot' : 'snapshots'}</p></div>
-        {loading ? <p className="p-6 text-sm text-slate-400">Cargando…</p> : snapshots.length === 0 ? <p className="p-6 text-sm text-slate-400">No hay registros que mostrar.</p> : (
+        <div className="border-b border-white/[0.08] px-4 py-4 sm:px-6"><h2 className="font-semibold text-white">Cortes guardados</h2><p className="mt-1 text-sm text-slate-400">{snapshots.length} {snapshots.length === 1 ? 'corte' : 'cortes'}</p></div>
+        {loading ? <p className="p-6 text-sm text-slate-400">Cargando…</p> : snapshots.length === 0 ? <p className="p-6 text-sm text-slate-400">No hay cortes que mostrar.</p> : (
           <div className="overflow-x-auto"><table className="w-full min-w-[700px] text-left text-sm">
             <thead className="bg-white/[0.025] text-xs uppercase tracking-wider text-slate-400"><tr><th className="px-5 py-3">Fecha</th><th className="px-4 py-3 text-right">Valor total</th><th className="px-4 py-3">Desglose guardado</th><th className="px-5 py-3 text-right">Acciones</th></tr></thead>
             <tbody className="divide-y divide-white/[0.06]">{snapshots.map((snapshot) => {
@@ -118,7 +118,7 @@ export default function HistoricoPage() {
           </table></div>
         )}
       </section>
-      <div className="sr-only" aria-live="polite">{snapshots.length} snapshots cargados</div>
+      <div className="sr-only" aria-live="polite">{snapshots.length} {snapshots.length === 1 ? 'corte cargado' : 'cortes cargados'}</div>
     </main>
   )
 }

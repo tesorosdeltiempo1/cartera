@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import AllocationComparison from '@/components/AllocationComparison'
 import ExportBackupButton from '@/components/ExportBackupButton'
 import PortfolioChart from '@/components/PortfolioChart'
@@ -40,10 +41,10 @@ type SnapshotCash = { cash_account_id: string; broker: string; currency: string;
 const CATEGORIES: Category[] = ['Núcleo Pasivo', 'Satélite Convicción', 'Seguridad y Liquidez', 'Activos Duros', 'Especulativo']
 const CATEGORY_STYLES: Record<Category, string> = {
   'Núcleo Pasivo': 'border-cyan-300/20 bg-cyan-300/10 text-cyan-200',
-  'Satélite Convicción': 'border-amber-300/20 bg-amber-300/10 text-amber-200',
-  'Seguridad y Liquidez': 'border-violet-300/20 bg-violet-300/10 text-violet-200',
+  'Satélite Convicción': 'border-violet-300/20 bg-violet-300/10 text-violet-200',
+  'Seguridad y Liquidez': 'border-emerald-300/20 bg-emerald-300/10 text-emerald-200',
   'Activos Duros': 'border-orange-300/20 bg-orange-300/10 text-orange-200',
-  Especulativo: 'border-emerald-300/20 bg-emerald-300/10 text-emerald-200',
+  Especulativo: 'border-amber-300/20 bg-amber-300/10 text-amber-200',
 }
 
 function valueOf(position: Position) {
@@ -110,6 +111,7 @@ export default function DashboardClient() {
       actualWeight: grandTotal > 0 ? (categoryPositions.reduce((sum, position) => sum + valueOf(position), 0) + (category === 'Seguridad y Liquidez' ? cashTotalEur : 0)) / grandTotal * 100 : 0,
       targetWeight: categoryAssets.reduce((sum, asset) => sum + (asset.target_weight ?? 0), 0),
       hasPositions: categoryAssets.length > 0 || (category === 'Seguridad y Liquidez' && cashSummary.length > 0),
+      hasTargetAssets: categoryAssets.length > 0,
       targetComplete: categoryAssets.length > 0 && categoryAssets.every((asset) => asset.target_weight !== null),
     }
   })
@@ -179,20 +181,21 @@ export default function DashboardClient() {
             <div className="home-hero-shade" />
             <div className="home-hero-content">
               <div className="home-hero-meta">
-                <span className="home-eyebrow"><span className="home-status-dot" />Registro patrimonial privado</span>
+                <span className="home-eyebrow">AUREUM <span aria-hidden="true">/</span> PATRIMONIO PRIVADO</span>
                 <span className="home-date">{new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}</span>
               </div>
               <div className="home-hero-title">
-                <p className="home-kicker">FORTUNA · TEMPORE · FIDES</p>
-                <h1>Lo que construyes.<br /><span>Lo que permanece.</span></h1>
+                <p className="home-kicker">PATRIMONIO · CRITERIO · CONTINUIDAD</p>
+                <h1>Cartera financiera,<br /><span>en perspectiva.</span></h1>
               </div>
               <div className="home-total-block">
-                <p className="home-total-label">{unvaluedPositions.length ? 'Capital valorado · EUR' : 'Patrimonio registrado · EUR'}</p>
+                <p className="home-total-label">{unvaluedPositions.length ? 'Capital valorado · EUR' : 'Cartera y efectivo · EUR'}</p>
                 <p className="home-total tabular-nums">{eur(grandTotal)}</p>
                 <div className="home-total-footer">
                   <p>
-                    Valoración manual · sin cotizaciones automáticas
+                    Valoraciones registradas manualmente
                     {snapshots.length > 0 && <span className="block">Último corte · {new Date(`${snapshots.at(-1)?.snapshot_date}T00:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
+                    <span className="block">Inmuebles y deuda en <Link href="/patrimonio" className="home-scope-link">Balance patrimonial</Link>.</span>
                   </p>
                   {grandTotal > 0 && <SaveSnapshotButton totalValue={grandTotal} breakdown={totals} snapshotAssets={snapshotDetailRows} cashBreakdown={cashSnapshotRows} disabled={unvaluedPositions.length > 0} />}
                 </div>
@@ -213,9 +216,9 @@ export default function DashboardClient() {
               <div className="disclosure-body">
                 {unlinkedCount > 0 && <p>{unlinkedCount} posiciones sin vincular a un activo consolidado; la comparación por activo no representa toda la cartera.</p>}
                 {unvaluedPositions.length > 0 && <div>
-                  <p>{unvaluedPositions.length} posiciones requieren confirmar moneda, precio fechado y tipo de cambio. Sus cifras originales siguen disponibles en Posiciones, pero no se suman como euros ni entran en snapshots nuevos.</p>
+                  <p>{unvaluedPositions.length} posiciones requieren confirmar moneda, precio fechado y tipo de cambio. Sus cifras originales siguen disponibles en Posiciones, pero no se suman como euros ni entran en cortes nuevos.</p>
                   {legacyPriceCount > 0 && <p className="mt-1">{legacyPriceCount} precios heredados no tienen moneda confirmada y podrían estar en monedas distintas.</p>}
-                  <a href="/posiciones" className="mt-2 inline-flex font-semibold text-teal-200 underline decoration-teal-200/40 underline-offset-4">Revisar posiciones →</a>
+                  <Link href="/posiciones" className="mt-2 inline-flex font-semibold text-teal-200 underline decoration-teal-200/40 underline-offset-4">Revisar posiciones</Link>
                 </div>}
               </div>
             </details>
@@ -224,7 +227,7 @@ export default function DashboardClient() {
           <div className="dashboard-sections">
             <details className="dashboard-disclosure">
               <summary className="disclosure-summary">
-                <span><span className="disclosure-title">Composición</span><span className="disclosure-subtitle">Distribución, objetivos y porcentajes</span></span><span className="disclosure-mark" aria-hidden="true" />
+                <span><span className="disclosure-title">Composición</span><span className="disclosure-subtitle">Distribución, objetivos y cobertura</span></span><span className="disclosure-mark" aria-hidden="true" />
               </summary>
               <div className="disclosure-body">
                 <section aria-label="Distribución por categoría de posición" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -243,7 +246,7 @@ export default function DashboardClient() {
                 {investmentAssets.length > 0 && unvaluedPositions.length === 0 && <AllocationComparison data={allocationData} positionsWithTarget={masterTargetsCount} totalPositions={investmentAssets.length} />}
                 <article className="dashboard-inner-card min-w-0 p-4 sm:p-5">
                   <h2 className="font-semibold text-white">Distribución por categoría</h2>
-                  <p className="mt-1 text-sm text-slate-400">{unvaluedPositions.length ? 'Solo valoraciones EUR confirmadas; las posiciones pendientes se excluyen.' : 'Valor actual registrado por clase estratégica de posición'}</p>
+                  <p className="mt-1 text-sm text-slate-400">{unvaluedPositions.length ? 'Solo valoraciones EUR confirmadas; las posiciones pendientes se excluyen.' : 'Valor actual registrado por clase estratégica de posición.'}</p>
                   <PortfolioChart data={totals} />
                 </article>
               </div>
@@ -274,12 +277,12 @@ export default function DashboardClient() {
 
             <details className="dashboard-disclosure">
               <summary className="disclosure-summary">
-                <span><span className="disclosure-title">Evolución</span><span className="disclosure-subtitle">{snapshots.length} snapshots registrados</span></span><span className="disclosure-mark" aria-hidden="true" />
+                <span><span className="disclosure-title">Evolución</span><span className="disclosure-subtitle">{snapshots.length} {snapshots.length === 1 ? 'corte registrado' : 'cortes registrados'}</span></span><span className="disclosure-mark" aria-hidden="true" />
               </summary>
               <section className="disclosure-body min-w-0">
                 <h2 className="font-semibold text-white">Evolución del patrimonio</h2>
-                <p className="mt-1 text-sm text-slate-400">Snapshots guardados manualmente</p>
-                {snapshots.length > 0 ? <TrackRecordChart data={snapshots} /> : <div className="flex min-h-64 items-center text-sm text-slate-400">Guarda un snapshot para iniciar el histórico.</div>}
+                <p className="mt-1 text-sm text-slate-400">Cortes puntuales de valor; no representan una rentabilidad ajustada por aportaciones y retiradas.</p>
+                {snapshots.length > 0 ? <TrackRecordChart data={snapshots} /> : <div className="flex min-h-64 items-center text-sm text-slate-400">Guarda un corte para iniciar el histórico.</div>}
               </section>
             </details>
 

@@ -45,11 +45,11 @@ export default function SaveSnapshotButton({ totalValue, breakdown, snapshotAsse
         p_snapshot_assets: snapshotAssets,
       })
       if (error) throw error
-      if (!data) throw new Error('No se recibió el identificador del snapshot.')
-      setMessage('Snapshot guardado.')
+      if (!data) throw new Error('No se recibió la confirmación del corte.')
+      setMessage('Corte de cartera guardado.')
       notifyPortfolioChanged()
     } catch (error) {
-      setMessage(error instanceof Error ? `No se pudo guardar: ${error.message}` : 'No se pudo guardar el snapshot.')
+      setMessage(error instanceof Error ? `No se pudo guardar: ${error.message}` : 'No se pudo guardar el corte de cartera.')
     } finally {
       setLoading(false)
     }
@@ -62,7 +62,7 @@ export default function SaveSnapshotButton({ totalValue, breakdown, snapshotAsse
         disabled={loading || totalValue === 0 || disabled}
         className="rounded-xl border border-teal-200/20 bg-teal-300 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-teal-950/20 transition hover:bg-teal-200 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading ? 'Guardando…' : '📸 Guardar snapshot de hoy'}
+        {loading ? 'Guardando…' : 'Guardar corte de hoy'}
       </button>
       {message && <p role="status" aria-live="polite" className="max-w-sm text-xs text-slate-300">{message}</p>}
     </div>

@@ -7,12 +7,12 @@ import { supabase } from '@/lib/supabase'
 import BrandMark from '@/components/BrandMark'
 
 const links = [
-  { href: '/', label: 'Dashboard', number: '01' },
-  { href: '/activos', label: 'Activos y objetivos', number: '02' },
-  { href: '/posiciones', label: 'Posiciones', number: '03' },
-  { href: '/patrimonio', label: 'Patrimonio', number: '04' },
-  { href: '/operaciones', label: 'Operaciones', number: '05' },
-  { href: '/historico', label: 'Histórico', number: '06' },
+  { href: '/', label: 'Resumen', icon: 'M3 3h8v8H3z M13 3h8v5h-8z M13 10h8v11h-8z M3 13h8v8H3z' },
+  { href: '/activos', label: 'Activos y objetivos', icon: 'M12 3 3 8l9 5 9-5-9-5Z M3 12l9 5 9-5 M3 16l9 5 9-5' },
+  { href: '/posiciones', label: 'Posiciones', icon: 'M4 5h16M4 12h16M4 19h16 M8 3v4m8 3v4m-8 3v4' },
+  { href: '/patrimonio', label: 'Patrimonio', icon: 'M3 10.5 12 4l9 6.5 M5 10v10h14V10 M9 20v-6h6v6' },
+  { href: '/operaciones', label: 'Operaciones', icon: 'M4 8h15m0 0-4-4m4 4-4 4 M20 16H5m0 0 4-4m-4 4 4 4' },
+  { href: '/historico', label: 'Histórico', icon: 'M12 8v4l3 2 M21 12a9 9 0 1 1-2.64-6.36 M21 3v6h-6' },
 ]
 
 export default function NavBar({ email }: { email: string }) {
@@ -57,7 +57,9 @@ export default function NavBar({ email }: { email: string }) {
               title={link.label}
               className={`sidebar-link${active ? ' is-active' : ''}`}
             >
-              <span className="sidebar-link-number">{link.number}</span>
+              <svg className="sidebar-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d={link.icon} />
+              </svg>
               <span className="sidebar-link-label">{link.label}</span>
               {active && <span className="sidebar-link-indicator" aria-hidden="true" />}
             </Link>
@@ -76,7 +78,9 @@ export default function NavBar({ email }: { email: string }) {
           aria-label={signingOut ? 'Cerrando sesión' : 'Cerrar sesión'}
           className="sidebar-signout"
         >
-          <span aria-hidden="true">←</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M10 17l5-5-5-5M15 12H3M12 3h7v18h-7" />
+          </svg>
           {signingOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
         </button>
         {signOutError && <p className="sidebar-error" role="alert">{signOutError}</p>}

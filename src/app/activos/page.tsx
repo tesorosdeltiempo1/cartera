@@ -53,7 +53,7 @@ const INITIAL_FORM: NewAsset = {
   name: '', ticker: '', market: '', isin: '', canonical_id: '', category: 'Núcleo Pasivo',
   target_weight: '', thesis: '', last_reviewed: '',
 }
-const inputClass = 'w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:border-teal-300/50 focus:outline-none'
+const inputClass = 'w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-400 focus:border-teal-300/50 focus:outline-none'
 
 function formatEur(value: number) {
   return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
@@ -210,7 +210,7 @@ export default function ActivosPage() {
   const unvaluedCount = positions.filter((position) => !getPositionValuation(position).complete).length
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-7xl px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+    <main className="app-page">
       <header className="mb-7">
         <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-teal-200">Política de inversión</p>
         <h1 className="text-2xl font-semibold text-white">Activos y objetivos</h1>

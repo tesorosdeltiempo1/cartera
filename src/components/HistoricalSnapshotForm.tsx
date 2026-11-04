@@ -7,28 +7,29 @@ import { supabase } from '@/lib/supabase'
 
 const inputClass = 'w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2.5 text-sm text-slate-100'
 const labelClass = 'grid min-w-0 gap-1.5 text-sm text-slate-300'
-const initialLines: HistoricalSnapshotLine[] = [
-  { broker: 'Trade Republic', amount: '' },
-  { broker: 'XTB', amount: '' },
-  { broker: 'eToro', amount: '' },
-  { broker: 'Cold wallet', amount: '' },
-]
+const initialLines: HistoricalSnapshotLine[] = [{ broker: '', amount: '' }]
+
+function localDateInputValue() {
+  const date = new Date()
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+  return date.toISOString().slice(0, 10)
+}
 
 function formatEur(value: number) {
   return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
 }
 
 export default function HistoricalSnapshotForm() {
-  const [snapshotDate, setSnapshotDate] = useState('2026-10-22')
+  const [snapshotDate, setSnapshotDate] = useState('')
   const [lines, setLines] = useState(initialLines)
-  const [sourceNote, setSourceNote] = useState('Informe de cartera v3 · 22-oct-2026; resumen agregado por broker, sin detalle por posición. Política vigente: Plan 2026-2030.')
+  const [sourceNote, setSourceNote] = useState('')
   const [saving, setSaving] = useState(false)
   const saveInProgress = useRef(false)
   const [message, setMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const preview = useMemo(() => {
     try {
-      return prepareHistoricalSnapshot(snapshotDate, lines, new Date().toISOString().slice(0, 10))
+      return prepareHistoricalSnapshot(snapshotDate, lines, localDateInputValue())
     } catch {
       return null
     }
@@ -55,10 +56,10 @@ export default function HistoricalSnapshotForm() {
     setErrorMessage('')
 
     try {
-      const prepared = prepareHistoricalSnapshot(snapshotDate, lines, new Date().toISOString().slice(0, 10))
+      const prepared = prepareHistoricalSnapshot(snapshotDate, lines, localDateInputValue())
       const trimmedSourceNote = sourceNote.trim()
       if (!trimmedSourceNote || trimmedSourceNote.length > 500) {
-        throw new Error('Indica la fuente del snapshot (máximo 500 caracteres).')
+        throw new Error('Indica la fuente del corte (máximo 500 caracteres).')
       }
 
       const { data, error } = await supabase.rpc('save_historical_portfolio_snapshot', {
@@ -68,12 +69,12 @@ export default function HistoricalSnapshotForm() {
         p_source_note: trimmedSourceNote,
       })
       if (error) throw error
-      if (!data) throw new Error('No se recibió el identificador del snapshot.')
+      if (!data) throw new Error('No se recibió la confirmación del corte.')
 
-      setMessage(`Snapshot histórico guardado: ${formatEur(prepared.totalValue)}. No se modificaron las posiciones actuales.`)
+      setMessage(`Corte histórico guardado: ${formatEur(prepared.totalValue)}. No se modificaron las posiciones actuales.`)
       notifyPortfolioChanged()
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'No se pudo guardar el snapshot histórico.')
+      setErrorMessage(error instanceof Error ? error.message : 'No se pudo guardar el corte histórico.')
     } finally {
       saveInProgress.current = false
       setSaving(false)
@@ -82,14 +83,14 @@ export default function HistoricalSnapshotForm() {
 
   return (
     <section className="mb-6 rounded-2xl border border-amber-200/15 bg-slate-900/70 p-4 sm:p-6">
-      <h2 className="font-semibold text-white">Añadir snapshot histórico agregado</h2>
+      <h2 className="font-semibold text-white">Añadir un corte histórico por broker</h2>
       <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-400">
-        Guarda una fecha pasada y un total por broker. No crea posiciones individuales, no cambia datos actuales y no incluye inmuebles ni hipotecas.
+        Registra una fecha pasada y un total por broker. No crea posiciones individuales, no cambia datos actuales y no incluye inmuebles ni hipotecas.
       </p>
 
       <form className="mt-5 grid gap-4" onSubmit={(event) => void handleSubmit(event)}>
         <label className={labelClass}>
-          Fecha de valoración
+          Fecha de valoración (hoy o anterior)
           <input className={inputClass} type="date" value={snapshotDate} onChange={(event) => setSnapshotDate(event.target.value)} required />
         </label>
 
@@ -112,20 +113,20 @@ export default function HistoricalSnapshotForm() {
 
         <label className={labelClass}>
           Fuente y limitaciones
-          <input className={inputClass} value={sourceNote} onChange={(event) => setSourceNote(event.target.value)} maxLength={500} required />
+          <input className={inputClass} value={sourceNote} onChange={(event) => setSourceNote(event.target.value)} placeholder="p. ej. extracto bancario, informe y limitaciones" maxLength={500} required />
         </label>
 
         <p className="text-xs leading-5 text-amber-100/70">
           Los importes se sumarán automáticamente. Se admiten decimales con coma o punto y separadores españoles de miles.
         </p>
         <p className="text-sm font-medium text-slate-200" aria-live="polite">
-          Total del snapshot: {preview ? formatEur(preview.totalValue) : 'completa los importes para calcularlo'}
+          Total del corte: {preview ? formatEur(preview.totalValue) : 'indica una fecha y completa los importes para calcularlo'}
         </p>
         {errorMessage && <p className="text-sm text-rose-200" role="alert">{errorMessage}</p>}
         {message && <p className="text-sm text-teal-200" role="status">{message}</p>}
 
         <button className="justify-self-start rounded-xl bg-teal-300 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-200 disabled:cursor-not-allowed disabled:opacity-50" type="submit" disabled={saving}>
-          {saving ? 'Guardando…' : 'Guardar snapshot histórico'}
+          {saving ? 'Guardando…' : 'Guardar corte histórico'}
         </button>
       </form>
     </section>

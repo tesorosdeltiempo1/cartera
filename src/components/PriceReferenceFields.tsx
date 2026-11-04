@@ -32,7 +32,7 @@ const FX_SOURCES: SourceChoice[] = [
   { value: 'Anotación manual', label: 'Anotación manual' },
 ]
 
-const inputClass = 'w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:border-teal-300/50 focus:outline-none'
+const inputClass = 'w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-400 focus:border-teal-300/50 focus:outline-none'
 const labelClass = 'grid min-w-0 gap-1.5 text-sm text-slate-300'
 
 function SourceField({

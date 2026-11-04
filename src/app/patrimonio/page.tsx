@@ -149,7 +149,7 @@ export default function PatrimonioPage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-7xl px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+    <main className="app-page">
       <header className="mb-7">
         <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-teal-200">Balance familiar</p>
         <h1 className="text-2xl font-semibold text-white">Patrimonio registrado</h1>

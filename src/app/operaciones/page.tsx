@@ -99,7 +99,7 @@ export default function OperacionesPage() {
   const cashTotalEur = cash.reduce((sum, account) => sum + account.balanceEur, 0)
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-7xl px-4 py-8 text-slate-100 sm:px-6 lg:px-8">
+    <main className="app-page">
       <header className="mb-7">
         <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-teal-200">Libro patrimonial</p>
         <h1 className="text-3xl text-white sm:text-4xl">Operaciones y efectivo</h1>

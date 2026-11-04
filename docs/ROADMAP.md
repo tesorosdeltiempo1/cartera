@@ -14,15 +14,32 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 2. **Procedencia visible:** conservar origen y fecha de datos que afectan valoraciones.
 3. **Cambios reversibles:** respaldar antes de importaciones, transformaciones o cambios de esquema.
 4. **Consentimiento explícito:** no migrar ni reescribir datos patrimoniales de producción sin revisión del propietario.
-5. **Accesibilidad antes que ornamento:** la identidad renacentista/rococó debe servir a la comprensión, no competir con ella.
+5. **Claridad antes que ornamento:** la identidad debe transmitir confianza y facilitar una revisión, no competir con las cifras.
 6. **Iteración pequeña:** cada entrega tiene alcance, criterio de aceptación y validación de producción explícitos.
 
 ### Dirección visual de la interfaz
 
-- Priorizar superficies oscuras, contraste cálido y fotografía arquitectónica con licencia y atribución verificables.
-- Mantener en la HOME una sola cifra patrimonial dominante; revelar composición, rentabilidad, evolución y respaldo bajo demanda.
-- La navegación principal debe permanecer visible y ofrecer estados activos, acceso por teclado y etiquetas comprensibles también en pantallas estrechas.
-- Los cambios de presentación no alteran cálculos ni datos patrimoniales; validar con lint, pruebas, build y revisión visual autenticada cuando haya una sesión legítima disponible.
+- La referencia es una herramienta privada de gestión patrimonial: sobria, precisa, silenciosa y editorial; no una fantasía de riqueza ni un panel de trading.
+- Mantener tema oscuro neutro, tipografía editorial limitada a titulares, acento bronce restringido y superficies sin marcos decorativos.
+- Usar una única cifra dominante en HOME; junto a ella, indicar la naturaleza del total, fecha del último corte y cualquier limitación que cambie su lectura.
+- Mantener navegación lateral, iconografía vectorial funcional y estados activos comprensibles; nunca representar acciones con emojis o caracteres ornamentales.
+- Unificar jerarquía, campos, tablas, estados y ritmo entre las seis rutas; la responsividad y la accesibilidad son requisitos, no concesiones.
+- Guía de voz, identidad visual, formularios y contrato de datos: [BRAND_GUIDE.md](BRAND_GUIDE.md).
+
+### Potencial de producto y límites
+
+**Visión:** un expediente patrimonial privado, consolidado y portable que responda con evidencia a cuatro preguntas: qué poseemos, qué debemos, cómo se formó cada cifra y qué ha cambiado desde el último corte.
+
+La capacidad debe crecer por capas verificables:
+
+1. **Balance fiable:** inversiones, efectivo, inmuebles y pasivos con titularidad, valoración fechada, procedencia, cobertura y tratamiento explícito de partidas desconocidas. La suma debe reconciliarse con sus componentes.
+2. **Registro auditable:** ledger de caja, operaciones y flujos inmobiliarios vinculados a su fuente; correcciones reversibles; importación asistida con previsualización, detección de duplicados y conciliación contra extractos.
+3. **Gobierno del patrimonio:** política de objetivos versionada, fechas de revisión, desviaciones explicables, compromisos recurrentes informativos y vistas por titular, cuenta o clase de activo cuando el modelo de permisos lo soporte.
+4. **Perspectiva y continuidad:** snapshots comparables, informes exportables, respaldo restaurable probado y escenarios editables que separen supuestos de hechos y no se presenten como predicciones.
+
+**Condiciones de expansión:** cada nueva clase de activo debe definir titularidad, valoración, liquidez, pasivos asociados, fuente, antigüedad y fórmula de atribución antes de entrar en el total. La incorporación de familiares, asesores, cuentas conectadas, OCR o precios automáticos exige revisión específica de privacidad, consentimiento, seguridad, licencia y modelo de permisos; no se infiere autorización por el carácter privado de la app.
+
+**Fuera de propósito:** ejecutar compras o pagos, recomendar productos, prometer rentabilidad, inferir monedas o valores, atribuir datos no confirmados o convertir Aureum en una contabilidad fiscal certificada.
 
 ## Línea base confirmada
 
@@ -112,13 +129,12 @@ El snapshot del 22-oct se basa en los totales por broker/cuenta del informe v3 y
 
 ### P4 — Sistema visual Aureum y accesibilidad
 
-- Aplicar de forma consistente marcos, tipografía, superficies y ornamentación renacentista/rococó en las cuatro secciones.
-- Restringir adornos a paneles y acciones; conservar tablas legibles, densidad útil y responsive.
-- Revisar contraste, navegación por teclado, foco visible, etiquetas, lectores de pantalla y `prefers-reduced-motion`.
-- Mantener números tabulares y jerarquía visual clara para distinguir dato, objetivo, desviación y advertencia.
-- Refinar los gráficos existentes antes de añadir nuevos: mostrar denominador, valor y peso por categoría; hacer legibles en euros los ejes y fechas del histórico.
-- Evitar leyendas automáticas y decoración que compita con los datos; preservar una lectura cómoda en móvil.
-- Primera iteración desplegada en `63121fd` (`Ready`): la HOME prioriza un total patrimonial monumental en una placa de mármol CSS y agrupa el análisis en desplegables; la navegación también queda en un menú compacto. Las seis rutas responden HTTP 200. Revisar foco, contraste y distribución móvil en sesión autenticada antes de dar P4 por cerrado.
+- Aplicar la guía de marca en las seis rutas: voz sobria, sin emojis ni filigranas, jerarquía y superficies consistentes.
+- Dar a cada campo una etiqueta persistente, unidad, reglas de validación visibles, estados de guardado y confirmación; conservar valores ante errores.
+- Mostrar cobertura, asignación objetivo y exposición no clasificada antes de interpretar una desviación.
+- Representar snapshots con eje temporal real y escala vertical que incluya cero; distinguir valor nominal de rentabilidad y ofrecer valores exactos accesibles.
+- Revisar foco, teclado, lectores de pantalla, contraste y estados de carga/vacío/error en anchos móvil y escritorio.
+- Auditoría local actual: se normalizan los controles y encabezados, se eliminan adornos heredados, se precisa la comparación de objetivos y se corrige la lectura del gráfico histórico. La revisión visual autenticada sigue pendiente para las seis rutas; no cerrar P4 con una captura de login o una ruta pública como sustituto.
 
 **Criterio de salida:** revisión de cada ruta en móvil y escritorio; ninguna ornamentación reduce la legibilidad, el contraste o la facilidad de completar tareas.
 

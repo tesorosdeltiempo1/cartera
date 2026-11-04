@@ -3,6 +3,7 @@ type CategoryAllocation = {
   actualWeight: number
   targetWeight: number
   hasPositions: boolean
+  hasTargetAssets: boolean
   targetComplete: boolean
 }
 
@@ -26,6 +27,10 @@ function barWidth(value: number) {
 }
 
 export default function AllocationComparison({ data, positionsWithTarget, totalPositions }: Props) {
+  const assignedTargetWeight = data.reduce((sum, item) => sum + item.targetWeight, 0)
+  const actualCoverage = data.reduce((sum, item) => sum + item.actualWeight, 0)
+  const targetsComplete = totalPositions > 0 && positionsWithTarget === totalPositions
+
   return (
     <section aria-labelledby="allocation-title" className="dashboard-inner-card p-4 sm:p-5">
       <div className="mb-5">
@@ -36,9 +41,26 @@ export default function AllocationComparison({ data, positionsWithTarget, totalP
         </p>
       </div>
 
+      <dl className="mb-5 grid gap-3 border-y border-white/[0.07] py-3 text-sm sm:grid-cols-3">
+        <div>
+          <dt className="text-xs text-slate-400">Objetivos declarados</dt>
+          <dd className="mt-1 font-medium tabular-nums text-slate-100">{positionsWithTarget} de {totalPositions} activos</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-slate-400">Suma de objetivos registrados</dt>
+          <dd className="mt-1 font-medium tabular-nums text-slate-100">{percent(assignedTargetWeight)}</dd>
+          <dd className="mt-0.5 text-xs text-slate-500">{targetsComplete ? assignedTargetWeight < 99.95 ? `${percent(100 - assignedTargetWeight)} sin asignar` : assignedTargetWeight > 100.05 ? `${percent(assignedTargetWeight - 100)} por encima de 100%` : 'asignación completa' : 'suma parcial; faltan activos por definir'}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-slate-400">Valor actual incluido en la comparativa</dt>
+          <dd className="mt-1 font-medium tabular-nums text-slate-100">{percent(actualCoverage)}</dd>
+          <dd className="mt-0.5 text-xs text-slate-500">del total de cartera y efectivo en EUR</dd>
+        </div>
+      </dl>
+
       <div className="grid gap-3 sm:grid-cols-2">
         {data.map((item) => {
-          const complete = item.hasPositions && item.targetComplete
+          const complete = item.hasTargetAssets && item.targetComplete
           const difference = item.actualWeight - item.targetWeight
 
           return (
@@ -46,7 +68,7 @@ export default function AllocationComparison({ data, positionsWithTarget, totalP
               <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
                 <h3 className="text-sm font-medium text-slate-200">{item.category}</h3>
                 <span className={`text-xs font-medium ${complete ? Math.abs(difference) < 0.05 ? 'text-emerald-200' : 'text-amber-200' : 'text-slate-400'}`}>
-                  {complete ? deviation(difference) : item.hasPositions ? 'Objetivo incompleto' : 'Sin posiciones'}
+                  {complete ? deviation(difference) : item.hasTargetAssets ? 'Objetivo incompleto' : item.hasPositions ? 'Sin objetivo definido' : 'Sin posiciones'}
                 </span>
               </div>
 
@@ -64,7 +86,7 @@ export default function AllocationComparison({ data, positionsWithTarget, totalP
                   <div className="mb-1 flex justify-between gap-2 text-slate-400">
                     <span>Peso objetivo</span>
                     <span className="tabular-nums text-slate-200">
-                      {!item.hasPositions ? '—' : complete ? percent(item.targetWeight) : `Parcial · ${percent(item.targetWeight)}`}
+                      {!item.hasTargetAssets ? '—' : complete ? percent(item.targetWeight) : `Parcial · ${percent(item.targetWeight)}`}
                     </span>
                   </div>
                   <div className="h-1.5 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
@@ -78,7 +100,7 @@ export default function AllocationComparison({ data, positionsWithTarget, totalP
       </div>
 
       <p className="mt-4 text-xs leading-5 text-slate-400">
-        La desviación se expresa en puntos porcentuales (real menos objetivo). Es una comparación informativa, no una recomendación de compra o venta.
+        La desviación se expresa en puntos porcentuales (peso real menos peso objetivo). La exposición sin activo consolidado se excluye de la comparativa; el efectivo no tiene un objetivo configurable en esta pantalla. Comparación informativa, no recomendación de compra o venta.
       </p>
     </section>
   )
