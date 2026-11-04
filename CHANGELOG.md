@@ -2,12 +2,13 @@
 
 Este archivo recoge las iteraciones funcionales y visuales por separado del README. Las fechas indican cuándo se implementó cada cambio; no implican por sí mismas que esté desplegado ni validado en producción.
 
-## 2026-11-04 — Snapshots históricos agregados (Supabase; web pendiente de despliegue)
+## 2026-11-04 — Snapshots históricos agregados (desplegado en producción)
 
 - Añadida una captura histórica fechada por broker con fuente y validación de que el total coincide con el desglose; no crea posiciones ni modifica valoraciones actuales o snapshots anteriores.
 - Las migraciones 010–012 se aplicaron en Supabase; la comprobación de solo lectura confirmó los objetos, RLS de planes y permisos de `authenticated`/`anon` esperados.
 - Se guardó el snapshot del 22-oct-2026 a partir de totales agregados por broker/cuenta del informe v3. No se crearon posiciones ni se modificaron valoraciones actuales; el registro no incluye inmuebles ni hipotecas.
-- El Plan 2026–2030 se conserva como política vigente. El formulario del snapshot y las demás mejoras web aún esperan el despliegue desde `main`.
+- El Plan 2026–2030 se conserva como política vigente.
+- El commit `77a63ec` se desplegó desde `main`; Vercel lo marcó `Ready`. El smoke test de `/historico` en el dominio de producción mostró la pantalla privada de acceso. No se usaron credenciales: queda pendiente validar las funciones autenticadas como propietario.
 
 ## 2026-11-04 — Pruebas repetibles y actualización de seguridad (local)
 

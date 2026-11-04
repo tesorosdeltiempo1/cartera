@@ -23,6 +23,7 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - Registros públicos desactivados y RLS/policies del propietario aplicados a las cuatro tablas de cartera, según diagnóstico compartido por el propietario.
 - Dashboard, catálogo de activos consolidados, posiciones por broker, histórico de snapshots y exportación JSON disponibles.
 - Despliegue automático desde `main` a Vercel.
+- La versión del commit `77a63ec` está desplegada en producción (`Ready`); el smoke test anónimo de `/historico` mostró la pantalla privada de acceso. No se validaron funciones con sesión propietaria en esta entrega.
 - El dashboard usa EUR como moneda base. La migración 006 ya añadió moneda/fecha/fuente de precio y FX; las posiciones previas tienen esos nuevos campos sin clasificar hasta revisión manual.
 - Los snapshots antiguos se conservan y no se recalculan al editar posiciones.
 - El respaldo es exportación JSON; aún no existe un flujo de restauración.
