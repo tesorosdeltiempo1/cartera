@@ -5,10 +5,10 @@ import { supabase } from '@/lib/supabase'
 import { notifyPortfolioChanged } from '@/lib/portfolioEvents'
 import { COMMON_CURRENCIES } from '@/lib/currencies'
 import { isCurrencyCodeSupported } from '@/lib/valuation'
-import type { LedgerPosition } from '@/lib/ledger'
+import type { CashAccount, LedgerPosition } from '@/lib/ledger'
 
-type OperationType = 'buy' | 'sell' | 'opening_cash' | 'deposit' | 'withdrawal' | 'dividend' | 'interest' | 'fee' | 'transfer_in' | 'transfer_out' | 'fx_update'
-type Props = { positions: LedgerPosition[]; trackedPositionIds: Set<string>; currencies: string[] }
+type OperationType = 'buy' | 'sell' | 'opening_cash' | 'deposit' | 'withdrawal' | 'dividend' | 'interest' | 'fee' | 'fx_update'
+type Props = { positions: LedgerPosition[]; trackedPositionIds: Set<string>; cashAccounts: CashAccount[] }
 
 const OPERATION_OPTIONS: { value: OperationType; label: string; group: 'position' | 'cash' }[] = [
   { value: 'buy', label: 'Compra de activo', group: 'position' },
@@ -19,17 +19,16 @@ const OPERATION_OPTIONS: { value: OperationType; label: string; group: 'position
   { value: 'dividend', label: 'Dividendo', group: 'cash' },
   { value: 'interest', label: 'Interés', group: 'cash' },
   { value: 'fee', label: 'Comisión', group: 'cash' },
-  { value: 'transfer_in', label: 'Traspaso recibido', group: 'cash' },
-  { value: 'transfer_out', label: 'Traspaso enviado', group: 'cash' },
   { value: 'fx_update', label: 'Actualizar cambio de la cuenta', group: 'cash' },
 ]
 
 const inputClass = 'w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2.5 text-sm text-slate-100'
 const labelClass = 'grid gap-1.5 text-sm text-slate-300'
 
-export default function RecordOperationForm({ positions, trackedPositionIds, currencies }: Props) {
+export default function RecordOperationForm({ positions, trackedPositionIds, cashAccounts }: Props) {
   const [operationType, setOperationType] = useState<OperationType>('buy')
   const [positionId, setPositionId] = useState('')
+  const [cashAccountId, setCashAccountId] = useState('')
   const [broker, setBroker] = useState('')
   const [currency, setCurrency] = useState('EUR')
   const [operationDate, setOperationDate] = useState(new Date().toISOString().slice(0, 10))
@@ -52,8 +51,11 @@ export default function RecordOperationForm({ positions, trackedPositionIds, cur
   const isFee = operationType === 'fee'
   const needsAmount = !isTrade && operationType !== 'fx_update'
   const chosenPosition = positions.find((position) => position.id === positionId)
-  const selectedCurrency = isTrade ? chosenPosition?.currency ?? '' : currency
-  const knownCurrencies = Array.from(new Set([...COMMON_CURRENCIES.map((item) => item.code), ...currencies])).sort()
+  const effectiveCashAccountId = cashAccountId || cashAccounts[0]?.id || '__new__'
+  const chosenCashAccount = cashAccounts.find((account) => account.id === effectiveCashAccountId)
+  const selectedCurrency = isTrade ? chosenPosition?.currency ?? '' : chosenCashAccount?.currency ?? currency
+  const selectedBroker = isTrade ? chosenPosition?.broker?.trim() || 'Broker sin especificar' : chosenCashAccount?.broker ?? broker.trim()
+  const knownCurrencies = Array.from(new Set([...COMMON_CURRENCIES.map((item) => item.code), ...cashAccounts.map((account) => account.currency)])).sort()
 
   function changeType(value: OperationType) {
     setOperationType(value)
@@ -74,7 +76,7 @@ export default function RecordOperationForm({ positions, trackedPositionIds, cur
     try {
       const operationCurrency = selectedCurrency.trim().toUpperCase()
       if (!isCurrencyCodeSupported(operationCurrency)) throw new Error('Selecciona una moneda válida.')
-      if (!isTrade && !broker.trim()) throw new Error('Indica el broker o la cuenta de efectivo.')
+      if (!isTrade && !selectedBroker) throw new Error('Indica el broker o la cuenta de efectivo.')
       if (isTrade && !chosenPosition) throw new Error('Selecciona la posición.')
       if (isTrade && !trackedPositionIds.has(positionId)) throw new Error('Inicia el seguimiento de esta posición desde Posiciones antes de comprar o vender.')
       if (isTrade && (!Number(quantity) || Number(quantity) <= 0 || !Number(unitPrice) || Number(unitPrice) <= 0)) throw new Error('Cantidad y precio de operación deben ser mayores que cero.')
@@ -87,7 +89,7 @@ export default function RecordOperationForm({ positions, trackedPositionIds, cur
         p_operation: {
           operation_type: operationType,
           position_id: isTrade ? positionId : null,
-          broker: isTrade ? chosenPosition?.broker || 'Broker sin especificar' : broker.trim(),
+          broker: selectedBroker,
           currency: operationCurrency,
           operation_date: operationDate,
           quantity: isTrade ? Number(quantity) : null,
@@ -121,7 +123,7 @@ export default function RecordOperationForm({ positions, trackedPositionIds, cur
     <form onSubmit={handleSubmit} className="grid gap-4 rounded-2xl border border-teal-300/15 bg-slate-900/60 p-4 sm:p-6">
       <div>
         <h2 className="text-lg text-white">Registrar una operación</h2>
-        <p className="mt-1 text-sm text-slate-400">Las compras y ventas actualizan posición y caja en un único paso. El ledger no reconstruye movimientos anteriores.</p>
+        <p className="mt-1 text-sm text-slate-400">Compras y ventas usan automáticamente la cuenta de caja del broker de la posición. Las aportaciones y rentas se asignan a la cuenta que elijas.</p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <label className={labelClass}>Tipo de operación
@@ -139,14 +141,24 @@ export default function RecordOperationForm({ positions, trackedPositionIds, cur
             <option value="">Selecciona una posición</option>
             {positions.map((position) => <option key={position.id} value={position.id}>{position.name} · {position.broker ?? 'broker no indicado'} · {position.currency ?? 'moneda pendiente'}</option>)}
           </select>
-        </label> : <label className={labelClass}>Broker / cuenta
-          <input value={broker} onChange={(event) => setBroker(event.target.value)} required placeholder="p. ej. Trade Republic" className={inputClass} />
-        </label>}
-        {!isTrade && <label className={labelClass}>Moneda de la cuenta
-          <select value={currency} onChange={(event) => setCurrency(event.target.value)} className={inputClass}>
-            {knownCurrencies.map((code) => <option key={code} value={code}>{COMMON_CURRENCIES.find((item) => item.code === code)?.label ?? code}</option>)}
+          {chosenPosition && <span className="text-xs text-slate-500">Caja asociada: {chosenPosition.broker || 'Broker sin especificar'} · {chosenPosition.currency ?? 'moneda pendiente'}</span>}
+        </label> : <label className={labelClass}>Cuenta de efectivo
+          <select value={effectiveCashAccountId} onChange={(event) => { setCashAccountId(event.target.value); if (event.target.value === '__new__') setBroker('') }} className={inputClass}>
+            {cashAccounts.map((account) => <option key={account.id} value={account.id}>{account.broker} · {account.currency}</option>)}
+            <option value="__new__">Otra cuenta…</option>
           </select>
         </label>}
+        {!isTrade && !chosenCashAccount && <>
+          <label className={labelClass}>Banco o broker
+            <input value={broker} onChange={(event) => setBroker(event.target.value)} required placeholder="p. ej. Trade Republic" className={inputClass} />
+          </label>
+          <label className={labelClass}>Moneda de la cuenta
+            <select value={currency} onChange={(event) => setCurrency(event.target.value)} className={inputClass}>
+              {knownCurrencies.map((code) => <option key={code} value={code}>{COMMON_CURRENCIES.find((item) => item.code === code)?.label ?? code}</option>)}
+            </select>
+          </label>
+        </>}
+        {!isTrade && chosenCashAccount && <div className={labelClass}>Banco o broker<span className="rounded-lg border border-white/10 bg-slate-950/50 px-3 py-2.5 text-sm">{chosenCashAccount.broker}</span></div>}
         <label className={labelClass}>Fecha de operación
           <input type="date" value={operationDate} onChange={(event) => setOperationDate(event.target.value)} required className={inputClass} />
         </label>
@@ -170,13 +182,13 @@ export default function RecordOperationForm({ positions, trackedPositionIds, cur
           </label>
           {chosenPosition?.currency && chosenPosition.currency !== 'EUR' && <FxFields currency={chosenPosition.currency} fxRate={fxRate} fxAsOf={fxAsOf} fxSource={fxSource} setFxRate={setFxRate} setFxAsOf={setFxAsOf} setFxSource={setFxSource} />}
         </>}
-        {needsAmount && <label className={labelClass}>{operationType === 'opening_cash' ? 'Saldo inicial' : isIncome ? 'Importe bruto' : isFee ? 'Comisión' : 'Importe'} ({currency})
+        {needsAmount && <label className={labelClass}>{operationType === 'opening_cash' ? 'Saldo inicial' : isIncome ? 'Importe bruto' : isFee ? 'Comisión' : 'Importe'} ({selectedCurrency})
           <input type="number" min={operationType === 'opening_cash' ? '0' : '0.00000001'} step="any" value={amount} onChange={(event) => setAmount(event.target.value)} required className={inputClass} />
         </label>}
-        {isIncome && <label className={labelClass}>Comisión descontada ({currency})
+        {isIncome && <label className={labelClass}>Comisión descontada ({selectedCurrency})
           <input type="number" min="0" step="any" value={fees} onChange={(event) => setFees(event.target.value)} className={inputClass} />
         </label>}
-        {!isTrade && currency !== 'EUR' && <FxFields currency={currency} fxRate={fxRate} fxAsOf={fxAsOf} fxSource={fxSource} setFxRate={setFxRate} setFxAsOf={setFxAsOf} setFxSource={setFxSource} />}
+        {!isTrade && selectedCurrency !== 'EUR' && <FxFields currency={selectedCurrency} fxRate={fxRate} fxAsOf={fxAsOf} fxSource={fxSource} setFxRate={setFxRate} setFxAsOf={setFxAsOf} setFxSource={setFxSource} />}
         <label className="grid gap-1.5 text-sm text-slate-300 sm:col-span-2 lg:col-span-3">Nota (opcional)
           <input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Referencia del extracto o comentario" className={inputClass} />
         </label>

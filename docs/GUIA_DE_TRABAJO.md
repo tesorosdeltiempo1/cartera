@@ -44,7 +44,7 @@ Los estados anteriores son una fotografía documental: comprobar el despliegue y
 | `docs/ROADMAP.md` | Prioridades, límites y criterios de aceptación del producto. |
 | `docs/database/` | Inspecciones de solo lectura, inventarios privados y scripts/migraciones SQL con estados distintos. |
 
-No se configura una suite de pruebas automatizadas en los scripts actuales de `package.json`. Las puertas locales disponibles son ESLint y el build de Next.js; completar estas comprobaciones con QA manual de los flujos afectados.
+`npm test` ejecuta pruebas unitarias con Node y `tsx` para calendario de aportaciones, cálculos del ledger y filtros. Las puertas locales adicionales son ESLint y el build de Next.js; completar estas comprobaciones con QA manual de los flujos afectados.
 
 ## Cómo abordar una mejora
 
@@ -61,6 +61,7 @@ Comandos de validación local:
 ```bash
 npm install
 npm run lint
+npm test
 npm run build
 ```
 

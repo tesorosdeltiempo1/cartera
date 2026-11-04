@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import TrackRecordChart from '@/components/TrackRecordChart'
 import DeleteSnapshotButton from '@/components/DeleteSnapshotButton'
+import HistoricalSnapshotForm from '@/components/HistoricalSnapshotForm'
 import { supabase } from '@/lib/supabase'
 import { formatCurrency, type SnapshotValuationDetail } from '@/lib/valuation'
 
-type Snapshot = { id: string; snapshot_date: string; total_value: number; breakdown: Record<string, number> | null; cash_breakdown: { broker: string; currency: string; balance: number; fx_rate_to_eur: number; fx_as_of: string | null; fx_source: string | null; value_eur: number }[] | null }
+type Snapshot = { id: string; snapshot_date: string; total_value: number; breakdown: Record<string, number> | null; cash_breakdown: { broker: string; currency: string; balance: number; fx_rate_to_eur: number; fx_as_of: string | null; fx_source: string | null; value_eur: number }[] | null; source_note: string | null }
 type SnapshotAsset = { snapshot_id: string; asset_name: string; category: string; value: number; target_weight: number | null; valuation_detail: SnapshotValuationDetail[] | null }
 
 function eur(value: number) {
@@ -56,6 +57,8 @@ export default function HistoricoPage() {
 
       {errorMessage && <p role="alert" className="mb-5 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">No se pudo cargar el histórico: {errorMessage}</p>}
 
+      <HistoricalSnapshotForm />
+
       <section className="mb-6 rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4 sm:p-6">
         <h2 className="font-semibold text-white">Evolución del patrimonio</h2>
         {loading ? <p className="py-12 text-sm text-slate-400">Cargando snapshots…</p> : chartData.length ? <TrackRecordChart data={chartData} /> : <p className="py-12 text-sm text-slate-400">Aún no hay snapshots. Guarda uno desde el Dashboard.</p>}
@@ -90,6 +93,7 @@ export default function HistoricoPage() {
                         </details>}
                       </>
                     : snapshot.breakdown ? Object.entries(snapshot.breakdown).map(([category, value]) => `${category}: ${eur(Number(value))}`).join(' · ') : 'Sin desglose'}
+                  {snapshot.source_note && <p className="mt-1 text-slate-500">{snapshot.source_note}</p>}
                 </td>
                 <td className="px-5 py-4 text-right"><DeleteSnapshotButton snapshotId={snapshot.id} date={new Date(`${snapshot.snapshot_date}T00:00:00`).toLocaleDateString('es-ES')} value={snapshot.total_value} /></td>
               </tr>

@@ -1,6 +1,6 @@
 # Roadmap de producto — Aureum
 
-**Revisión:** 2026-10-01
+**Revisión:** 2026-11-04
 **Estado:** autenticación y RLS aplicados; acceso del propietario confirmado en producción.  
 **Horizonte:** una mejora por iteración, con evidencia verificable y sin cambios silenciosos sobre datos reales.
 
@@ -26,7 +26,8 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - El dashboard usa EUR como moneda base. La migración 006 ya añadió moneda/fecha/fuente de precio y FX; las posiciones previas tienen esos nuevos campos sin clasificar hasta revisión manual.
 - Los snapshots antiguos se conservan y no se recalculan al editar posiciones.
 - El respaldo es exportación JSON; aún no existe un flujo de restauración.
-- Las migraciones 007 y 008 están aplicadas y sus tablas, RLS, policies y permisos fueron confirmados con el diagnóstico 002. `/operaciones` está desplegada; `/patrimonio` se publicó en `main` con `e0cef85`, pendiente de confirmación de Vercel y prueba funcional.
+- Las migraciones 007–012 están aplicadas en Supabase; el diagnóstico de solo lectura confirmó columnas/RPC de 010–012, RLS en planes y permisos solo para `authenticated` donde corresponde. Se guardó un snapshot histórico agregado del 22-oct-2026; no reconstruye posiciones ni incluye inmuebles/hipotecas.
+- El respaldo local incluye el contenido completo de las tablas nuevas y conserva paginación/conteos; todavía no existe flujo de restauración.
 - El detalle de la dirección clásica Aureum y su validación está en [CHANGELOG.md](../CHANGELOG.md).
 - El procedimiento de trabajo, la arquitectura actual y las precauciones de datos están en [GUIA_DE_TRABAJO.md](GUIA_DE_TRABAJO.md).
 
@@ -82,13 +83,21 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 - Revisar edición y eliminación de posiciones y snapshots: confirmación contextual, resultado inequívoco, prevención de doble envío y manejo de errores de red.
 - Probar operaciones destructivas primero con datos de prueba y usuario propietario; no usar cambios reales como prueba de interfaz.
 - Mejorar estados de carga, vacío, error y recuperación/reintento de forma consistente.
-- Añadir filtros/búsqueda de posiciones si el volumen real lo justifica.
+- Posiciones ya tiene filtros/búsqueda; `/operaciones` filtra los 250 movimientos recientes por texto y tipo, sin hacer pasar esa ventana por el historial completo.
 
 **Ledger desplegado:** el propietario confirmó que `/operaciones` funciona en producción. La migración 007 está aplicada y el diagnóstico 002 confirmó tablas, RLS, policies y grants de funciones. Dashboard y `/operaciones` usan `get_portfolio_ledger_summary` para agregar el historial completo; 250 filas solo limitan la lista reciente. La exportación pagina y comprueba recuentos; los snapshots usan un RPC transaccional. El punto de partida del ledger no reconstruye operaciones anteriores.
 
-**Integridad de snapshots:** `save_portfolio_snapshot` inserta resumen y detalle en una transacción; el flujo de la app queda pendiente de comprobación tras el despliegue.
+**Integridad de snapshots:** `save_portfolio_snapshot` inserta resumen y detalle en una transacción; 012 añade snapshots históricos agregados con procedencia y valida que el total coincida con el desglose. La inserción histórica se verificó en Supabase; queda comprobar el formulario tras el despliegue.
+
+El snapshot del 22-oct se basa en los totales por broker/cuenta del informe v3 y no constituye un inventario por posición ni un balance patrimonial completo. El Plan 2026–2030 es la referencia de política vigente. Los datos inmobiliarios y de hipotecas siguen pendientes.
 
 **Criterio de salida:** operaciones críticas verificadas de extremo a extremo en entorno de prueba, sin pérdida accidental y con confirmación posterior.
+
+**Incremento preparado para despliegue:** 010 añade traspasos atómicos entre cuentas de la misma moneda y reversiones auditables; 011 añade planes semanales/mensuales informativos que no generan cargos ni movimientos. El respaldo JSON incluye los planes. Migraciones aplicadas y grants/RLS comprobados; después del despliegue, probar con datos ficticios antes de registrar operaciones reales.
+
+**Resiliencia local:** `/operaciones` ofrece reintento explícito de carga y búsqueda/filtro en la lista de 250 movimientos recientes. El resumen sigue calculándose sobre el ledger completo; los filtros no cambian cifras ni datos.
+
+**Pruebas y dependencias:** `npm test` cubre calendario semanal/mensual, entradas inválidas, cálculo de venta, resumen de caja, rentabilidad y filtros. Next.js y su configuración ESLint se actualizaron a 16.4.5; `npm audit --omit=dev` reporta cero vulnerabilidades. El árbol de desarrollo aún informa avisos moderados de `minimatch`; no se forzó una actualización incompatible del linter.
 
 ### P4 — Sistema visual Aureum y accesibilidad
 
@@ -114,6 +123,7 @@ Solo después de P0. Evaluar proveedor, licencias, cobertura de instrumentos y l
 Solo cuando la base de datos y el histórico sean consistentes:
 
 - Registrar aportaciones como flujo de capital separado de la rentabilidad/valor de mercado.
+- La migración 011 está aplicada y la interfaz de planes está preparada: posiciones/caja, importe, frecuencia y fechas; no ejecuta compras ni cargos. Pendiente desplegar y verificar un plan ficticio.
 - Explorar avisos de revisión y desviación respecto a la política, siempre informativos y configurables.
 - Proyecciones a largo plazo únicamente con supuestos editables, escenarios y advertencia de que no son predicciones ni recomendaciones.
 

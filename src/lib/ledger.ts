@@ -36,6 +36,54 @@ export type LedgerTransaction = {
   realized_pnl_native: number
   realized_pnl_eur: number
   notes: string | null
+  property_id?: string | null
+  mortgage_id?: string | null
+  principal_amount?: number
+  flow_category?: string | null
+  transfer_group_id?: string | null
+  reversal_of_transaction_id?: string | null
+}
+
+function normalizeSearchText(value: string) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es')
+}
+
+export function filterLedgerTransactions(
+  transactions: LedgerTransaction[],
+  search: string,
+  operationType: string,
+  positionNames: Map<string, string>,
+  operationLabels: Record<string, string>,
+): LedgerTransaction[] {
+  const query = normalizeSearchText(search.trim())
+  return transactions.filter((transaction) => {
+    if (operationType !== 'all' && transaction.operation_type !== operationType) return false
+    if (!query) return true
+    const searchable = [
+      transaction.broker,
+      transaction.position_id ? positionNames.get(transaction.position_id) ?? '' : '',
+      transaction.notes ?? '',
+      operationLabels[transaction.operation_type] ?? transaction.operation_type,
+    ].join(' ')
+    const normalizedSearchable = normalizeSearchText(searchable)
+    return normalizedSearchable.includes(query)
+  })
+}
+
+export type ContributionPlan = {
+  id: string
+  name: string
+  broker: string
+  currency: string
+  amount: number
+  plan_type: 'cash_deposit' | 'investment_purchase'
+  cadence: 'weekly' | 'monthly'
+  weekday: number | null
+  day_of_month: number | null
+  start_date: string
+  end_date: string | null
+  target_position_id: string | null
+  is_active: boolean
 }
 
 export type CashAccount = {

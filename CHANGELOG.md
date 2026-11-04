@@ -2,6 +2,32 @@
 
 Este archivo recoge las iteraciones funcionales y visuales por separado del README. Las fechas indican cuándo se implementó cada cambio; no implican por sí mismas que esté desplegado ni validado en producción.
 
+## 2026-11-04 — Snapshots históricos agregados (Supabase; web pendiente de despliegue)
+
+- Añadida una captura histórica fechada por broker con fuente y validación de que el total coincide con el desglose; no crea posiciones ni modifica valoraciones actuales o snapshots anteriores.
+- Las migraciones 010–012 se aplicaron en Supabase; la comprobación de solo lectura confirmó los objetos, RLS de planes y permisos de `authenticated`/`anon` esperados.
+- Se guardó el snapshot del 22-oct-2026 a partir de totales agregados por broker/cuenta del informe v3. No se crearon posiciones ni se modificaron valoraciones actuales; el registro no incluye inmuebles ni hipotecas.
+- El Plan 2026–2030 se conserva como política vigente. El formulario del snapshot y las demás mejoras web aún esperan el despliegue desde `main`.
+
+## 2026-11-04 — Pruebas repetibles y actualización de seguridad (local)
+
+- Añadida suite `npm test` con ocho casos sobre fechas, validación de calendario, cálculo de ventas, caja, rentabilidad, búsqueda y snapshots históricos agregados; búsqueda ignora diferencias de acentos.
+- El calendario rechaza fechas imposibles y frecuencias/valores inválidos en vez de mostrar una fecha ficticia; los planes vencidos se distinguen claramente.
+- La revisión SQL de 010 detectó y corrigió localmente que un traspaso fechado con un cambio antiguo no debe reemplazar el cambio vigente de las cuentas.
+- Actualizados `next` y `eslint-config-next` a 16.4.5, parche indicado por npm para los advisories críticos/altos de la versión anterior; actualizadas dependencias transitivas con `npm audit fix` sin `--force`.
+- `npm audit --omit=dev` informa cero vulnerabilidades. La auditoría completa aún informa 16 vulnerabilidades moderadas en el árbol de desarrollo asociadas a `minimatch`; no se forzó un downgrade incompatible de ESLint.
+- Smoke test local del acceso en navegador a 390 px: login visible y sin desbordamiento horizontal. No se usaron credenciales; falta sesión propietaria y pruebas de integración SQL en Supabase aislado. No se modificó producción.
+
+## 2026-11-04 — Traspasos, correcciones auditables y planes previstos (local; esquema aplicado)
+
+- Preparadas y aplicadas en Supabase las migraciones 010 (traspasos atómicos y reversiones) y 011 (planes semanales/mensuales); la interfaz web aún no está desplegada.
+- La interfaz permite trasladar efectivo entre cuentas de la misma moneda y revertir movimientos elegibles sin borrar el original. Cada reversión exige motivo; transferencias se revierten por ambas cuentas juntas.
+- `/operaciones` incorpora planes previstos con próxima fecha y pausa/reanudación; son recordatorios y no crean operaciones, compras ni cargos.
+- El historial reciente permite buscar por activo, broker o nota y filtrar por tipo; muestra claramente que opera sobre una ventana de 250 registros y añade reintento ante errores de carga.
+- El respaldo JSON pagina y comprueba recuentos también para planes; se corrigen etiquetas para movimientos inmobiliarios y transferencias.
+- Validación local: `npm run lint`, `npm run build`, `git diff --check` y tres casos de calendario (semanal, mensual y fin de vigencia) pasan.
+- Pendiente tras despliegue: probar con datos ficticios transferencias, reversiones y planes antes de registrar operaciones reales.
+
 ## 2026-10-01 — Flujos inmobiliarios migrados
 
 - Añadida migración 009 para registrar alquileres, gastos y pagos hipotecarios en el ledger de caja existente.
