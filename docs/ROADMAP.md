@@ -53,6 +53,7 @@ La capacidad debe crecer por capas verificables:
 - El respaldo es exportación JSON; aún no existe un flujo de restauración.
 - Las migraciones 007–012 están aplicadas en Supabase; el diagnóstico de solo lectura confirmó columnas/RPC de 010–012, RLS en planes y permisos solo para `authenticated` donde corresponde. Se guardó un snapshot histórico agregado del 22-oct-2026; no reconstruye posiciones ni incluye inmuebles/hipotecas.
 - El respaldo local incluye el contenido completo de las tablas nuevas y conserva paginación/conteos; todavía no existe flujo de restauración.
+- En el workspace se prepara una importación local CSV con vista previa, conciliación parcial, selección por fila y acta JSON descargable. No se debe presentar como disponible en producción hasta desplegar y probar; todavía no interpreta formatos originales de brokers ni guarda el acta dentro de Supabase.
 - El detalle de la dirección clásica Aureum y su validación está en [CHANGELOG.md](../CHANGELOG.md).
 - El procedimiento de trabajo, la arquitectura actual y las precauciones de datos están en [GUIA_DE_TRABAJO.md](GUIA_DE_TRABAJO.md).
 
@@ -92,6 +93,21 @@ La capacidad debe crecer por capas verificables:
 - Mantener los archivos de respaldo fuera del repositorio y protegidos localmente.
 
 **Criterio de salida:** restauración ensayada en entorno aislado, conteos y totales reconciliados y errores de filas identificados antes de aplicar.
+
+### P1b — Importación asistida y conciliación de posiciones
+
+**Objetivo:** reducir la transcripción sin tratar extractos, informes agregados e inferencias como datos intercambiables.
+
+La primera etapa local acepta el CSV común de Aureum, lo analiza en el navegador, propone coincidencias por broker + ticker o broker + nombre y presenta cambios por fila, bloqueos y suma de valoraciones completas. El usuario elige las filas y confirma. No se borran posiciones ausentes ni se modifican vínculos, objetivos, ledger o snapshots. El acta JSON es descargable, pero no se almacena en la base de datos; la aplicación por varias filas no es transaccional.
+
+**Siguientes pasos antes de darla por terminada:**
+
+- Validar con extractos ficticios y, tras desplegar, con una importación de prueba controlada por el propietario; no probar contra datos reales sin confirmación y respaldo reciente.
+- Evaluar un adaptador por formato/versión de cada broker solo cuando exista un ejemplo no sensible y se conozcan sus convenciones de unidades, efectivo, moneda y fecha.
+- Diseñar un registro de importación persistido y una aplicación transaccional con RPC antes de prometer auditoría duradera o importaciones grandes.
+- No extraer de PDF los totales agregados como si fueran filas ni actualizar posiciones desde narrativas sin extractos originales.
+
+**Criterio de salida:** cada dato importado tiene fuente y fecha revisables; la suma se etiqueta como parcial si faltan valoraciones; discrepancias se muestran, no se fuerzan; cambios y bloqueos se explican antes de escribir; y el acta/backup permite reconstruir qué se aplicó.
 
 ### P2 — Calidad del catálogo y política de inversión
 

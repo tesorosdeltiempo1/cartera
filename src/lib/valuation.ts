@@ -1,5 +1,5 @@
 export type PositionPriceData = {
-  quantity: number
+  quantity: number | null
   avg_price: number | null
   current_price: number | null
   currency: string | null
@@ -8,6 +8,8 @@ export type PositionPriceData = {
   fx_rate_to_eur: number | null
   fx_as_of: string | null
   fx_source: string | null
+  estimated_value_eur?: number | null
+  estimated_value_as_of?: string | null
 }
 
 export type PositionValuation = {
@@ -15,6 +17,13 @@ export type PositionValuation = {
   valueEur: number | null
   quoteCurrency: string | null
   quotePrice: number | null
+  reason: string | null
+}
+
+export type PositionOverviewValuation = {
+  quality: 'confirmed' | 'estimated' | 'missing'
+  valueEur: number | null
+  asOf: string | null
   reason: string | null
 }
 
@@ -54,7 +63,7 @@ export function isCurrencyCodeSupported(value: string) {
 
 export function getSnapshotValuationDetail(position: PositionWithIdentity): SnapshotValuationDetail | null {
   const valuation = getPositionValuation(position)
-  if (!valuation.complete || valuation.valueEur === null || position.current_price === null || !position.currency || !position.price_as_of || !position.price_source) {
+  if (!valuation.complete || valuation.valueEur === null || position.quantity === null || position.current_price === null || !position.currency || !position.price_as_of || !position.price_source) {
     return null
   }
 
@@ -91,6 +100,10 @@ export function getPositionValuation(position: PositionPriceData): PositionValua
     return { complete: false, valueEur: null, quoteCurrency: currency, quotePrice, reason: 'Falta un precio actual válido.' }
   }
 
+  if (position.quantity === null || !Number.isFinite(position.quantity) || position.quantity < 0) {
+    return { complete: false, valueEur: null, quoteCurrency: currency, quotePrice, reason: 'Falta la cantidad necesaria para calcular el valor desde el precio por unidad.' }
+  }
+
   if (!position.price_as_of || !position.price_source?.trim()) {
     return { complete: false, valueEur: null, quoteCurrency: currency, quotePrice, reason: 'Añade la fecha y el origen del precio actual.' }
   }
@@ -115,6 +128,35 @@ export function getPositionValuation(position: PositionPriceData): PositionValua
     quoteCurrency: currency,
     quotePrice,
     reason: null,
+  }
+}
+
+export function getPositionOverviewValuation(position: PositionPriceData): PositionOverviewValuation {
+  const confirmed = getPositionValuation(position)
+  if (confirmed.complete && confirmed.valueEur !== null) {
+    return {
+      quality: 'confirmed',
+      valueEur: confirmed.valueEur,
+      asOf: position.price_as_of,
+      reason: null,
+    }
+  }
+
+  const estimatedValue = position.estimated_value_eur
+  if (estimatedValue !== null && estimatedValue !== undefined && Number.isFinite(estimatedValue) && estimatedValue >= 0) {
+    return {
+      quality: 'estimated',
+      valueEur: estimatedValue,
+      asOf: position.estimated_value_as_of ?? null,
+      reason: null,
+    }
+  }
+
+  return {
+    quality: 'missing',
+    valueEur: null,
+    asOf: null,
+    reason: confirmed.reason,
   }
 }
 

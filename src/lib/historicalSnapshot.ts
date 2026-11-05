@@ -8,6 +8,20 @@ export type PreparedHistoricalSnapshot = {
   breakdown: Record<string, number>
 }
 
+export type SnapshotValueChange = {
+  difference: number
+  percentage: number
+}
+
+export function compareSnapshotValues(currentValue: number, previousValue: number): SnapshotValueChange | null {
+  if (!Number.isFinite(currentValue) || !Number.isFinite(previousValue) || previousValue <= 0) return null
+  const difference = Math.round((currentValue - previousValue) * 100) / 100
+  return {
+    difference,
+    percentage: difference / previousValue * 100,
+  }
+}
+
 function isValidDate(value: string) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
   if (!match) return false

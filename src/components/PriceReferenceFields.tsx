@@ -9,6 +9,7 @@ type SourceChoice = { value: string; label: string }
 
 type Props = {
   hasCurrentPrice: boolean
+  currencyRequired?: boolean
   currencyLocked?: boolean
   currency: string
   priceAsOf: string
@@ -88,6 +89,7 @@ function SourceField({
 
 export default function PriceReferenceFields({
   hasCurrentPrice,
+  currencyRequired = true,
   currencyLocked = false,
   currency,
   priceAsOf,
@@ -125,7 +127,7 @@ export default function PriceReferenceFields({
             id={`${idPrefix}-currency`}
             value={selectedCurrency}
             onChange={(event) => onChange('currency', event.target.value === '__other__' ? '__other__' : event.target.value)}
-            required
+            required={currencyRequired}
             disabled={currencyLocked}
             className={inputClass}
           >
@@ -141,7 +143,7 @@ export default function PriceReferenceFields({
               aria-label="Código de otra moneda"
               maxLength={3}
               pattern="[A-Za-z]{3}"
-              required
+              required={currencyRequired}
               disabled={currencyLocked}
               className={inputClass}
             />

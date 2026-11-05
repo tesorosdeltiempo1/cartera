@@ -2,6 +2,33 @@
 
 Este archivo recoge las iteraciones funcionales y visuales por separado del README. Las fechas indican cuándo se implementó cada cambio; no implican por sí mismas que esté desplegado ni validado en producción.
 
+## 2026-11-05 — Valoraciones cotidianas por estimación (local)
+
+- Posiciones admite un valor total aproximado en EUR sin obligar a registrar unidades, cotización ni conversión. Las referencias detalladas siguen disponibles para quien quiera afinar; una cotización completa tiene prioridad.
+- Resumen, exposiciones y nuevos cortes distinguen importes con referencias, estimaciones manuales y posiciones sin importe. Las estimaciones no alteran la rentabilidad del ledger.
+- Patrimonio excluye las estimaciones del corte verificable y ahora explica la diferencia. La importación CSV muestra la calidad de cada fila y avisa cuando una conciliación incluye estimaciones.
+- Requiere aplicar manualmente [013_estimated_position_values.sql](docs/database/013_estimated_position_values.sql) antes de desplegar esta versión. La migración no se ha aplicado; no se modificaron datos ni producción.
+- Validación local: lint, TypeScript, pruebas (25/25), build y `git diff --check` pasan.
+
+## 2026-11-05 — Lectura jerárquica del histórico (local)
+
+- Histórico prioriza el periodo cubierto, el último valor y la variación nominal frente al corte anterior; el formulario agregado queda plegado y el detalle se consulta por corte.
+- La variación se etiqueta explícitamente como nominal, no como rentabilidad; se conservan los desgloses, fuentes, valoraciones y controles de eliminación.
+- Añadidas pruebas de comparación de importes, incluyendo variación negativa y referencia inválida. `npm run lint`, `npx tsc --noEmit`, `npm test` (22 pruebas) y `npm run build` pasan. Sin cambios en datos ni despliegue.
+
+## 2026-11-05 — Resumen operativo de posiciones (local)
+
+- Posiciones abre con el número de tenencias, el importe EUR conocido de las posiciones valorables y el recuento de vínculos resolubles; se explica qué queda fuera de cada cifra.
+- Las acciones manuales y la importación CSV se pliegan para dar prioridad al inventario. Se conserva la tabla, sus filtros y todos los controles de revisión.
+- `npm run lint`, `npx tsc --noEmit` y `npm test` (22 pruebas) pasan. Sin cambios en datos ni despliegue.
+
+## 2026-11-05 — Importación CSV revisable y claridad de fechas (local)
+
+- Posiciones incorpora plantilla CSV y análisis local en el navegador, coincidencia conservadora, vista previa por fila, detección de ambigüedades, conciliación opcional y confirmación explícita. Las filas ausentes no se borran; el ledger y los históricos quedan protegidos.
+- Tras aplicar, se puede descargar un acta JSON privada. La aplicación por filas no es transaccional y el acta no se guarda en Supabase; ambas limitaciones se explican en la interfaz y el manual.
+- HOME separa la fecha de consulta del último corte y el rango de referencias de valoración; prioriza cobertura, efectivo, composición por categoría y mayores exposiciones identificadas, sin presentar esas cifras como rentabilidad ni modelar derivados.
+- Añadidas pruebas de parsing, formatos numéricos, validación, identidad, cambios, ledger y procedencia. Validación local: `npm test` (21 pruebas), `npx tsc --noEmit`, `npm run lint`, `npm run build` y `git diff --check` pasan. No se importaron posiciones ni se modificaron datos de producción; el cambio aún no está desplegado.
+
 ## 2026-11-04 — Manual de uso de Aureum
 
 - Añadido [MANUAL_DE_USO.md](docs/MANUAL_DE_USO.md), que explica acceso, orden de configuración, seis secciones, valoración y divisas, ledger, inmuebles, cortes, respaldos, privacidad y límites de interpretación.

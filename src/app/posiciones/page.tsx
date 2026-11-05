@@ -4,8 +4,9 @@ import { useCallback, useEffect, useState } from 'react'
 import AddAssetForm from '@/components/AddAssetForm'
 import DeleteAssetButton from '@/components/DeleteAssetButton'
 import EditAssetButton from '@/components/EditAssetButton'
+import PositionImportPanel from '@/components/PositionImportPanel'
 import { supabase } from '@/lib/supabase'
-import { formatCurrency, getPositionValuation } from '@/lib/valuation'
+import { formatCurrency, getPositionOverviewValuation, getPositionValuation } from '@/lib/valuation'
 
 type Position = {
   id: string
@@ -13,7 +14,7 @@ type Position = {
   ticker: string | null
   category: string
   broker: string | null
-  quantity: number
+  quantity: number | null
   avg_price: number | null
   current_price: number | null
   target_weight: number | null
@@ -24,11 +25,13 @@ type Position = {
   fx_rate_to_eur: number | null
   fx_as_of: string | null
   fx_source: string | null
+  estimated_value_eur: number | null
+  estimated_value_as_of: string | null
   cost_basis_eur: number | null
   ledger_started_at: string | null
 }
 type AssetLabel = { id: string; name: string }
-type ValuationFilter = 'all' | 'pending' | 'valued'
+type ValuationFilter = 'all' | 'pending' | 'valued' | 'estimated'
 
 function eur(value: number) {
   return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
@@ -68,12 +71,22 @@ export default function PosicionesPage() {
   }, [load])
 
   const linkedAssets = new Map(masterAssets.map((asset) => [asset.id, asset.name]))
-  const unvaluedCount = positions.filter((position) => !getPositionValuation(position).complete).length
-  const valuedCount = positions.length - unvaluedCount
+  const overviewValuations = positions.map((position) => getPositionOverviewValuation(position))
+  const confirmedValues = positions.map((position) => getPositionValuation(position).valueEur ?? 0)
+  const valuedCount = overviewValuations.filter((valuation) => valuation.quality === 'confirmed').length
+  const estimatedCount = overviewValuations.filter((valuation) => valuation.quality === 'estimated').length
+  const unvaluedCount = positions.length - valuedCount - estimatedCount
+  const confirmedValueEur = Math.round(confirmedValues.reduce((total, value) => total + value, 0) * 100) / 100
+  const estimatedValueEur = Math.round(overviewValuations.reduce((total, valuation) => total + (valuation.quality === 'estimated' ? valuation.valueEur ?? 0 : 0), 0) * 100) / 100
+  const indicativeValueEur = confirmedValueEur + estimatedValueEur
+  const linkedCount = positions.filter((position) => position.investment_asset_id && linkedAssets.has(position.investment_asset_id)).length
   const normalizedSearch = searchTerm.trim().toLocaleLowerCase('es-ES')
   const visiblePositions = positions.filter((position) => {
-    const valued = getPositionValuation(position).complete
-    const matchesValuation = valuationFilter === 'all' || (valuationFilter === 'valued' ? valued : !valued)
+    const quality = getPositionOverviewValuation(position).quality
+    const matchesValuation = valuationFilter === 'all'
+      || (valuationFilter === 'pending' && quality === 'missing')
+      || (valuationFilter === 'valued' && quality === 'confirmed')
+      || (valuationFilter === 'estimated' && quality === 'estimated')
     const searchableText = [position.name, position.ticker, position.broker, linkedAssets.get(position.investment_asset_id ?? '')]
       .filter(Boolean)
       .join(' ')
@@ -90,12 +103,40 @@ export default function PosicionesPage() {
       </header>
 
       {errorMessage && <p role="alert" className="mb-5 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">No se pudieron cargar las posiciones: {errorMessage}</p>}
-      {!loading && unvaluedCount > 0 && <p role="status" className="mb-5 rounded-xl border border-amber-300/20 bg-amber-300/[0.07] px-4 py-3 text-sm leading-6 text-amber-100">{unvaluedCount} posiciones necesitan moneda, precio con fecha/origen o tipo de cambio para incluirse en totales en EUR. Edítalas aquí; los valores desconocidos no se convierten automáticamente.</p>}
+      {!loading && unvaluedCount > 0 && <p role="status" className="mb-5 rounded-xl border border-amber-300/20 bg-amber-300/[0.07] px-4 py-3 text-sm leading-6 text-amber-100">{unvaluedCount} posiciones aún no tienen importe en EUR y quedan fuera del total orientativo. Puedes añadir una estimación rápida o completar precio y cambio.</p>}
 
-      <section className="mb-6 rounded-2xl border border-white/[0.08] bg-slate-900/70 p-4 sm:p-6">
-        <h2 className="mb-4 text-lg font-semibold text-white">Añadir posición en un broker</h2>
-        <AddAssetForm />
-        <p className="mt-3 text-xs leading-5 text-slate-500">Una posición nueva queda sin consolidar hasta vincularla manualmente desde «Activos y objetivos». El peso objetivo de esta fila es antiguo/referencial; no se usa como objetivo global.</p>
+      <section aria-label="Resumen de posiciones" className="mb-5 grid gap-3 sm:grid-cols-3">
+        <article className="rounded-xl border border-white/[0.08] bg-slate-900/70 p-4">
+          <p className="text-xs text-slate-400">Tenencias registradas</p>
+          <p className="mt-2 text-2xl font-medium tabular-nums text-white">{loading || errorMessage ? '—' : positions.length}</p>
+          <p className="mt-1 text-xs text-slate-500">{loading ? 'Cargando inventario' : errorMessage ? 'No se pudo verificar' : `${valuedCount} con referencias · ${estimatedCount} estimadas · ${unvaluedCount} sin importe`}</p>
+        </article>
+        <article className="rounded-xl border border-white/[0.08] bg-slate-900/70 p-4">
+          <p className="text-xs text-slate-400">Valor orientativo de posiciones</p>
+          <p className="mt-2 text-2xl font-medium tabular-nums text-white">{loading || errorMessage ? '—' : eur(indicativeValueEur)}</p>
+          <p className="mt-1 text-xs text-slate-500">{loading || errorMessage ? ' ' : `${eur(confirmedValueEur)} con referencias · ${eur(estimatedValueEur)} estimados`}</p>
+        </article>
+        <article className="rounded-xl border border-white/[0.08] bg-slate-900/70 p-4">
+          <p className="text-xs text-slate-400">Vinculadas a un activo</p>
+          <p className="mt-2 text-2xl font-medium tabular-nums text-white">{loading || errorMessage ? '—' : `${linkedCount} / ${positions.length}`}</p>
+          <p className="mt-1 text-xs text-slate-500">{loading ? 'Cargando vínculos' : errorMessage ? 'No se pudo verificar' : `${positions.length - linkedCount} sin vínculo resoluble; no entran en análisis por activo.`}</p>
+        </article>
+      </section>
+
+      <section aria-label="Acciones de inventario" className="mb-5 grid gap-2">
+        <details className="overflow-hidden rounded-xl border border-white/[0.08] bg-slate-900/50">
+          <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-slate-200 sm:px-5">Añadir posición manual</summary>
+          <div className="border-t border-white/[0.08] p-4 sm:p-6">
+            <AddAssetForm />
+            <p className="mt-3 text-xs leading-5 text-slate-500">Una posición nueva queda sin consolidar hasta vincularla manualmente desde «Activos y objetivos». El peso objetivo de esta fila es antiguo/referencial; no se usa como objetivo global.</p>
+          </div>
+        </details>
+        <details className="overflow-hidden rounded-xl border border-white/[0.08] bg-slate-900/50">
+          <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-slate-200 sm:px-5">Importar posiciones desde un CSV revisable</summary>
+          <div className="border-t border-white/[0.08] pt-5">
+            <PositionImportPanel positions={positions} onApplied={load} />
+          </div>
+        </details>
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-slate-900/70">
@@ -109,6 +150,7 @@ export default function PosicionesPage() {
               ['all', 'Todas', positions.length],
               ['pending', 'Pendientes', unvaluedCount],
               ['valued', 'Valoradas', valuedCount],
+              ['estimated', 'Estimadas', estimatedCount],
             ] as const).map(([filter, label, count]) => (
               <button
                 key={filter}
@@ -140,14 +182,15 @@ export default function PosicionesPage() {
             </tr></thead>
             <tbody className="divide-y divide-white/[0.06]">{visiblePositions.length === 0 ? <tr><td colSpan={8} className="px-5 py-10 text-center text-sm text-slate-400">No hay posiciones que coincidan con estos filtros.</td></tr> : visiblePositions.map((position) => {
               const valuation = getPositionValuation(position)
+              const overviewValuation = getPositionOverviewValuation(position)
               return <tr key={position.id} className="hover:bg-white/[0.025]">
-                <td className="px-5 py-4"><p className="font-medium text-slate-100">{position.name}</p><p className="mt-0.5 text-xs text-slate-500">{[position.ticker, position.broker].filter(Boolean).join(' · ') || 'Sin ticker ni broker'}</p><p className={`mt-1 text-xs ${valuation.complete ? 'text-emerald-200' : 'text-amber-200'}`}>{valuation.complete ? `${position.currency} · precio ${position.price_as_of} · ${position.price_source}` : 'Valoración pendiente'}</p>{!valuation.complete && (position.current_price !== null || position.avg_price !== null) && <p className="mt-1 text-xs text-amber-100/80">Cifras heredadas · moneda sin confirmar: {position.current_price !== null ? `actual ${position.current_price.toLocaleString('es-ES')}` : ''}{position.current_price !== null && position.avg_price !== null ? ' · ' : ''}{position.avg_price !== null ? `medio ${position.avg_price.toLocaleString('es-ES')}` : ''}</p>}{valuation.reason && <p className="mt-0.5 max-w-56 text-xs text-amber-200/80">{valuation.reason}</p>}</td>
+                <td className="px-5 py-4"><p className="font-medium text-slate-100">{position.name}</p><p className="mt-0.5 text-xs text-slate-500">{[position.ticker, position.broker].filter(Boolean).join(' · ') || 'Sin ticker ni broker'}</p><p className={`mt-1 text-xs ${overviewValuation.quality === 'confirmed' ? 'text-emerald-200' : overviewValuation.quality === 'estimated' ? 'text-amber-200' : 'text-slate-400'}`}>{overviewValuation.quality === 'confirmed' ? `${position.currency} · precio ${position.price_as_of} · ${position.price_source}` : overviewValuation.quality === 'estimated' ? `Estimación manual · ${overviewValuation.asOf ?? 'fecha no registrada'}` : 'Sin importe en EUR'}</p>{!valuation.complete && (position.current_price !== null || position.avg_price !== null) && <p className="mt-1 text-xs text-amber-100/80">Cifras heredadas · moneda o conversión sin confirmar: {position.current_price !== null ? `actual ${position.current_price.toLocaleString('es-ES')}` : ''}{position.current_price !== null && position.avg_price !== null ? ' · ' : ''}{position.avg_price !== null ? `medio ${position.avg_price.toLocaleString('es-ES')}` : ''}</p>}{overviewValuation.reason && overviewValuation.quality === 'missing' && <p className="mt-0.5 max-w-56 text-xs text-amber-200/80">{overviewValuation.reason}</p>}</td>
                 <td className="px-4 py-4 text-slate-300">{position.investment_asset_id ? linkedAssets.get(position.investment_asset_id) ?? 'Vínculo no encontrado' : <span className="text-amber-200">Sin vincular</span>}</td>
                 <td className="px-4 py-4 text-slate-300">{position.category}</td>
-                <td className="px-4 py-4 text-right tabular-nums text-slate-300">{position.quantity.toLocaleString('es-ES')}</td>
+                <td className="px-4 py-4 text-right tabular-nums text-slate-300">{position.quantity === null ? '—' : position.quantity.toLocaleString('es-ES')}</td>
                 <td className="px-4 py-4 text-right tabular-nums text-slate-300">{position.avg_price == null ? '—' : position.currency ? formatCurrency(position.avg_price, position.currency) : `${position.avg_price.toLocaleString('es-ES')} · sin moneda`}</td>
                 <td className="px-4 py-4 text-right tabular-nums text-slate-300">{position.current_price == null ? '—' : position.currency ? formatCurrency(position.current_price, position.currency) : `${position.current_price.toLocaleString('es-ES')} · sin moneda`}</td>
-                <td className="px-4 py-4 text-right tabular-nums text-slate-100" title={valuation.reason ?? undefined}>{valuation.complete && valuation.valueEur !== null ? eur(valuation.valueEur) : position.current_price !== null || position.avg_price !== null ? 'No convertido' : 'Pendiente'}</td>
+                <td className={`px-4 py-4 text-right tabular-nums ${overviewValuation.quality === 'estimated' ? 'text-amber-100' : 'text-slate-100'}`} title={overviewValuation.reason ?? undefined}>{overviewValuation.valueEur !== null ? eur(overviewValuation.valueEur) : position.current_price !== null || position.avg_price !== null ? 'No convertido' : 'Pendiente'}</td>
                 <td className="px-5 py-4"><div className="flex justify-end gap-2"><EditAssetButton asset={position} /><DeleteAssetButton assetId={position.id} assetName={position.name} /></div></td>
               </tr>
             })}</tbody>

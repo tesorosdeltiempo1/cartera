@@ -26,6 +26,8 @@ type Props = {
     value: number
     target_weight: number | null
     valuation_detail: SnapshotValuationDetail[]
+    confirmed_value: number
+    estimated_value: number
   }[]
 }
 

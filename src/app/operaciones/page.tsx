@@ -153,7 +153,7 @@ export default function OperacionesPage() {
             const result = returns.find((item) => item.positionId === position.id)
             return <tr key={position.id}>
               <td className="px-4 py-3"><p className="font-medium text-slate-100">{position.name}</p><p className="text-xs text-slate-500">{position.broker ?? 'Broker sin indicar'} · {position.currency ?? 'moneda pendiente'}</p></td>
-              <td className="px-4 py-3 text-right tabular-nums">{Number(position.quantity).toLocaleString('es-ES')}</td>
+              <td className="px-4 py-3 text-right tabular-nums">{position.quantity === null ? '—' : position.quantity.toLocaleString('es-ES')}</td>
               <td className="px-4 py-3 text-right tabular-nums">{position.cost_basis_eur === null ? '—' : eur(Number(position.cost_basis_eur))}</td>
               <td className={`px-4 py-3 text-right tabular-nums ${(result?.realizedEur ?? 0) >= 0 ? 'text-emerald-200' : 'text-rose-200'}`}>{eur(result?.realizedEur ?? 0)}</td>
               <td className="px-4 py-3">{position.ledger_started_at ? <span className="text-emerald-200">Activo desde {new Date(position.ledger_started_at).toLocaleDateString('es-ES')}</span> : <StartLedgerButton position={position} />}</td>

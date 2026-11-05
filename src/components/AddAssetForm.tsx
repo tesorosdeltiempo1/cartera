@@ -6,13 +6,19 @@ import { notifyPortfolioChanged } from '@/lib/portfolioEvents'
 import { isCurrencyCodeSupported } from '@/lib/valuation'
 import PriceReferenceFields from '@/components/PriceReferenceFields'
 
+function localDateInputValue() {
+  const date = new Date()
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+  return date.toISOString().slice(0, 10)
+}
+
 export default function AddAssetForm() {
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [form, setForm] = useState({
     name: '', ticker: '', category: 'Núcleo Pasivo', broker: '',
-    quantity: '', avg_price: '', current_price: '', target_weight: '', currency: '',
+    quantity: '', estimated_value_eur: '', avg_price: '', current_price: '', target_weight: '', currency: '',
     price_as_of: '', price_source: '', fx_rate_to_eur: '', fx_as_of: '', fx_source: '',
   })
 
@@ -37,18 +43,19 @@ export default function AddAssetForm() {
       return
     }
 
-    const quantity = Number(form.quantity)
-    if (form.quantity.trim() === '' || !Number.isFinite(quantity) || quantity < 0) {
-      setErrorMessage('Introduce una cantidad válida (puede ser cero).')
-      setLoading(false)
-      return
-    }
+    const quantity = form.quantity.trim() === '' ? null : Number(form.quantity)
 
     const averagePrice = optionalNumeric(form.avg_price)
     const currentPrice = optionalNumeric(form.current_price)
+    const estimatedValue = optionalNumeric(form.estimated_value_eur)
     const targetWeight = optionalNumeric(form.target_weight)
-    if ([averagePrice, currentPrice].some((value) => value !== null && (!Number.isFinite(value) || value < 0))) {
-      setErrorMessage('Los precios deben ser importes válidos iguales o mayores que cero.')
+    if ((quantity !== null && (!Number.isFinite(quantity) || quantity < 0)) || (quantity === null && currentPrice !== null)) {
+      setErrorMessage(currentPrice !== null ? 'Para calcular desde un precio por unidad necesitas indicar las unidades.' : 'Introduce una cantidad válida o deja el campo vacío para guardar solo una estimación total.')
+      setLoading(false)
+      return
+    }
+    if ([averagePrice, currentPrice, estimatedValue].some((value) => value !== null && (!Number.isFinite(value) || value < 0))) {
+      setErrorMessage('Los importes deben ser valores válidos iguales o mayores que cero.')
       setLoading(false)
       return
     }
@@ -64,7 +71,7 @@ export default function AddAssetForm() {
       setLoading(false)
       return
     }
-    if (!isCurrencyCodeSupported(currency)) {
+    if ((currentPrice !== null || averagePrice !== null) && !isCurrencyCodeSupported(currency)) {
       setErrorMessage('Indica una moneda ISO 4217 reconocida, por ejemplo EUR o USD.')
       setLoading(false)
       return
@@ -76,7 +83,7 @@ export default function AddAssetForm() {
     }
 
     const fxRate = optionalNumeric(form.fx_rate_to_eur)
-    if (form.current_price.trim() && currency !== 'EUR' && (fxRate === null || !Number.isFinite(fxRate) || fxRate <= 0 || !form.fx_as_of || !form.fx_source.trim() || form.fx_source === '__custom__')) {
+    if (currentPrice !== null && currency !== 'EUR' && (fxRate === null || !Number.isFinite(fxRate) || fxRate <= 0 || !form.fx_as_of || !form.fx_source.trim() || form.fx_source === '__custom__')) {
       setErrorMessage('Para valorar en EUR una posición no denominada en EUR, indica tasa EUR por unidad, fecha y origen del cambio.')
       setLoading(false)
       return
@@ -91,18 +98,24 @@ export default function AddAssetForm() {
         quantity,
         avg_price: averagePrice,
         current_price: currentPrice,
+        estimated_value_eur: currentPrice !== null ? null : estimatedValue,
+        estimated_value_as_of: currentPrice !== null || estimatedValue === null ? null : localDateInputValue(),
         target_weight: targetWeight,
-        currency,
-        price_as_of: form.current_price.trim() ? form.price_as_of : null,
-        price_source: form.current_price.trim() ? form.price_source.trim() : null,
-        fx_rate_to_eur: currency === 'EUR' || !form.current_price.trim() ? null : fxRate,
-        fx_as_of: currency === 'EUR' || !form.current_price.trim() ? null : form.fx_as_of,
-        fx_source: currency === 'EUR' || !form.current_price.trim() ? null : form.fx_source.trim(),
+        currency: isCurrencyCodeSupported(currency) ? currency : null,
+        price_as_of: currentPrice !== null ? form.price_as_of : null,
+        price_source: currentPrice !== null ? form.price_source.trim() : null,
+        fx_rate_to_eur: currency === 'EUR' || currentPrice === null ? null : fxRate,
+        fx_as_of: currency === 'EUR' || currentPrice === null ? null : form.fx_as_of,
+        fx_source: currency === 'EUR' || currentPrice === null ? null : form.fx_source.trim(),
       })
       if (error) throw error
 
-      setForm({ name: '', ticker: '', category: 'Núcleo Pasivo', broker: '', quantity: '', avg_price: '', current_price: '', target_weight: '', currency: '', price_as_of: '', price_source: '', fx_rate_to_eur: '', fx_as_of: '', fx_source: '' })
-      setSuccessMessage('Posición añadida. Confirma su moneda y referencia de precio antes de incluirla en el patrimonio en EUR.')
+      setForm({ name: '', ticker: '', category: 'Núcleo Pasivo', broker: '', quantity: '', estimated_value_eur: '', avg_price: '', current_price: '', target_weight: '', currency: '', price_as_of: '', price_source: '', fx_rate_to_eur: '', fx_as_of: '', fx_source: '' })
+      setSuccessMessage(currentPrice !== null
+        ? 'Posición añadida con precio y conversión registrados.'
+        : estimatedValue !== null
+          ? 'Posición añadida con una estimación manual en EUR.'
+          : 'Posición añadida sin valoración; puedes añadir una estimación o refinarla cuando quieras.')
       notifyPortfolioChanged()
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'No se pudo guardar la posición.')
@@ -133,26 +146,37 @@ export default function AddAssetForm() {
       <label className="grid gap-1.5 text-sm text-slate-300">Broker o custodio
         <input name="broker" value={form.broker} onChange={handleChange} placeholder="p. ej. Mi banco" maxLength={120} className={inputClass} />
       </label>
-      <label className="grid gap-1.5 text-sm text-slate-300">Unidades
-        <input name="quantity" value={form.quantity} onChange={handleChange} type="number" min="0" step="any" required className={inputClass} />
+      <label className="grid gap-1.5 text-sm text-slate-300">Unidades (opcional)
+        <input name="quantity" value={form.quantity} onChange={handleChange} type="number" min="0" step="any" className={inputClass} />
+        <span className="text-xs leading-5 text-slate-500">Necesarias solo para valorar desde un precio por unidad.</span>
       </label>
-      <label className="grid gap-1.5 text-sm text-slate-300">Coste medio por unidad
-        <input name="avg_price" value={form.avg_price} onChange={handleChange} type="number" min="0" step="any" className={inputClass} />
+      <label className="grid gap-1.5 text-sm text-slate-300">Valor total aproximado (€)
+        <input name="estimated_value_eur" value={form.estimated_value_eur} onChange={handleChange} type="number" min="0" step="any" inputMode="decimal" className={inputClass} placeholder="Opcional" />
+        <span className="text-xs leading-5 text-slate-500">Una cifra orientativa basta para empezar. No hace falta convertir precios ni documentar fuentes.</span>
       </label>
-      <label className="grid gap-1.5 text-sm text-slate-300">Precio actual por unidad
-        <input name="current_price" value={form.current_price} onChange={handleChange} type="number" min="0" step="any" className={inputClass} />
-      </label>
-      <PriceReferenceFields
-        hasCurrentPrice={form.current_price.trim() !== ''}
-        currency={form.currency}
-        priceAsOf={form.price_as_of}
-        priceSource={form.price_source}
-        fxRateToEur={form.fx_rate_to_eur}
-        fxAsOf={form.fx_as_of}
-        fxSource={form.fx_source}
-        onChange={handlePriceReferenceChange}
-      />
-      <p className="col-span-full text-xs leading-5 text-slate-400">El coste medio y el precio actual usan la moneda indicada. El coste medio es informativo; la valoración usa el precio actual con fecha y fuente.</p>
+      <details className="col-span-full rounded-xl border border-white/10 bg-black/10 p-3">
+        <summary className="cursor-pointer text-sm font-medium text-slate-200">Añadir precio, divisa y referencias (opcional)</summary>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="grid gap-1.5 text-sm text-slate-300">Coste medio por unidad
+            <input name="avg_price" value={form.avg_price} onChange={handleChange} type="number" min="0" step="any" className={inputClass} />
+          </label>
+          <label className="grid gap-1.5 text-sm text-slate-300">Precio actual por unidad
+            <input name="current_price" value={form.current_price} onChange={handleChange} type="number" min="0" step="any" className={inputClass} />
+          </label>
+          <PriceReferenceFields
+            hasCurrentPrice={form.current_price.trim() !== ''}
+            currencyRequired={form.current_price.trim() !== '' || form.avg_price.trim() !== ''}
+            currency={form.currency}
+            priceAsOf={form.price_as_of}
+            priceSource={form.price_source}
+            fxRateToEur={form.fx_rate_to_eur}
+            fxAsOf={form.fx_as_of}
+            fxSource={form.fx_source}
+            onChange={handlePriceReferenceChange}
+          />
+          <p className="col-span-full text-xs leading-5 text-slate-500">Al guardar una cotización completa, se usará esa valoración en lugar de la estimación. El coste medio es solo informativo.</p>
+        </div>
+      </details>
       <label className="grid gap-1.5 text-sm text-slate-300">Objetivo heredado de esta posición (%)
         <input name="target_weight" value={form.target_weight} onChange={handleChange} type="number" min="0" max="100" step="any" aria-describedby="legacy-target-help" className={inputClass} />
         <span id="legacy-target-help" className="text-xs leading-5 text-slate-500">Dato de referencia antiguo; no sustituye al objetivo del activo consolidado.</span>

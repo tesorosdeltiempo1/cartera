@@ -12,7 +12,7 @@ type Asset = {
   ticker: string | null
   category: string
   broker: string | null
-  quantity: number
+  quantity: number | null
   avg_price: number | null
   current_price: number | null
   target_weight: number | null
@@ -23,6 +23,8 @@ type Asset = {
   fx_rate_to_eur: number | null
   fx_as_of: string | null
   fx_source: string | null
+  estimated_value_eur: number | null
+  estimated_value_as_of: string | null
   cost_basis_eur: number | null
   ledger_started_at: string | null
 }
@@ -33,6 +35,8 @@ type FormValues = {
   category: string
   broker: string
   quantity: string
+  estimated_value_eur: string
+  estimated_value_as_of: string
   avg_price: string
   current_price: string
   target_weight: string
@@ -52,7 +56,9 @@ function toFormValues(asset: Asset): FormValues {
     ticker: asset.ticker ?? '',
     category: asset.category,
     broker: asset.broker ?? '',
-    quantity: String(asset.quantity),
+    quantity: asset.quantity == null ? '' : String(asset.quantity),
+    estimated_value_eur: asset.estimated_value_eur == null ? '' : String(asset.estimated_value_eur),
+    estimated_value_as_of: asset.estimated_value_as_of ?? '',
     avg_price: asset.avg_price == null ? '' : String(asset.avg_price),
     current_price: asset.current_price == null ? '' : String(asset.current_price),
     target_weight: asset.target_weight == null ? '' : String(asset.target_weight),
@@ -67,6 +73,12 @@ function toFormValues(asset: Asset): FormValues {
 
 function optionalNumber(value: string) {
   return value.trim() === '' ? null : Number(value)
+}
+
+function localDateInputValue() {
+  const date = new Date()
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset())
+  return date.toISOString().slice(0, 10)
 }
 
 export default function EditAssetButton({ asset }: { asset: Asset }) {
@@ -96,37 +108,57 @@ export default function EditAssetButton({ asset }: { asset: Asset }) {
 
     try {
       const currency = form.currency.trim().toUpperCase()
+      const currentPrice = optionalNumber(form.current_price)
+      const quantity = optionalNumber(form.quantity)
+      const estimatedValue = optionalNumber(form.estimated_value_eur)
+      if (quantity !== null && (!Number.isFinite(quantity) || quantity < 0)) {
+        setErrorMessage('La cantidad debe ser un valor válido igual o mayor que cero.')
+        return
+      }
+      if (currentPrice !== null && quantity === null) {
+        setErrorMessage('Para valorar desde un precio por unidad necesitas indicar las unidades.')
+        return
+      }
       if (currency === '__OTHER__' || form.price_source === '__custom__' || form.fx_source === '__custom__') {
         setErrorMessage('Completa el código de otra moneda o indica dónde consultaste el dato.')
         return
       }
-      if (!isCurrencyCodeSupported(currency)) {
+      if ((currentPrice !== null || optionalNumber(form.avg_price) !== null) && !isCurrencyCodeSupported(currency)) {
         setErrorMessage('Selecciona una moneda de la lista o escribe un código reconocido.')
         return
       }
-      if (form.current_price.trim() && (!form.price_as_of || !form.price_source.trim() || form.price_source === '__custom__')) {
+      if (currentPrice !== null && (!form.price_as_of || !form.price_source.trim() || form.price_source === '__custom__')) {
         setErrorMessage('Para el precio actual, indica también la fecha y el origen.')
         return
       }
       const fxRate = optionalNumber(form.fx_rate_to_eur)
-      if (form.current_price.trim() && currency !== 'EUR' && (fxRate === null || !Number.isFinite(fxRate) || fxRate <= 0 || !form.fx_as_of || !form.fx_source.trim() || form.fx_source === '__custom__')) {
+      if (currentPrice !== null && currency !== 'EUR' && (fxRate === null || !Number.isFinite(fxRate) || fxRate <= 0 || !form.fx_as_of || !form.fx_source.trim() || form.fx_source === '__custom__')) {
         setErrorMessage('Para valorar en EUR una posición no denominada en EUR, indica tasa EUR por unidad, fecha y origen del cambio.')
         return
       }
+      if (estimatedValue !== null && (!Number.isFinite(estimatedValue) || estimatedValue < 0)) {
+        setErrorMessage('La estimación debe ser un importe válido igual o mayor que cero.')
+        return
+      }
+      const estimateChanged = estimatedValue !== asset.estimated_value_eur
       const updatedValues = {
         name: form.name.trim(),
         ticker: form.ticker.trim() || null,
         broker: form.broker.trim() || null,
-        quantity: Number(form.quantity),
+        quantity,
         avg_price: optionalNumber(form.avg_price),
-        current_price: optionalNumber(form.current_price),
+        current_price: currentPrice,
+        estimated_value_eur: currentPrice !== null ? null : estimatedValue,
+        estimated_value_as_of: currentPrice !== null || estimatedValue === null
+          ? null
+          : estimateChanged ? localDateInputValue() : form.estimated_value_as_of || localDateInputValue(),
         target_weight: optionalNumber(form.target_weight),
-        currency,
-        price_as_of: form.current_price.trim() ? form.price_as_of : null,
-        price_source: form.current_price.trim() ? form.price_source.trim() : null,
-        fx_rate_to_eur: currency === 'EUR' || !form.current_price.trim() ? null : fxRate,
-        fx_as_of: currency === 'EUR' || !form.current_price.trim() ? null : form.fx_as_of,
-        fx_source: currency === 'EUR' || !form.current_price.trim() ? null : form.fx_source.trim(),
+        currency: isCurrencyCodeSupported(currency) ? currency : null,
+        price_as_of: currentPrice !== null ? form.price_as_of : null,
+        price_source: currentPrice !== null ? form.price_source.trim() : null,
+        fx_rate_to_eur: currency === 'EUR' || currentPrice === null ? null : fxRate,
+        fx_as_of: currency === 'EUR' || currentPrice === null ? null : form.fx_as_of,
+        fx_source: currency === 'EUR' || currentPrice === null ? null : form.fx_source.trim(),
         ...(!asset.investment_asset_id ? { category: form.category } : {}),
       }
       const { data, error } = await supabase.from('assets').update(updatedValues).eq('id', asset.id).select('id').single()
@@ -196,28 +228,39 @@ export default function EditAssetButton({ asset }: { asset: Asset }) {
             </label>
             <label className="grid gap-1 text-sm">
               Cantidad
-              <input name="quantity" value={form.quantity} onChange={handleChange} type="number" min="0" step="any" required readOnly={Boolean(asset.ledger_started_at)} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white read-only:opacity-60" />
+              <input name="quantity" value={form.quantity} onChange={handleChange} type="number" min="0" step="any" readOnly={Boolean(asset.ledger_started_at)} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white read-only:opacity-60" />
             </label>
             <label className="grid gap-1 text-sm">
-              Precio medio de compra
-              <input name="avg_price" value={form.avg_price} onChange={handleChange} type="number" min="0" step="any" readOnly={Boolean(asset.ledger_started_at)} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white read-only:opacity-60" />
+              Valor total estimado (€)
+              <input name="estimated_value_eur" value={form.estimated_value_eur} onChange={handleChange} type="number" min="0" step="any" inputMode="decimal" className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
+              <span className="text-xs leading-5 text-slate-500">{form.estimated_value_as_of ? `Estimación revisada el ${form.estimated_value_as_of}.` : 'Sin fecha de referencia todavía.'}</span>
             </label>
-            <label className="grid gap-1 text-sm">
-              Precio actual
-              <input name="current_price" value={form.current_price} onChange={handleChange} type="number" min="0" step="any" className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-            </label>
-            <PriceReferenceFields
-              hasCurrentPrice={form.current_price.trim() !== ''}
-              currencyLocked={Boolean(asset.ledger_started_at)}
-              currency={form.currency}
-              priceAsOf={form.price_as_of}
-              priceSource={form.price_source}
-              fxRateToEur={form.fx_rate_to_eur}
-              fxAsOf={form.fx_as_of}
-              fxSource={form.fx_source}
-              onChange={handlePriceReferenceChange}
-            />
-            <p className="col-span-full text-xs leading-5 text-slate-400">El precio medio y el actual se expresan en la moneda indicada arriba. El precio medio es solo informativo; la valoración usa el precio actual.</p>
+            <details className="col-span-full rounded-xl border border-white/10 bg-black/10 p-3">
+              <summary className="cursor-pointer text-sm font-medium text-slate-200">Refinar con precio, divisa y referencias</summary>
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label className="grid gap-1 text-sm">
+                  Precio medio de compra
+                  <input name="avg_price" value={form.avg_price} onChange={handleChange} type="number" min="0" step="any" readOnly={Boolean(asset.ledger_started_at)} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white read-only:opacity-60" />
+                </label>
+                <label className="grid gap-1 text-sm">
+                  Precio actual
+                  <input name="current_price" value={form.current_price} onChange={handleChange} type="number" min="0" step="any" className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />
+                </label>
+                <PriceReferenceFields
+                  hasCurrentPrice={form.current_price.trim() !== ''}
+                  currencyRequired={form.current_price.trim() !== '' || form.avg_price.trim() !== ''}
+                  currencyLocked={Boolean(asset.ledger_started_at)}
+                  currency={form.currency}
+                  priceAsOf={form.price_as_of}
+                  priceSource={form.price_source}
+                  fxRateToEur={form.fx_rate_to_eur}
+                  fxAsOf={form.fx_as_of}
+                  fxSource={form.fx_source}
+                  onChange={handlePriceReferenceChange}
+                />
+                <p className="col-span-full text-xs leading-5 text-slate-400">Una cotización completa tiene prioridad sobre la estimación. Las operaciones del ledger conservan su moneda para no alterar su historial.</p>
+              </div>
+            </details>
             <label className="grid gap-1 text-sm">
               Peso objetivo antiguo por posición (%)
               <input name="target_weight" value={form.target_weight} onChange={handleChange} type="number" min="0" max="100" step="any" className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" />

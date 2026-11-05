@@ -1,15 +1,13 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import AllocationComparison from '@/components/AllocationComparison'
 import ExportBackupButton from '@/components/ExportBackupButton'
-import PortfolioChart from '@/components/PortfolioChart'
 import SaveSnapshotButton from '@/components/SaveSnapshotButton'
 import TrackRecordChart from '@/components/TrackRecordChart'
 import { supabase } from '@/lib/supabase'
-import { getPositionValuation, getSnapshotValuationDetail, type SnapshotValuationDetail } from '@/lib/valuation'
+import { getPositionOverviewValuation, getPositionValuation, getSnapshotValuationDetail, type SnapshotValuationDetail } from '@/lib/valuation'
 import { normalizeLedgerSummary, summarizePositionReturns, type LedgerSummary, type LedgerSummaryResponse } from '@/lib/ledger'
 
 type Category = 'Núcleo Pasivo' | 'Satélite Convicción' | 'Seguridad y Liquidez' | 'Activos Duros' | 'Especulativo'
@@ -19,7 +17,7 @@ type Position = {
   ticker: string | null
   category: Category
   broker: string | null
-  quantity: number
+  quantity: number | null
   avg_price: number | null
   current_price: number | null
   target_weight: number | null
@@ -30,29 +28,28 @@ type Position = {
   fx_rate_to_eur: number | null
   fx_as_of: string | null
   fx_source: string | null
+  estimated_value_eur: number | null
+  estimated_value_as_of: string | null
   cost_basis_eur: number | null
   ledger_started_at: string | null
 }
 type InvestmentAsset = { id: string; name: string; category: Category; target_weight: number | null }
 type Snapshot = { id: string; snapshot_date: string; total_value: number; breakdown: Record<string, number> }
-type SnapshotAsset = { snapshot_id: string; investment_asset_id: string | null; asset_name: string; category: Category; value: number; target_weight: number | null; valuation_detail: SnapshotValuationDetail[] }
+type SnapshotAsset = { snapshot_id: string; investment_asset_id: string | null; asset_name: string; category: Category; value: number; target_weight: number | null; valuation_detail: SnapshotValuationDetail[]; confirmed_value: number; estimated_value: number }
 type SnapshotCash = { cash_account_id: string; broker: string; currency: string; balance: number; fx_rate_to_eur: number; fx_as_of: string | null; fx_source: string | null; value_eur: number }
 
 const CATEGORIES: Category[] = ['Núcleo Pasivo', 'Satélite Convicción', 'Seguridad y Liquidez', 'Activos Duros', 'Especulativo']
-const CATEGORY_STYLES: Record<Category, string> = {
-  'Núcleo Pasivo': 'border-cyan-300/20 bg-cyan-300/10 text-cyan-200',
-  'Satélite Convicción': 'border-violet-300/20 bg-violet-300/10 text-violet-200',
-  'Seguridad y Liquidez': 'border-emerald-300/20 bg-emerald-300/10 text-emerald-200',
-  'Activos Duros': 'border-orange-300/20 bg-orange-300/10 text-orange-200',
-  Especulativo: 'border-amber-300/20 bg-amber-300/10 text-amber-200',
-}
 
 function valueOf(position: Position) {
-  return getPositionValuation(position).valueEur ?? 0
+  return getPositionOverviewValuation(position).valueEur ?? 0
 }
 
 function eur(value: number) {
   return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
+}
+
+function dateLabel(value: string, options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }) {
+  return new Date(`${value}T00:00:00`).toLocaleDateString('es-ES', options)
 }
 
 export default function DashboardClient() {
@@ -95,12 +92,60 @@ export default function DashboardClient() {
 
   const cashSummary = ledgerSummary.cash_accounts
   const cashTotalEur = cashSummary.reduce((sum, account) => sum + account.balanceEur, 0)
+  const confirmedPositionValue = positions.reduce((sum, position) => sum + (getPositionValuation(position).valueEur ?? 0), 0)
+  const estimatedPositionValue = positions.reduce((sum, position) => {
+    const valuation = getPositionOverviewValuation(position)
+    return sum + (valuation.quality === 'estimated' ? valuation.valueEur ?? 0 : 0)
+  }, 0)
+  const confirmedTotal = confirmedPositionValue + cashTotalEur
+  const confirmedValuationDates = [
+    ...positions.flatMap((position) => {
+      if (!getPositionValuation(position).complete) return []
+      return [
+        position.price_as_of,
+        ...(position.currency?.toUpperCase() === 'EUR' ? [] : [position.fx_as_of]),
+      ].filter((date): date is string => date !== null)
+    }),
+    ...cashSummary
+      .flatMap((account) => account.currency !== 'EUR' && account.fx_as_of ? [account.fx_as_of] : []),
+  ].sort()
+  const estimatedValuationDates = positions.flatMap((position) =>
+    getPositionOverviewValuation(position).quality === 'estimated' && position.estimated_value_as_of
+      ? [position.estimated_value_as_of]
+      : [],
+  ).sort()
+  const firstValuationDate = confirmedValuationDates[0]
+  const lastValuationDate = confirmedValuationDates.at(-1)
+  const firstEstimateDate = estimatedValuationDates[0]
+  const lastEstimateDate = estimatedValuationDates.at(-1)
+  const latestSnapshot = snapshots.at(-1)
   const totals = CATEGORIES.map((category) => ({
     category,
     value: positions.filter((position) => position.category === category).reduce((sum, position) => sum + valueOf(position), 0)
       + (category === 'Seguridad y Liquidez' ? cashTotalEur : 0),
   }))
   const grandTotal = totals.reduce((sum, total) => sum + total.value, 0)
+  const categoryComposition = [...totals].filter((total) => total.value > 0).sort((left, right) => right.value - left.value)
+  const largestCategory = categoryComposition[0]
+  const linkedCount = positions.length - positions.filter((position) => !position.investment_asset_id).length
+  const valuedPositionsCount = positions.filter((position) => getPositionValuation(position).complete).length
+  const estimatedPositionsCount = positions.filter((position) => getPositionOverviewValuation(position).quality === 'estimated').length
+  const identifiedExposures = [
+    ...investmentAssets.map((asset) => ({
+      id: asset.id,
+      name: asset.name,
+      value: positions
+        .filter((position) => position.investment_asset_id === asset.id)
+        .reduce((sum, position) => sum + valueOf(position), 0),
+    })),
+    ...positions
+      .filter((position) => !position.investment_asset_id)
+      .map((position) => ({
+        id: position.id,
+        name: `${position.name}${position.broker ? ` · ${position.broker}` : ''} (sin consolidar)`,
+        value: valueOf(position),
+      })),
+  ].filter((exposure) => exposure.value > 0).sort((left, right) => right.value - left.value).slice(0, 3)
   const allocationData = CATEGORIES.map((category) => {
     const categoryAssets = investmentAssets.filter((asset) => asset.category === category)
     const categoryPositions = positions.filter((position) =>
@@ -116,7 +161,7 @@ export default function DashboardClient() {
     }
   })
   const unlinkedCount = positions.filter((position) => !position.investment_asset_id).length
-  const unvaluedPositions = positions.filter((position) => !getPositionValuation(position).complete)
+  const unvaluedPositions = positions.filter((position) => getPositionOverviewValuation(position).quality === 'missing')
   const legacyPriceCount = unvaluedPositions.filter((position) => position.current_price !== null || position.avg_price !== null).length
   const masterTargetsCount = investmentAssets.filter((asset) => asset.target_weight !== null).length
   const valuationByPosition = new Map(positions.map((position) => [position.id, getPositionValuation(position).valueEur]))
@@ -143,13 +188,20 @@ export default function DashboardClient() {
   const snapshotDetailRows: Omit<SnapshotAsset, 'snapshot_id'>[] = [
     ...investmentAssets.map((asset) => {
       const linkedPositions = positions.filter((position) => position.investment_asset_id === asset.id)
+      const confirmedValue = linkedPositions.reduce((sum, position) => sum + (getPositionValuation(position).valueEur ?? 0), 0)
+      const estimatedValue = linkedPositions.reduce((sum, position) => {
+        const valuation = getPositionOverviewValuation(position)
+        return sum + (valuation.quality === 'estimated' ? valuation.valueEur ?? 0 : 0)
+      }, 0)
       return {
         investment_asset_id: asset.id,
         asset_name: asset.name,
         category: asset.category,
-        value: linkedPositions.reduce((sum, position) => sum + valueOf(position), 0),
+        value: confirmedValue + estimatedValue,
         target_weight: asset.target_weight,
         valuation_detail: linkedPositions.map(getSnapshotValuationDetail).filter((detail): detail is SnapshotValuationDetail => detail !== null),
+        confirmed_value: confirmedValue,
+        estimated_value: estimatedValue,
       }
     }),
     ...positions.filter((position) => !position.investment_asset_id).map((position) => ({
@@ -159,6 +211,8 @@ export default function DashboardClient() {
       value: valueOf(position),
       target_weight: null,
       valuation_detail: [getSnapshotValuationDetail(position)].filter((detail): detail is SnapshotValuationDetail => detail !== null),
+      confirmed_value: getPositionValuation(position).valueEur ?? 0,
+      estimated_value: getPositionOverviewValuation(position).quality === 'estimated' ? getPositionOverviewValuation(position).valueEur ?? 0 : 0,
     })),
   ]
 
@@ -169,43 +223,119 @@ export default function DashboardClient() {
         <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-8 text-sm text-slate-400" aria-live="polite">Cargando cartera…</div>
       ) : (
         <>
-          <section className="home-hero">
-            <Image
-              src="/colosseum-night.jpg"
-              alt="Coliseo de Roma iluminado durante la noche"
-              fill
-              priority
-              sizes="(max-width: 760px) 100vw, calc(100vw - 280px)"
-              className="home-hero-image"
-            />
-            <div className="home-hero-shade" />
-            <div className="home-hero-content">
-              <div className="home-hero-meta">
-                <span className="home-eyebrow">AUREUM <span aria-hidden="true">/</span> PATRIMONIO PRIVADO</span>
-                <span className="home-date">{new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}</span>
+          <section className="home-overview" aria-labelledby="dashboard-title">
+            <header className="overview-heading">
+              <div>
+                <p className="home-eyebrow">AUREUM <span aria-hidden="true">/</span> RESUMEN FINANCIERO</p>
+                <h1 id="dashboard-title">Cartera actual</h1>
               </div>
-              <div className="home-hero-title">
-                <p className="home-kicker">PATRIMONIO · CRITERIO · CONTINUIDAD</p>
-                <h1>Cartera financiera,<br /><span>en perspectiva.</span></h1>
-              </div>
+              <p className="home-date">Consulta · {new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</p>
+            </header>
+            <div className="overview-main">
               <div className="home-total-block">
-                <p className="home-total-label">{unvaluedPositions.length ? 'Capital valorado · EUR' : 'Cartera y efectivo · EUR'}</p>
+                <p className="home-total-label">Valor orientativo de posiciones y efectivo · EUR</p>
                 <p className="home-total tabular-nums">{eur(grandTotal)}</p>
-                <div className="home-total-footer">
-                  <p>
-                    Valoraciones registradas manualmente
-                    {snapshots.length > 0 && <span className="block">Último corte · {new Date(`${snapshots.at(-1)?.snapshot_date}T00:00:00`).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</span>}
-                    <span className="block">Inmuebles y deuda en <Link href="/patrimonio" className="home-scope-link">Balance patrimonial</Link>.</span>
-                  </p>
-                  {grandTotal > 0 && <SaveSnapshotButton totalValue={grandTotal} breakdown={totals} snapshotAssets={snapshotDetailRows} cashBreakdown={cashSnapshotRows} disabled={unvaluedPositions.length > 0} />}
-                </div>
+                <p className="overview-scope">
+                  {estimatedPositionsCount > 0 && <>{eur(confirmedTotal)} con referencias + {eur(estimatedPositionValue)} estimados manualmente. </>}
+                  {unvaluedPositions.length > 0
+                    ? <>{unvaluedPositions.length} posición(es) sin importe conocido quedan fuera de este total. <Link href="/posiciones">Revisarlas</Link>.</>
+                    : 'Los valores pueden no corresponder al día de hoy.'}
+                  {' '}Inmuebles y deuda se consultan en <Link href="/patrimonio">Patrimonio</Link>.
+                </p>
               </div>
+              <dl className="overview-metrics">
+                <div>
+                  <dt>Valoraciones con referencia</dt>
+                  <dd>{valuedPositionsCount}<span> / {positions.length}</span></dd>
+                  <p>{estimatedPositionsCount} estimadas · {unvaluedPositions.length} sin importe</p>
+                </div>
+                <div>
+                  <dt>Efectivo registrado</dt>
+                  <dd>{eur(cashTotalEur)}</dd>
+                  <p>{grandTotal > 0 ? `${(cashTotalEur / grandTotal * 100).toLocaleString('es-ES', { maximumFractionDigits: 1 })}% del total valorado` : 'Sin total valorado'}</p>
+                </div>
+                <div>
+                  <dt>Posiciones consolidadas</dt>
+                  <dd>{linkedCount}<span> / {positions.length}</span></dd>
+                  <p>vinculadas a un activo maestro</p>
+                </div>
+              </dl>
             </div>
-            <p className="hero-credit">
-              <a href="https://commons.wikimedia.org/wiki/File:Colosseum_at_night_-_wide_angle.JPG" target="_blank" rel="noreferrer">Coliseo de noche · Martin Falbisoner</a>
-              <span> · </span>
-              <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noreferrer">CC BY-SA 3.0</a>
-            </p>
+            <div className="overview-footer">
+              <p>
+                <span>Referencias detalladas</span>
+                <strong>{firstValuationDate && lastValuationDate
+                  ? `${dateLabel(firstValuationDate)} — ${dateLabel(lastValuationDate)}`
+                  : 'Sin fechas documentadas'}</strong>
+              </p>
+              {estimatedPositionsCount > 0 && <p>
+                <span>Estimaciones manuales</span>
+                <strong>{firstEstimateDate && lastEstimateDate
+                  ? `${dateLabel(firstEstimateDate)} — ${dateLabel(lastEstimateDate)}`
+                  : 'Fecha no disponible'}</strong>
+              </p>}
+              <p>
+                <span>Último corte histórico</span>
+                <strong>{latestSnapshot ? dateLabel(latestSnapshot.snapshot_date) : 'Aún no hay cortes'}</strong>
+              </p>
+              {grandTotal > 0 && <SaveSnapshotButton totalValue={grandTotal} breakdown={totals} snapshotAssets={snapshotDetailRows} cashBreakdown={cashSnapshotRows} disabled={unvaluedPositions.length > 0} />}
+            </div>
+          </section>
+
+          <section className="dashboard-reading" aria-labelledby="reading-title">
+            <header className="reading-heading">
+              <div>
+                <p className="home-kicker">ESTRUCTURA Y COBERTURA</p>
+                <h2 id="reading-title">Lectura de cartera</h2>
+              </div>
+              {largestCategory && grandTotal > 0 && (
+                <p className="reading-lead">
+                  Mayor bloque: <strong>{largestCategory.category}</strong>, {eur(largestCategory.value)} ({(largestCategory.value / grandTotal * 100).toLocaleString('es-ES', { maximumFractionDigits: 1 })}%).
+                </p>
+              )}
+            </header>
+            <div className="reading-grid">
+              <section className="reading-panel" aria-labelledby="category-title">
+                <h3 id="category-title">Composición por categoría</h3>
+                <p>Importes con referencias y estimaciones; efectivo en Seguridad y Liquidez.</p>
+                {categoryComposition.length > 0
+                  ? <ol className="composition-list">
+                    {categoryComposition.map((item) => {
+                      const share = grandTotal > 0 ? item.value / grandTotal * 100 : 0
+                      return (
+                        <li key={item.category}>
+                          <div className="composition-label">
+                            <span>{item.category}</span>
+                            <strong>{eur(item.value)}</strong>
+                          </div>
+                          <div className="composition-track" aria-hidden="true">
+                            <span style={{ width: `${share}%` }} />
+                          </div>
+                          <span className="composition-share">{share.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</span>
+                        </li>
+                      )
+                    })}
+                  </ol>
+                  : <p className="reading-empty">Todavía no hay importes con valoración EUR.</p>}
+              </section>
+              <section className="reading-panel" aria-labelledby="exposure-title">
+                <h3 id="exposure-title">Mayores exposiciones registradas</h3>
+                <p>Activos vinculados o posiciones individuales aún sin consolidar.</p>
+                {identifiedExposures.length > 0 ? (
+                  <ol className="exposure-list">
+                    {identifiedExposures.map((exposure, index) => (
+                      <li key={exposure.id}>
+                        <span className="exposure-rank">{String(index + 1).padStart(2, '0')}</span>
+                        <span className="exposure-name">{exposure.name}</span>
+                        <strong>{eur(exposure.value)}</strong>
+                        <span className="exposure-share">{grandTotal > 0 ? `${(exposure.value / grandTotal * 100).toLocaleString('es-ES', { maximumFractionDigits: 1 })}%` : '—'}</span>
+                      </li>
+                    ))}
+                  </ol>
+                ) : <p className="reading-empty">No hay exposiciones valoradas para ordenar.</p>}
+                <p className="reading-caveat">La consolidación depende de los vínculos registrados; no modela exposiciones indirectas, derivados ni riesgo de emisor.</p>
+              </section>
+            </div>
           </section>
 
           {(unlinkedCount > 0 || unvaluedPositions.length > 0) && (
@@ -216,39 +346,24 @@ export default function DashboardClient() {
               <div className="disclosure-body">
                 {unlinkedCount > 0 && <p>{unlinkedCount} posiciones sin vincular a un activo consolidado; la comparación por activo no representa toda la cartera.</p>}
                 {unvaluedPositions.length > 0 && <div>
-                  <p>{unvaluedPositions.length} posiciones requieren confirmar moneda, precio fechado y tipo de cambio. Sus cifras originales siguen disponibles en Posiciones, pero no se suman como euros ni entran en cortes nuevos.</p>
+                  <p>{unvaluedPositions.length} posiciones no tienen aún una cifra en EUR. Puedes añadir una estimación total sin precio ni cambio, o refinarla con los datos de cotización.</p>
                   {legacyPriceCount > 0 && <p className="mt-1">{legacyPriceCount} precios heredados no tienen moneda confirmada y podrían estar en monedas distintas.</p>}
                   <Link href="/posiciones" className="mt-2 inline-flex font-semibold text-teal-200 underline decoration-teal-200/40 underline-offset-4">Revisar posiciones</Link>
                 </div>}
+                {estimatedPositionsCount > 0 && <p>{estimatedPositionsCount} valoraciones son estimaciones manuales; se incluyen en el total orientativo, no en la rentabilidad del ledger.</p>}
               </div>
             </details>
           )}
 
           <div className="dashboard-sections">
-            <details className="dashboard-disclosure">
+            <details className="dashboard-disclosure" open>
               <summary className="disclosure-summary">
-                <span><span className="disclosure-title">Composición</span><span className="disclosure-subtitle">Distribución, objetivos y cobertura</span></span><span className="disclosure-mark" aria-hidden="true" />
+                <span><span className="disclosure-title">Objetivos</span><span className="disclosure-subtitle">Asignación actual frente a los objetivos registrados</span></span><span className="disclosure-mark" aria-hidden="true" />
               </summary>
               <div className="disclosure-body">
-                <section aria-label="Distribución por categoría de posición" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                  {totals.map((total) => (
-                    <article key={total.category} className="dashboard-stat-card">
-                      <div className="mb-4 flex items-start justify-between gap-2">
-                        <p className="text-sm leading-5 text-slate-400">{total.category}</p>
-                        <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${CATEGORY_STYLES[total.category]}`}>
-                          {grandTotal > 0 ? `${(total.value / grandTotal * 100).toFixed(1)}%` : '0,0%'}
-                        </span>
-                      </div>
-                      <p className="text-lg font-semibold tracking-tight text-white">{eur(total.value)}</p>
-                    </article>
-                  ))}
-                </section>
-                {investmentAssets.length > 0 && unvaluedPositions.length === 0 && <AllocationComparison data={allocationData} positionsWithTarget={masterTargetsCount} totalPositions={investmentAssets.length} />}
-                <article className="dashboard-inner-card min-w-0 p-4 sm:p-5">
-                  <h2 className="font-semibold text-white">Distribución por categoría</h2>
-                  <p className="mt-1 text-sm text-slate-400">{unvaluedPositions.length ? 'Solo valoraciones EUR confirmadas; las posiciones pendientes se excluyen.' : 'Valor actual registrado por clase estratégica de posición.'}</p>
-                  <PortfolioChart data={totals} />
-                </article>
+                {investmentAssets.length > 0
+                  ? <AllocationComparison data={allocationData} positionsWithTarget={masterTargetsCount} totalPositions={investmentAssets.length} />
+                  : <p>Aún no hay activos consolidados para comparar objetivos. Puedes crearlos en <Link href="/activos" className="font-medium text-teal-200 underline underline-offset-4">Activos y objetivos</Link>.</p>}
               </div>
             </details>
 

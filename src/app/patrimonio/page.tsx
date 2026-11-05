@@ -7,7 +7,7 @@ import SaveWealthSnapshotButton from '@/components/SaveWealthSnapshotButton'
 import TrackRecordChart from '@/components/TrackRecordChart'
 import { notifyPortfolioChanged } from '@/lib/portfolioEvents'
 import { supabase } from '@/lib/supabase'
-import { formatCurrency, getPositionValuation, type PositionPriceData } from '@/lib/valuation'
+import { formatCurrency, getPositionOverviewValuation, getPositionValuation, type PositionPriceData } from '@/lib/valuation'
 import { normalizeLedgerSummary, type LedgerSummary, type LedgerSummaryResponse } from '@/lib/ledger'
 import { getMortgageValuation, getPropertyValuation, summarizeWealth, type MortgageLiability, type RealEstateAsset, type WealthSnapshot } from '@/lib/wealth'
 
@@ -74,7 +74,7 @@ export default function PatrimonioPage() {
     setLoading(true)
     try {
       const [positionsResult, summaryResult, propertiesResult, mortgagesResult, cashFlowsResult, snapshotsResult] = await Promise.all([
-        supabase.from('assets').select('quantity,current_price,currency,price_as_of,price_source,fx_rate_to_eur,fx_as_of,fx_source'),
+        supabase.from('assets').select('quantity,current_price,currency,price_as_of,price_source,fx_rate_to_eur,fx_as_of,fx_source,estimated_value_eur,estimated_value_as_of'),
         supabase.rpc('get_portfolio_ledger_summary'),
         supabase.from('real_estate_assets').select('*').order('name'),
         supabase.from('mortgage_liabilities').select('*').order('name'),
@@ -110,6 +110,7 @@ export default function PatrimonioPage() {
   const mortgageValuations = mortgages.map((mortgage) => getMortgageValuation(mortgage))
   const financialAssetTotal = positions.reduce((sum, position) => sum + (getPositionValuation(position).valueEur ?? 0), 0)
   const financialIncompleteCount = positions.filter((position) => !getPositionValuation(position).complete).length
+  const financialEstimateCount = positions.filter((position) => getPositionOverviewValuation(position).quality === 'estimated').length
   const cashTotalEur = ledgerSummary.cash_accounts.reduce((sum, account) => sum + account.balanceEur, 0)
   const propertiesValueEur = propertyValuations.map((valuation) => valuation.valueEur ?? 0)
   const mortgageDebtEur = mortgageValuations.map((valuation) => valuation.valueEur ?? 0)
@@ -163,7 +164,7 @@ export default function PatrimonioPage() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">{snapshotReady ? 'Patrimonio neto estimado' : 'Subtotal · faltan datos'}</p>
           <p className="mt-2 text-4xl font-semibold tabular-nums text-white">{loading ? 'Cargando…' : eur(totals.netWorthEur)}</p>
-          <p className="mt-2 max-w-2xl text-sm text-slate-400">Valor atribuible de inmuebles más cartera y efectivo, menos saldos hipotecarios atribuibles. Las valoraciones pendientes no se suman.</p>
+          <p className="mt-2 max-w-2xl text-sm text-slate-400">Valor atribuible de inmuebles más cartera con referencias completas y efectivo, menos saldos hipotecarios atribuibles. Las estimaciones rápidas de posiciones se muestran en Resumen, pero no se mezclan en este balance.</p>
         </div>
         <SaveWealthSnapshotButton
           disabled={loading || !snapshotReady || Boolean(errorMessage)}
@@ -175,6 +176,7 @@ export default function PatrimonioPage() {
         <section role="status" className="mb-6 border-l-2 border-amber-300/60 bg-amber-300/[0.06] px-4 py-3 text-sm leading-6 text-amber-100">
           <p>Completa los datos pendientes para guardar un corte patrimonial verificable.</p>
           {financialIncompleteCount > 0 && <p>{financialIncompleteCount} posiciones financieras necesitan confirmar su valoración.</p>}
+          {financialEstimateCount > 0 && <p>{financialEstimateCount} de ellas tienen una estimación rápida; se excluye deliberadamente del corte patrimonial verificable.</p>}
           {incompletePropertyCount > 0 && <p>{incompletePropertyCount} inmuebles necesitan una valoración completa.</p>}
           {debtReviewPending.length > 0 && <p>{debtReviewPending.length} inmuebles necesitan indicar si tienen hipoteca.</p>}
           {incompleteMortgageCount > 0 && <p>{incompleteMortgageCount} hipotecas necesitan confirmar saldo, moneda y procedencia.</p>}

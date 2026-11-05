@@ -20,10 +20,10 @@ export default function StartLedgerButton({ position }: { position: LedgerPositi
   if (position.ledger_started_at) return <span className="text-xs text-emerald-200">Seguimiento activo</span>
 
   const currency = position.currency?.toUpperCase() ?? ''
-  const validBalance = position.quantity > 0 && position.avg_price !== null && position.avg_price > 0
+  const validBalance = position.quantity !== null && position.quantity > 0 && position.avg_price !== null && position.avg_price > 0
   const rate = Number(fxRate)
-  const estimatedBasis = validBalance && Number.isFinite(rate) && rate > 0
-    ? position.quantity * position.avg_price! * rate
+  const estimatedBasis = validBalance && position.quantity !== null && position.avg_price !== null && Number.isFinite(rate) && rate > 0
+    ? position.quantity * position.avg_price * rate
     : null
 
   async function startLedger() {
@@ -81,7 +81,7 @@ export default function StartLedgerButton({ position }: { position: LedgerPositi
             <h2 id={`ledger-title-${position.id}`} className="mt-1 text-xl">Iniciar seguimiento · {position.name}</h2>
           </div>
           <div className="rounded-xl border border-amber-300/20 bg-amber-300/[0.07] p-3 text-sm leading-6 text-amber-100">
-            Esto fija un saldo inicial hoy con {position.quantity.toLocaleString('es-ES')} unidades y coste medio {position.avg_price?.toLocaleString('es-ES')} {currency}. No crea compras antiguas ni reconstruye rentabilidad anterior.
+            Esto fija un saldo inicial hoy con {position.quantity?.toLocaleString('es-ES') ?? 'cantidad pendiente'} unidades y coste medio {position.avg_price?.toLocaleString('es-ES')} {currency}. No crea compras antiguas ni reconstruye rentabilidad anterior.
           </div>
           {currency !== 'EUR' && <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1 text-sm text-slate-300 sm:col-span-2">Coste medio convertido: EUR por 1 {currency}

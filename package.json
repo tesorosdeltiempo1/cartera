@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test src/lib/portfolio.test.mjs"
+    "test": "tsx --test src/lib/portfolio.test.mjs src/lib/position-import.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.0",

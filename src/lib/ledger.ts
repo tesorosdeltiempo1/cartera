@@ -3,7 +3,7 @@ export type LedgerPosition = {
   name: string
   broker: string | null
   currency: string | null
-  quantity: number
+  quantity: number | null
   avg_price: number | null
   current_price: number | null
   cost_basis_eur: number | null

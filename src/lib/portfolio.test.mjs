@@ -2,8 +2,9 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { getNextContributionDate } from './contributionPlans.ts'
 import { fetchAllRows } from './backup.ts'
-import { prepareHistoricalSnapshot } from './historicalSnapshot.ts'
+import { compareSnapshotValues, prepareHistoricalSnapshot } from './historicalSnapshot.ts'
 import { calculateSale, filterLedgerTransactions, summarizeCashAccounts, summarizePositionReturns } from './ledger.ts'
+import { getPositionOverviewValuation } from './valuation.ts'
 
 const today = (date) => new Date(`${date}T12:00:00Z`)
 
@@ -134,6 +135,49 @@ test('historical aggregate snapshots validate dates, unique brokers, and localiz
     { broker: ' broker ', amount: '20' },
   ], '2026-11-04'), /más de una vez/)
   assert.throws(() => prepareHistoricalSnapshot('2026-10-22', [{ broker: 'Broker', amount: '-1' }], '2026-11-04'), /importe válido/)
+})
+
+test('historical snapshot comparisons show nominal changes and avoid invalid baselines', () => {
+  assert.deepEqual(compareSnapshotValues(1100, 1000), { difference: 100, percentage: 10 })
+  assert.deepEqual(compareSnapshotValues(950, 1000), { difference: -50, percentage: -5 })
+  assert.equal(compareSnapshotValues(1000, 0), null)
+  assert.equal(compareSnapshotValues(Number.NaN, 1000), null)
+})
+
+test('overview valuation prefers confirmed quotes and otherwise uses a direct EUR estimate', () => {
+  const estimate = {
+    quantity: 3,
+    avg_price: null,
+    current_price: null,
+    currency: null,
+    price_as_of: null,
+    price_source: null,
+    fx_rate_to_eur: null,
+    fx_as_of: null,
+    fx_source: null,
+    estimated_value_eur: 250,
+    estimated_value_as_of: '2026-11-05',
+  }
+
+  assert.deepEqual(getPositionOverviewValuation(estimate), {
+    quality: 'estimated',
+    valueEur: 250,
+    asOf: '2026-11-05',
+    reason: null,
+  })
+  assert.equal(getPositionOverviewValuation({ ...estimate, estimated_value_eur: -1 }).quality, 'missing')
+  assert.deepEqual(getPositionOverviewValuation({
+    ...estimate,
+    currency: 'EUR',
+    current_price: 100,
+    price_as_of: '2026-11-04',
+    price_source: 'Broker',
+  }), {
+    quality: 'confirmed',
+    valueEur: 300,
+    asOf: '2026-11-04',
+    reason: null,
+  })
 })
 
 test('backup pagination exports every row and requires a stable exact count', async () => {
