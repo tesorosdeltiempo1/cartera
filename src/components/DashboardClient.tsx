@@ -7,7 +7,7 @@ import ExportBackupButton from '@/components/ExportBackupButton'
 import SaveSnapshotButton from '@/components/SaveSnapshotButton'
 import TrackRecordChart from '@/components/TrackRecordChart'
 import { supabase } from '@/lib/supabase'
-import { getPositionOverviewValuation, getPositionValuation, getSnapshotValuationDetail, type SnapshotValuationDetail } from '@/lib/valuation'
+import { ESTIMATE_REVIEW_AFTER_DAYS, getPositionOverviewValuation, getPositionValuation, getSnapshotValuationDetail, isEstimateDueForReview, type SnapshotValuationDetail } from '@/lib/valuation'
 import { normalizeLedgerSummary, summarizePositionReturns, type LedgerSummary, type LedgerSummaryResponse } from '@/lib/ledger'
 
 type Category = 'Núcleo Pasivo' | 'Satélite Convicción' | 'Seguridad y Liquidez' | 'Activos Duros' | 'Especulativo'
@@ -130,6 +130,9 @@ export default function DashboardClient() {
   const linkedCount = positions.length - positions.filter((position) => !position.investment_asset_id).length
   const valuedPositionsCount = positions.filter((position) => getPositionValuation(position).complete).length
   const estimatedPositionsCount = positions.filter((position) => getPositionOverviewValuation(position).quality === 'estimated').length
+  const estimateReviewCount = positions.filter((position) =>
+    getPositionOverviewValuation(position).quality === 'estimated' && isEstimateDueForReview(position.estimated_value_as_of),
+  ).length
   const identifiedExposures = [
     ...investmentAssets.map((asset) => ({
       id: asset.id,
@@ -338,10 +341,10 @@ export default function DashboardClient() {
             </div>
           </section>
 
-          {(unlinkedCount > 0 || unvaluedPositions.length > 0) && (
+          {(unlinkedCount > 0 || unvaluedPositions.length > 0 || estimateReviewCount > 0) && (
             <details className="dashboard-disclosure">
               <summary className="disclosure-summary">
-                <span><span className="disclosure-title">Revisión de datos</span><span className="disclosure-subtitle">{unlinkedCount + unvaluedPositions.length} alertas necesitan atención</span></span><span className="disclosure-mark" aria-hidden="true" />
+                <span><span className="disclosure-title">Revisión de datos</span><span className="disclosure-subtitle">{unlinkedCount + unvaluedPositions.length + estimateReviewCount} alertas necesitan atención</span></span><span className="disclosure-mark" aria-hidden="true" />
               </summary>
               <div className="disclosure-body">
                 {unlinkedCount > 0 && <p>{unlinkedCount} posiciones sin vincular a un activo consolidado; la comparación por activo no representa toda la cartera.</p>}
@@ -351,6 +354,7 @@ export default function DashboardClient() {
                   <Link href="/posiciones" className="mt-2 inline-flex font-semibold text-teal-200 underline decoration-teal-200/40 underline-offset-4">Revisar posiciones</Link>
                 </div>}
                 {estimatedPositionsCount > 0 && <p>{estimatedPositionsCount} valoraciones son estimaciones manuales; se incluyen en el total orientativo, no en la rentabilidad del ledger.</p>}
+                {estimateReviewCount > 0 && <p>{estimateReviewCount} estimaciones llevan más de {ESTIMATE_REVIEW_AFTER_DAYS} días sin revisar o no tienen fecha. Siguen en el total orientativo; <Link href="/posiciones#revisar-estimaciones" className="font-semibold text-teal-200 underline decoration-teal-200/40 underline-offset-4">ver estimaciones pendientes</Link>.</p>}
               </div>
             </details>
           )}

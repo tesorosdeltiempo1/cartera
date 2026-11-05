@@ -88,8 +88,9 @@ Para una moneda extranjera, el cambio se introduce como **EUR por una unidad de 
 ### Revisar o buscar posiciones
 
 - Al abrir **Posiciones**, el resumen distingue importes con referencias, estimaciones manuales, posiciones sin importe y vínculos resolubles. El total orientativo excluye efectivo e inmuebles; no lo interpretes como patrimonio completo.
-- Usa **Todas**, **Pendientes**, **Valoradas** o **Estimadas** para filtrar.
+- Usa **Todas**, **Pendientes**, **Valoradas**, **Estimadas** o **Revisar estimaciones** para filtrar. Esta última agrupa estimaciones con más de 90 días o sin fecha registrada.
 - Busca por nombre, ticker o broker.
+- Una estimación antigua sigue formando parte del total orientativo, pero Aureum la marca para revisión. El aviso no modifica el importe ni lo actualiza automáticamente; revisa el valor con el broker o la fuente que corresponda.
 - **Añadir posición manual** y **Importar posiciones desde un CSV revisable** están plegados para priorizar la lectura del inventario; despliega la acción que necesites.
 - Usa **Editar** para actualizar el valor aproximado o desplegar los datos detallados. Cambiar una estimación vuelve a fecharla; comprueba el importe antes de guardar.
 - **Eliminar** abre una confirmación irreversible. Descarga un respaldo y comprueba la posición seleccionada antes de confirmar.

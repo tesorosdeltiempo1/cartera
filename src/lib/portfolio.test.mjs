@@ -4,7 +4,7 @@ import { getNextContributionDate } from './contributionPlans.ts'
 import { fetchAllRows } from './backup.ts'
 import { compareSnapshotValues, prepareHistoricalSnapshot } from './historicalSnapshot.ts'
 import { calculateSale, filterLedgerTransactions, summarizeCashAccounts, summarizePositionReturns } from './ledger.ts'
-import { getPositionOverviewValuation } from './valuation.ts'
+import { getEstimateAgeDays, getPositionOverviewValuation, isEstimateDueForReview } from './valuation.ts'
 
 const today = (date) => new Date(`${date}T12:00:00Z`)
 
@@ -178,6 +178,18 @@ test('overview valuation prefers confirmed quotes and otherwise uses a direct EU
     asOf: '2026-11-04',
     reason: null,
   })
+})
+
+test('estimate review age uses calendar days and keeps missing or future dates reviewable', () => {
+  const todayDate = '2026-11-05'
+  assert.equal(getEstimateAgeDays('2026-11-05', todayDate), 0)
+  assert.equal(getEstimateAgeDays('2026-08-07', todayDate), 90)
+  assert.equal(getEstimateAgeDays('2026-08-06', todayDate), 91)
+  assert.equal(isEstimateDueForReview('2026-08-07', todayDate), false)
+  assert.equal(isEstimateDueForReview('2026-08-06', todayDate), true)
+  assert.equal(getEstimateAgeDays('2026-11-06', todayDate), null)
+  assert.equal(getEstimateAgeDays('2026-02-30', todayDate), null)
+  assert.equal(isEstimateDueForReview(null, todayDate), true)
 })
 
 test('backup pagination exports every row and requires a stable exact count', async () => {

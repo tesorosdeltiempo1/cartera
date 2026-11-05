@@ -6,7 +6,7 @@ import DeleteAssetButton from '@/components/DeleteAssetButton'
 import EditAssetButton from '@/components/EditAssetButton'
 import PositionImportPanel from '@/components/PositionImportPanel'
 import { supabase } from '@/lib/supabase'
-import { formatCurrency, getPositionOverviewValuation, getPositionValuation } from '@/lib/valuation'
+import { ESTIMATE_REVIEW_AFTER_DAYS, formatCurrency, getEstimateAgeDays, getPositionOverviewValuation, getPositionValuation, isEstimateDueForReview } from '@/lib/valuation'
 
 type Position = {
   id: string
@@ -31,7 +31,7 @@ type Position = {
   ledger_started_at: string | null
 }
 type AssetLabel = { id: string; name: string }
-type ValuationFilter = 'all' | 'pending' | 'valued' | 'estimated'
+type ValuationFilter = 'all' | 'pending' | 'valued' | 'estimated' | 'review'
 
 function eur(value: number) {
   return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
@@ -75,6 +75,9 @@ export default function PosicionesPage() {
   const confirmedValues = positions.map((position) => getPositionValuation(position).valueEur ?? 0)
   const valuedCount = overviewValuations.filter((valuation) => valuation.quality === 'confirmed').length
   const estimatedCount = overviewValuations.filter((valuation) => valuation.quality === 'estimated').length
+  const estimateReviewCount = positions.filter((position) =>
+    getPositionOverviewValuation(position).quality === 'estimated' && isEstimateDueForReview(position.estimated_value_as_of),
+  ).length
   const unvaluedCount = positions.length - valuedCount - estimatedCount
   const confirmedValueEur = Math.round(confirmedValues.reduce((total, value) => total + value, 0) * 100) / 100
   const estimatedValueEur = Math.round(overviewValuations.reduce((total, valuation) => total + (valuation.quality === 'estimated' ? valuation.valueEur ?? 0 : 0), 0) * 100) / 100
@@ -87,6 +90,7 @@ export default function PosicionesPage() {
       || (valuationFilter === 'pending' && quality === 'missing')
       || (valuationFilter === 'valued' && quality === 'confirmed')
       || (valuationFilter === 'estimated' && quality === 'estimated')
+      || (valuationFilter === 'review' && quality === 'estimated' && isEstimateDueForReview(position.estimated_value_as_of))
     const searchableText = [position.name, position.ticker, position.broker, linkedAssets.get(position.investment_asset_id ?? '')]
       .filter(Boolean)
       .join(' ')
@@ -104,6 +108,7 @@ export default function PosicionesPage() {
 
       {errorMessage && <p role="alert" className="mb-5 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">No se pudieron cargar las posiciones: {errorMessage}</p>}
       {!loading && unvaluedCount > 0 && <p role="status" className="mb-5 rounded-xl border border-amber-300/20 bg-amber-300/[0.07] px-4 py-3 text-sm leading-6 text-amber-100">{unvaluedCount} posiciones aún no tienen importe en EUR y quedan fuera del total orientativo. Puedes añadir una estimación rápida o completar precio y cambio.</p>}
+      {!loading && estimateReviewCount > 0 && <p role="status" className="mb-5 rounded-xl border border-amber-300/20 bg-amber-300/[0.07] px-4 py-3 text-sm leading-6 text-amber-100">{estimateReviewCount} estimaciones llevan más de {ESTIMATE_REVIEW_AFTER_DAYS} días sin revisar o no tienen fecha. Siguen incluidas en el total orientativo; comprueba si quieres actualizar alguna.</p>}
 
       <section aria-label="Resumen de posiciones" className="mb-5 grid gap-3 sm:grid-cols-3">
         <article className="rounded-xl border border-white/[0.08] bg-slate-900/70 p-4">
@@ -151,10 +156,12 @@ export default function PosicionesPage() {
               ['pending', 'Pendientes', unvaluedCount],
               ['valued', 'Valoradas', valuedCount],
               ['estimated', 'Estimadas', estimatedCount],
+              ['review', 'Revisar estimaciones', estimateReviewCount],
             ] as const).map(([filter, label, count]) => (
               <button
                 key={filter}
                 type="button"
+                id={filter === 'review' ? 'revisar-estimaciones' : undefined}
                 aria-pressed={valuationFilter === filter}
                 onClick={() => setValuationFilter(filter)}
                 className={`rounded-md px-3 py-2 text-xs font-medium transition ${valuationFilter === filter ? 'bg-teal-300/15 text-teal-100' : 'text-slate-400 hover:text-white'}`}
@@ -183,8 +190,15 @@ export default function PosicionesPage() {
             <tbody className="divide-y divide-white/[0.06]">{visiblePositions.length === 0 ? <tr><td colSpan={8} className="px-5 py-10 text-center text-sm text-slate-400">No hay posiciones que coincidan con estos filtros.</td></tr> : visiblePositions.map((position) => {
               const valuation = getPositionValuation(position)
               const overviewValuation = getPositionOverviewValuation(position)
+              const estimateAgeDays = overviewValuation.quality === 'estimated' ? getEstimateAgeDays(position.estimated_value_as_of) : null
+              const estimateNeedsReview = overviewValuation.quality === 'estimated' && isEstimateDueForReview(position.estimated_value_as_of)
+              const estimateAgeLabel = estimateAgeDays === null
+                ? 'fecha no válida · revisar'
+                : estimateAgeDays === 0
+                  ? 'hoy'
+                  : `hace ${estimateAgeDays} días${estimateNeedsReview ? ' · revisar' : ''}`
               return <tr key={position.id} className="hover:bg-white/[0.025]">
-                <td className="px-5 py-4"><p className="font-medium text-slate-100">{position.name}</p><p className="mt-0.5 text-xs text-slate-500">{[position.ticker, position.broker].filter(Boolean).join(' · ') || 'Sin ticker ni broker'}</p><p className={`mt-1 text-xs ${overviewValuation.quality === 'confirmed' ? 'text-emerald-200' : overviewValuation.quality === 'estimated' ? 'text-amber-200' : 'text-slate-400'}`}>{overviewValuation.quality === 'confirmed' ? `${position.currency} · precio ${position.price_as_of} · ${position.price_source}` : overviewValuation.quality === 'estimated' ? `Estimación manual · ${overviewValuation.asOf ?? 'fecha no registrada'}` : 'Sin importe en EUR'}</p>{!valuation.complete && (position.current_price !== null || position.avg_price !== null) && <p className="mt-1 text-xs text-amber-100/80">Cifras heredadas · moneda o conversión sin confirmar: {position.current_price !== null ? `actual ${position.current_price.toLocaleString('es-ES')}` : ''}{position.current_price !== null && position.avg_price !== null ? ' · ' : ''}{position.avg_price !== null ? `medio ${position.avg_price.toLocaleString('es-ES')}` : ''}</p>}{overviewValuation.reason && overviewValuation.quality === 'missing' && <p className="mt-0.5 max-w-56 text-xs text-amber-200/80">{overviewValuation.reason}</p>}</td>
+                <td className="px-5 py-4"><p className="font-medium text-slate-100">{position.name}</p><p className="mt-0.5 text-xs text-slate-500">{[position.ticker, position.broker].filter(Boolean).join(' · ') || 'Sin ticker ni broker'}</p><p className={`mt-1 text-xs ${overviewValuation.quality === 'confirmed' ? 'text-emerald-200' : overviewValuation.quality === 'estimated' ? estimateNeedsReview ? 'text-amber-100' : 'text-amber-200' : 'text-slate-400'}`}>{overviewValuation.quality === 'confirmed' ? `${position.currency} · precio ${position.price_as_of} · ${position.price_source}` : overviewValuation.quality === 'estimated' ? `Estimación manual · ${overviewValuation.asOf ?? 'fecha no registrada'} · ${estimateAgeLabel}` : 'Sin importe en EUR'}</p>{!valuation.complete && (position.current_price !== null || position.avg_price !== null) && <p className="mt-1 text-xs text-amber-100/80">Cifras heredadas · moneda o conversión sin confirmar: {position.current_price !== null ? `actual ${position.current_price.toLocaleString('es-ES')}` : ''}{position.current_price !== null && position.avg_price !== null ? ' · ' : ''}{position.avg_price !== null ? `medio ${position.avg_price.toLocaleString('es-ES')}` : ''}</p>}{overviewValuation.reason && overviewValuation.quality === 'missing' && <p className="mt-0.5 max-w-56 text-xs text-amber-200/80">{overviewValuation.reason}</p>}</td>
                 <td className="px-4 py-4 text-slate-300">{position.investment_asset_id ? linkedAssets.get(position.investment_asset_id) ?? 'Vínculo no encontrado' : <span className="text-amber-200">Sin vincular</span>}</td>
                 <td className="px-4 py-4 text-slate-300">{position.category}</td>
                 <td className="px-4 py-4 text-right tabular-nums text-slate-300">{position.quantity === null ? '—' : position.quantity.toLocaleString('es-ES')}</td>

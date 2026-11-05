@@ -2,6 +2,12 @@
 
 Este archivo recoge las iteraciones funcionales y visuales por separado del README. Las fechas indican cuándo se implementó cada cambio; no implican por sí mismas que esté desplegado ni validado en producción.
 
+## 2026-11-05 — Revisión de antigüedad de estimaciones (local)
+
+- Posiciones muestra cuántos días tiene cada estimación y ofrece un filtro directo para las que superan 90 días o carecen de fecha.
+- Resumen avisa de las estimaciones pendientes y enlaza al filtro. El aviso no modifica el total ni actualiza datos automáticamente.
+- Añadidas pruebas para límites de antigüedad, fechas inválidas y fechas futuras.
+
 ## 2026-11-05 — Valoraciones cotidianas por estimación (local)
 
 - Posiciones admite un valor total aproximado en EUR sin obligar a registrar unidades, cotización ni conversión. Las referencias detalladas siguen disponibles para quien quiera afinar; una cotización completa tiene prioridad.

@@ -50,6 +50,39 @@ export type PositionWithIdentity = PositionPriceData & {
   broker: string | null
 }
 
+export const ESTIMATE_REVIEW_AFTER_DAYS = 90
+
+function dateOnlyDayNumber(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) return null
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const timestamp = Date.UTC(year, month - 1, day)
+  const parsed = new Date(timestamp)
+  if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== day) return null
+  return Math.floor(timestamp / 86_400_000)
+}
+
+function localDateString(date: Date) {
+  const localDate = new Date(date)
+  localDate.setMinutes(localDate.getMinutes() - localDate.getTimezoneOffset())
+  return localDate.toISOString().slice(0, 10)
+}
+
+export function getEstimateAgeDays(asOf: string | null | undefined, today = localDateString(new Date())) {
+  if (!asOf) return null
+  const estimateDay = dateOnlyDayNumber(asOf)
+  const todayDay = dateOnlyDayNumber(today)
+  if (estimateDay === null || todayDay === null || estimateDay > todayDay) return null
+  return todayDay - estimateDay
+}
+
+export function isEstimateDueForReview(asOf: string | null | undefined, today?: string) {
+  const ageDays = getEstimateAgeDays(asOf, today)
+  return ageDays === null || ageDays > ESTIMATE_REVIEW_AFTER_DAYS
+}
+
 export function isCurrencyCodeSupported(value: string) {
   const currency = value.trim().toUpperCase()
   if (!/^[A-Z]{3}$/.test(currency) || ['XXX', 'XTS', 'ZZZ'].includes(currency)) return false
