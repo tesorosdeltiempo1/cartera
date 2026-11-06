@@ -74,7 +74,7 @@ export default function BackupValidator() {
         <div aria-live="polite" className="grid gap-3">
           <div className={result.valid ? 'text-sm text-emerald-200' : 'text-sm text-rose-200'} role={result.valid ? 'status' : 'alert'}>
             {result.valid
-              ? `Estructura y referencias internas correctas: ${totalRows.toLocaleString('es-ES')} filas en 10 tablas.`
+              ? `Estructura, referencias y totales patrimoniales coherentes: ${totalRows.toLocaleString('es-ES')} filas en 10 tablas.`
               : 'El archivo no supera la comprobación estructural.'}
             {fileName && <span className="mt-1 block break-all text-xs text-slate-400">{fileName}</span>}
             {result.exportedAt && <span className="mt-1 block text-xs text-slate-400">Exportado: {new Date(result.exportedAt).toLocaleString('es-ES')}</span>}
@@ -98,7 +98,7 @@ export default function BackupValidator() {
             </details>
           )}
           <p className="text-xs leading-5 text-slate-500">
-            Una comprobación correcta no demuestra que la copia incluya cambios posteriores a su fecha ni garantiza que pueda restaurarse.
+            También se concilian los componentes y detalles congelados de los cortes patrimoniales. Una comprobación correcta no demuestra que la copia incluya cambios posteriores a su fecha ni garantiza que pueda restaurarse.
           </p>
         </div>
       )}

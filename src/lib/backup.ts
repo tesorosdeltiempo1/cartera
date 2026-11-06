@@ -90,6 +90,19 @@ function emptyValidationResult(error: string): BackupValidationResult {
   return { valid: false, exportedAt: null, counts: { ...EMPTY_COUNTS }, errors: [error] }
 }
 
+function addFiniteNumberError(row: Record<string, unknown>, column: string, label: string, addError: (message: string) => void) {
+  const value = row[column]
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    addError(`${label}: ${column} no es un número finito.`)
+    return null
+  }
+  return value
+}
+
+function isClose(left: number, right: number) {
+  return Math.abs(left - right) <= Math.max(0.000001, Math.max(Math.abs(left), Math.abs(right)) * 1e-10)
+}
+
 export function validateBackupJson(content: string): BackupValidationResult {
   let parsed: unknown
   try {
@@ -167,6 +180,56 @@ export function validateBackupJson(content: string): BackupValidationResult {
       }
     })
   }
+
+  tables.wealth_snapshots.forEach((row, index) => {
+    if (!isRecord(row)) return
+    const label = `wealth_snapshots, fila ${index + 1}`
+    const financialAssets = addFiniteNumberError(row, 'financial_assets_eur', label, addError)
+    const cash = addFiniteNumberError(row, 'cash_eur', label, addError)
+    const realEstate = addFiniteNumberError(row, 'real_estate_eur', label, addError)
+    const mortgageDebt = addFiniteNumberError(row, 'mortgage_debt_eur', label, addError)
+    const netWorth = addFiniteNumberError(row, 'net_worth_eur', label, addError)
+    if (
+      financialAssets !== null && cash !== null && realEstate !== null
+      && mortgageDebt !== null && netWorth !== null
+      && !isClose(netWorth, financialAssets + cash + realEstate - mortgageDebt)
+    ) {
+      addError(`${label}: net_worth_eur no coincide con activos, efectivo, inmuebles y deuda.`)
+    }
+
+    for (const detail of [
+      { column: 'property_detail', total: realEstate, id: 'property_id' },
+      { column: 'mortgage_detail', total: mortgageDebt, id: 'mortgage_id' },
+    ]) {
+      const entries = row[detail.column]
+      if (!Array.isArray(entries)) {
+        addError(`${label}: ${detail.column} no es una lista.`)
+        continue
+      }
+
+      let total = 0
+      let hasInvalidValues = false
+      entries.forEach((entry, detailIndex) => {
+        const detailLabel = `${label}, ${detail.column}, fila ${detailIndex + 1}`
+        if (!isRecord(entry)) {
+          addError(`${detailLabel}: el detalle no es un objeto.`)
+          hasInvalidValues = true
+          return
+        }
+        const id = entry[detail.id]
+        if (typeof id !== 'string' || !UUID_PATTERN.test(id)) {
+          addError(`${detailLabel}: falta un ${detail.id} válido.`)
+        }
+        const value = addFiniteNumberError(entry, 'value_eur', detailLabel, addError)
+        if (value === null) hasInvalidValues = true
+        else total += value
+      })
+
+      if (detail.total !== null && !hasInvalidValues && !isClose(total, detail.total)) {
+        addError(`${label}: el total de ${detail.column} no coincide con su desglose.`)
+      }
+    }
+  })
 
   return { valid: errors.length === 0 && omittedErrorCount === 0, exportedAt, counts, errors: getErrors() }
 }

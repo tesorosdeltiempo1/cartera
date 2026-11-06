@@ -233,7 +233,16 @@ test('backup validation accepts a complete version 7 archive with linked rows', 
       portfolio_transactions: [{ id: backupId(6), cash_account_id: backupId(5), position_id: backupId(1) }],
       real_estate_assets: [{ id: backupId(7) }],
       mortgage_liabilities: [{ id: backupId(8), property_id: backupId(7) }],
-      wealth_snapshots: [{ id: backupId(9) }],
+      wealth_snapshots: [{
+        id: backupId(9),
+        financial_assets_eur: 100,
+        cash_eur: -10,
+        real_estate_eur: 20,
+        mortgage_debt_eur: 5,
+        net_worth_eur: 105,
+        property_detail: [{ property_id: backupId(7), value_eur: 20 }],
+        mortgage_detail: [{ mortgage_id: backupId(8), property_id: backupId(7), value_eur: 5 }],
+      }],
       portfolio_contribution_plans: [{ id: backupId(10), target_position_id: backupId(1) }],
     },
   }
@@ -277,4 +286,43 @@ test('backup validation reports unsupported, incomplete, duplicate, and broken-r
 
   delete backup.tables.wealth_snapshots
   assert.ok(validateBackupJson(JSON.stringify(backup)).errors.some((error) => /Falta la tabla wealth_snapshots/.test(error)))
+})
+
+test('backup validation reconciles net worth snapshots and frozen property details', () => {
+  const backup = {
+    app: 'Cartera',
+    formatVersion: 7,
+    exportedAt: '2026-11-06T12:00:00.000Z',
+    tables: Object.fromEntries([
+      'assets',
+      'investment_assets',
+      'portfolio_snapshots',
+      'portfolio_snapshot_assets',
+      'portfolio_cash_accounts',
+      'portfolio_transactions',
+      'real_estate_assets',
+      'mortgage_liabilities',
+      'wealth_snapshots',
+      'portfolio_contribution_plans',
+    ].map((table) => [table, []])),
+  }
+  backup.tables.wealth_snapshots = [{
+    id: backupId(1),
+    financial_assets_eur: 100,
+    cash_eur: 25,
+    real_estate_eur: 300,
+    mortgage_debt_eur: 80,
+    net_worth_eur: 345,
+    property_detail: [{ property_id: backupId(2), value_eur: 300 }],
+    mortgage_detail: [{ mortgage_id: backupId(3), value_eur: 80 }],
+  }]
+  assert.equal(validateBackupJson(JSON.stringify(backup)).valid, true)
+
+  backup.tables.wealth_snapshots[0].net_worth_eur = 346
+  backup.tables.wealth_snapshots[0].property_detail[0].value_eur = 299
+  backup.tables.wealth_snapshots[0].mortgage_detail[0].mortgage_id = 'invalid-id'
+  const result = validateBackupJson(JSON.stringify(backup))
+  assert.ok(result.errors.some((error) => /net_worth_eur no coincide/.test(error)))
+  assert.ok(result.errors.some((error) => /total de property_detail/.test(error)))
+  assert.ok(result.errors.some((error) => /mortgage_id válido/.test(error)))
 })

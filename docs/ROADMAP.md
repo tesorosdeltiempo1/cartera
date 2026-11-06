@@ -87,7 +87,7 @@ La capacidad debe crecer por capas verificables:
 **Objetivo:** demostrar que el JSON exportado puede validarse y recuperarse sin riesgo para la cartera real.
 
 - La exportación paginada exige datos y conteo exacto estable para cada tabla; las pruebas cubren paginación, falta de datos/conteo, cambios de total y resultados parciales.
-- El panel local permite seleccionar un JSON y comprobar su versión, tablas requeridas, identificadores y referencias internas; no envía el archivo ni escribe en la base de datos. Esto verifica estructura, no autenticidad, actualidad, equivalencia con producción ni restaurabilidad.
+- El panel local permite seleccionar un JSON y comprobar su versión, tablas requeridas, identificadores, referencias internas y conciliación aritmética de los cortes de patrimonio; no envía el archivo ni escribe en la base de datos. Esto verifica estructura, no autenticidad, actualidad, equivalencia con producción ni restaurabilidad.
 - La exportación lee tablas por separado y no fija una instantánea transaccional; un reemplazo concurrente que mantenga el mismo conteo puede pasar inadvertido. Diseñar una fuente coherente de respaldo antes de implementar restauración.
 - Antes de restaurar, validar versión y forma del esquema, integridad referencial, duplicados, orden de inserción y recuentos; generar un informe de diferencias y no sobrescribir por defecto.
 - Ensayar exportación, restauración y nueva exportación en un proyecto Supabase desechable separado de producción. No usar credenciales de producción ni cargar datos reales en fixtures.

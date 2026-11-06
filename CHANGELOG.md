@@ -4,9 +4,9 @@ Este archivo recoge las iteraciones funcionales y visuales por separado del READ
 
 ## 2026-11-06 — Comprobación local de respaldos
 
-- Respaldo privado permite seleccionar un JSON y comprobar su versión, tablas, identificadores y referencias internas sin subir el archivo ni escribir en Supabase.
+- Respaldo privado permite seleccionar un JSON y comprobar su versión, tablas, identificadores, referencias internas y conciliación aritmética de los cortes de patrimonio, sin subir el archivo ni escribir en Supabase.
 - La validación no certifica actualidad, equivalencia con producción ni restaurabilidad; esas comprobaciones siguen requiriendo un entorno aislado.
-- Añadidas pruebas para respaldos válidos, malformados, incompletos, versiones incompatibles, IDs duplicados y referencias rotas.
+- Añadidas pruebas para respaldos válidos, malformados, incompletos, versiones incompatibles, IDs duplicados, referencias rotas y discrepancias en snapshots patrimoniales.
 
 ## 2026-11-06 — Dirección de producto y estado documental
 
