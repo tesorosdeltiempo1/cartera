@@ -244,8 +244,9 @@ En el registro, abre **Desglose, fuentes y valoración** para consultar los impo
 2. Espera el mensaje de éxito y comprueba que el archivo `cartera-respaldo-AAAA-MM-DD.json` se haya descargado.
 3. Guarda el JSON en una ubicación privada y protegida. Contiene datos patrimoniales personales en claro.
 4. Descarga respaldos periódicos y antes de ediciones o eliminaciones importantes.
+5. Si quieres comprobar un archivo existente, usa **Comprobar un archivo de respaldo**. El JSON se lee localmente en el navegador; se revisan versión, tablas, identificadores y referencias internas. No se envía ni se restaura.
 
-La aplicación ofrece exportación, no restauración desde el archivo. No compartas el JSON por correo o servicios públicos y no lo subas al repositorio de código.
+Una comprobación correcta solo confirma la estructura y las referencias internas de ese archivo. No demuestra que incluya los cambios más recientes, que coincida con Supabase ni que pueda restaurarse. La aplicación ofrece exportación y comprobación estructural, no restauración desde el archivo. No compartas el JSON por correo o servicios públicos y no lo subas al repositorio de código.
 
 ## 12. Cómo interpretar resultados y resolver dudas
 

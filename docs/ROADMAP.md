@@ -1,12 +1,12 @@
 # Roadmap de producto — Aureum
 
-**Revisión:** 2026-11-04
+**Revisión:** 2026-11-06
 **Estado:** autenticación y RLS aplicados; acceso del propietario confirmado en producción.  
 **Horizonte:** una mejora por iteración, con evidencia verificable y sin cambios silenciosos sobre datos reales.
 
 ## Dirección de producto
 
-Aureum es un registro privado y auditable del patrimonio familiar a largo plazo. Debe priorizar exactitud, procedencia y continuidad sobre automatizaciones llamativas. No es un broker ni un asesor financiero.
+Aureum es un registro patrimonial privado, de propietario único, para conocer qué se posee y se debe, de dónde sale cada cifra y qué ha cambiado entre cortes. Debe priorizar exactitud, procedencia y continuidad sobre automatizaciones llamativas. No es un broker ni un asesor financiero.
 
 ### Principios de decisión
 
@@ -28,14 +28,16 @@ Aureum es un registro privado y auditable del patrimonio familiar a largo plazo.
 
 ### Potencial de producto y límites
 
-**Visión:** un expediente patrimonial privado, consolidado y portable que responda con evidencia a cuatro preguntas: qué poseemos, qué debemos, cómo se formó cada cifra y qué ha cambiado desde el último corte.
+**Visión:** un expediente patrimonial privado, consolidado y portable que responda con evidencia a cuatro preguntas: qué poseo, qué debo, cómo se formó cada cifra y qué ha cambiado desde el último corte.
 
 La capacidad debe crecer por capas verificables:
 
 1. **Balance fiable:** inversiones, efectivo, inmuebles y pasivos con titularidad, valoración fechada, procedencia, cobertura y tratamiento explícito de partidas desconocidas. La suma debe reconciliarse con sus componentes.
 2. **Registro auditable:** ledger de caja, operaciones y flujos inmobiliarios vinculados a su fuente; correcciones reversibles; importación asistida con previsualización, detección de duplicados y conciliación contra extractos.
-3. **Gobierno del patrimonio:** política de objetivos versionada, fechas de revisión, desviaciones explicables, compromisos recurrentes informativos y vistas por titular, cuenta o clase de activo cuando el modelo de permisos lo soporte.
+3. **Gobierno del patrimonio:** política de objetivos versionada, desviaciones explicables y compromisos recurrentes informativos. Las vistas por titular o el acceso de otras personas requieren un modelo de permisos explícito; no forman parte del uso actual.
 4. **Perspectiva y continuidad:** snapshots comparables, informes exportables, respaldo restaurable probado y escenarios editables que separen supuestos de hechos y no se presenten como predicciones.
+
+**Enfoque inmediato:** mejorar continuidad, conciliación y trazabilidad sin exigir que todas las posiciones tengan datos de cotización completos. EUR estimado es una vía válida para uso personal; la valoración detallada queda disponible cuando aporta precisión. No se añadirá por ahora una revisión mensual guiada: queda aplazada por decisión del propietario.
 
 **Condiciones de expansión:** cada nueva clase de activo debe definir titularidad, valoración, liquidez, pasivos asociados, fuente, antigüedad y fórmula de atribución antes de entrar en el total. La incorporación de familiares, asesores, cuentas conectadas, OCR o precios automáticos exige revisión específica de privacidad, consentimiento, seguridad, licencia y modelo de permisos; no se infiere autorización por el carácter privado de la app.
 
@@ -45,21 +47,20 @@ La capacidad debe crecer por capas verificables:
 
 - Login del único propietario con Supabase Auth; el propietario confirmó que puede entrar y ver sus datos.
 - Registros públicos desactivados y RLS/policies del propietario aplicados a las cuatro tablas de cartera, según diagnóstico compartido por el propietario.
-- Dashboard, catálogo de activos consolidados, posiciones por broker, histórico de snapshots y exportación JSON disponibles.
+- Dashboard, catálogo de activos consolidados, posiciones por broker, efectivo y ledger, patrimonio inmobiliario, histórico de snapshots y exportación JSON implementados. La existencia de una ruta o de código en `main` no sustituye la comprobación de cada flujo autenticado en producción.
 - Despliegue automático desde `main` a Vercel.
-- El commit `77a63ec` desplegó el formulario agregado, cargado en `/historico` por una sesión propietaria ya activa; no se enviaron datos y queda pendiente probar el guardado con una operación de prueba controlada. La mejora de integridad del respaldo y resiliencia del histórico se publicó en `dd7d07b` (`Ready`); las rutas principales responden HTTP 200 sin autenticación, pero no se probaron escrituras autenticadas.
-- El dashboard usa EUR como moneda base. La migración 006 ya añadió moneda/fecha/fuente de precio y FX; las posiciones previas tienen esos nuevos campos sin clasificar hasta revisión manual.
+- El dashboard usa EUR como moneda base. La migración 006 añadió moneda/fecha/fuente de precio y FX; las posiciones previas pueden seguir sin clasificar hasta revisión manual.
 - Los snapshots antiguos se conservan y no se recalculan al editar posiciones.
-- El respaldo es exportación JSON; aún no existe un flujo de restauración.
-- Las migraciones 007–012 están aplicadas en Supabase; el diagnóstico de solo lectura confirmó columnas/RPC de 010–012, RLS en planes y permisos solo para `authenticated` donde corresponde. Se guardó un snapshot histórico agregado del 22-oct-2026; no reconstruye posiciones ni incluye inmuebles/hipotecas.
-- El respaldo local incluye el contenido completo de las tablas nuevas y conserva paginación/conteos; todavía no existe flujo de restauración.
-- En el workspace se prepara una importación local CSV con vista previa, conciliación parcial, selección por fila y acta JSON descargable. No se debe presentar como disponible en producción hasta desplegar y probar; todavía no interpreta formatos originales de brokers ni guarda el acta dentro de Supabase.
+- Posiciones admite estimaciones directas en EUR y señala las que superan 90 días o carecen de fecha. El aviso no modifica la valoración ni constituye una política universal de frescura.
+- La importación CSV asistida está implementada: analiza localmente, presenta una vista previa y deja seleccionar filas; su aplicación es fila a fila, puede quedar parcial y el acta se descarga localmente. No interpreta formatos originales de brokers ni persiste el acta. La validación autenticada de producción sigue siendo una comprobación separada.
+- El respaldo JSON incluye las diez tablas consultadas por la aplicación y comprueba los conteos de las páginas. No existe restauración desde la app y no se ha ensayado una recuperación completa en una base aislada.
+- Las migraciones 007–013 y los estados confirmados de Supabase constan en el historial del proyecto y en [005_owner_access_status.md](database/005_owner_access_status.md). Los cortes históricos agregados no reconstruyen posiciones por operación ni garantizan cobertura inmobiliaria.
 - El detalle de la dirección clásica Aureum y su validación está en [CHANGELOG.md](../CHANGELOG.md).
 - El procedimiento de trabajo, la arquitectura actual y las precauciones de datos están en [GUIA_DE_TRABAJO.md](GUIA_DE_TRABAJO.md).
 
 ## Prioridades
 
-### P0 — Fiabilidad de valoración y divisa · transición desplegada, clasificación pendiente
+### P0 — Fiabilidad de valoración y divisa · base desplegada, revisión de datos pendiente
 
 **Objetivo:** evitar que una valoración parezca precisa cuando el precio puede estar en otra divisa o no tener fecha/origen conocidos.
 
@@ -67,7 +68,7 @@ La capacidad debe crecer por capas verificables:
 - Se conserva EUR como moneda base, coherente con el producto actual; inventariar sin exponer datos qué divisa corresponde a cada precio existente.
 - La migración 006 añadió moneda ISO, fecha/origen del precio y tipo de cambio manual EUR por unidad con su fecha/fuente (integración automática queda fuera).
 - Mantener datos existentes sin clasificar hasta revisión individual; no inferir moneda solo por ticker, broker o nombre.
-- La nueva app deja las valoraciones incompletas fuera de totales EUR/snapshots, pero mantiene las cifras heredadas visibles y marcadas como moneda no confirmada; no se suman entre sí.
+- La app deja las valoraciones incompletas fuera de totales EUR/snapshots verificables, pero mantiene las cifras heredadas visibles y marcadas como moneda no confirmada; la estimación directa en EUR permite una vía de uso más sencilla.
 - Mostrar valor original y equivalente en moneda base con tipo de cambio y fecha visibles; guardar esos inputs en snapshots nuevos y no recalcular históricos.
 - El propietario confirmó que [006_position_price_provenance.sql](database/006_position_price_provenance.sql) terminó con `Success. No rows returned`; el informe 002 confirma las seis columnas, `valuation_detail`, sus constraints, RLS, grants `authenticated` y ausencia de grants de tabla a `anon`.
 
@@ -76,38 +77,41 @@ La capacidad debe crecer por capas verificables:
 - El valor en moneda base se puede reproducir a partir de cantidad, precio, moneda y tipo de cambio fechado.
 - No se silencian valores desconocidos ni se aplica una tasa ficticia/implícita.
 - Usuarios pueden distinguir el valor original del convertido y ver la fecha del precio/cambio.
-- El esquema y constraints están inspeccionados. La transición está desplegada desde el commit `19e3acb`; la revisión automática confirmó el acceso privado de la nueva versión. La interfaz preserva cifras heredadas sin sumarlas, bloquea snapshots parciales y permite clasificar cada posición desde su edición.
+- El esquema y constraints están inspeccionados; la migración 013 habilita estimaciones EUR y snapshots con calidad desglosada. La interfaz preserva cifras heredadas sin sumarlas, bloquea snapshots financieros sin importe y permite clasificar cada posición desde su edición.
 - Cierre completo del P0: el propietario verifica sesión/datos en producción, revisa moneda y precio por posición, y confirma valores EUR y snapshots futuros.
 
 **Fuera de alcance:** API de cotizaciones, conversión intradía, cambios retroactivos de snapshots, fuente cambiaria común automatizada y look-through de fondos.
 
-### P1 — Custodia y recuperación de datos
+### P1 — Custodia y recuperación de datos · pendiente
 
-**Objetivo:** convertir el JSON exportado en un respaldo operable y verificable.
+**Objetivo:** demostrar que el JSON exportado puede validarse y recuperarse sin riesgo para la cartera real.
 
-- Documentar un procedimiento de recuperación manual probado con un conjunto ficticio.
-- Diseñar importación con previsualización, validación de versión/esquema, detección de duplicados y confirmación final; nunca sobrescribir por defecto.
-- Verificar que la exportación no se pueda generar como si estuviera completa cuando falló una de las consultas.
-- La exportación paginada exige datos y conteo exacto estable para cada tabla; pruebas cubren paginación, falta de datos/conteo, cambios de total y resultados parciales. Restauración sigue pendiente.
+- La exportación paginada exige datos y conteo exacto estable para cada tabla; las pruebas cubren paginación, falta de datos/conteo, cambios de total y resultados parciales.
+- El panel local permite seleccionar un JSON y comprobar su versión, tablas requeridas, identificadores y referencias internas; no envía el archivo ni escribe en la base de datos. Esto verifica estructura, no autenticidad, actualidad, equivalencia con producción ni restaurabilidad.
 - La exportación lee tablas por separado y no fija una instantánea transaccional; un reemplazo concurrente que mantenga el mismo conteo puede pasar inadvertido. Diseñar una fuente coherente de respaldo antes de implementar restauración.
+- Antes de restaurar, validar versión y forma del esquema, integridad referencial, duplicados, orden de inserción y recuentos; generar un informe de diferencias y no sobrescribir por defecto.
+- Ensayar exportación, restauración y nueva exportación en un proyecto Supabase desechable separado de producción. No usar credenciales de producción ni cargar datos reales en fixtures.
+- No afirmar que existe recuperación operativa hasta comparar los datos antes y después y documentar los límites que no se puedan restaurar.
 - Mantener los archivos de respaldo fuera del repositorio y protegidos localmente.
 
-**Criterio de salida:** restauración ensayada en entorno aislado, conteos y totales reconciliados y errores de filas identificados antes de aplicar.
+**Criterio de salida:** restauración ensayada en entorno aislado; conteos, referencias y totales reconciliados; errores identificados antes de cualquier aplicación; procedimiento repetible por el propietario.
 
 ### P1b — Importación asistida y conciliación de posiciones
 
 **Objetivo:** reducir la transcripción sin tratar extractos, informes agregados e inferencias como datos intercambiables.
 
-La primera etapa local acepta el CSV común de Aureum, lo analiza en el navegador, propone coincidencias por broker + ticker o broker + nombre y presenta cambios por fila, bloqueos y suma de valoraciones completas. El usuario elige las filas y confirma. No se borran posiciones ausentes ni se modifican vínculos, objetivos, ledger o snapshots. El acta JSON es descargable, pero no se almacena en la base de datos; la aplicación por varias filas no es transaccional.
+La primera etapa está implementada en el código actual: acepta el CSV común de Aureum, lo analiza en el navegador, propone coincidencias por broker + ticker o broker + nombre y presenta cambios por fila, bloqueos y suma de valoraciones. El usuario elige las filas y confirma. No se borran posiciones ausentes ni se modifican vínculos, objetivos, ledger o snapshots. El acta JSON es descargable, pero no se almacena en la base de datos; la aplicación por varias filas no es transaccional. La interpretación de formatos originales de brokers sigue fuera de alcance.
 
 **Siguientes pasos antes de darla por terminada:**
 
-- Validar con extractos ficticios y, tras desplegar, con una importación de prueba controlada por el propietario; no probar contra datos reales sin confirmación y respaldo reciente.
+- Validar con extractos ficticios; confirmar el despliegue y el flujo autenticado antes de considerarla disponible en producción. No probar contra datos reales sin confirmación y respaldo reciente.
 - Evaluar un adaptador por formato/versión de cada broker solo cuando exista un ejemplo no sensible y se conozcan sus convenciones de unidades, efectivo, moneda y fecha.
-- Diseñar un registro de importación persistido y una aplicación transaccional con RPC antes de prometer auditoría duradera o importaciones grandes.
+- Diseñar un registro de importación persistido y una aplicación transaccional con RPC antes de prometer auditoría duradera o importaciones grandes. Un fallo de fila debe cancelar el lote completo.
 - No extraer de PDF los totales agregados como si fueran filas ni actualizar posiciones desde narrativas sin extractos originales.
 
 **Criterio de salida:** cada dato importado tiene fuente y fecha revisables; la suma se etiqueta como parcial si faltan valoraciones; discrepancias se muestran, no se fuerzan; cambios y bloqueos se explican antes de escribir; y el acta/backup permite reconstruir qué se aplicó.
+
+**Medida de éxito:** menos correcciones manuales repetidas y ninguna discrepancia de conciliación silenciada. Medir con fixtures y pruebas del propietario, no mediante telemetría de datos financieros.
 
 ### P2 — Calidad del catálogo y política de inversión
 
@@ -164,40 +168,15 @@ Solo después de P0. Evaluar proveedor, licencias, cobertura de instrumentos y l
 
 ### P6 — Seguimiento de aportaciones y planificación
 
-Solo cuando la base de datos y el histórico sean consistentes:
+La migración 011 y la interfaz de planes están implementadas; los planes son informativos y no ejecutan compras ni cargos. La comprobación de uso autenticado en producción debe confirmarse antes de darla por validada.
 
-- Registrar aportaciones como flujo de capital separado de la rentabilidad/valor de mercado.
-- La migración 011 está aplicada y la interfaz de planes está preparada: posiciones/caja, importe, frecuencia y fechas; no ejecuta compras ni cargos. Pendiente desplegar y verificar un plan ficticio.
-- Explorar avisos de revisión y desviación respecto a la política, siempre informativos y configurables.
-- Proyecciones a largo plazo únicamente con supuestos editables, escenarios y advertencia de que no son predicciones ni recomendaciones.
+No añadir ahora una revisión mensual guiada ni avisos periódicos de desviación: quedan aplazados a petición del propietario. Las proyecciones solo se reconsiderarán si aportan valor cotidiano y separan con claridad supuestos de hechos.
 
-### Propuesta de expansión — Tracker patrimonial completo
+### Patrimonio inmobiliario y flujos · modelo implementado
 
-**Estado:** aprobada por el propietario para desarrollo. La migración 008 está aplicada y verificada; la primera implementación se publicó en `main` con `e0cef85`, pendiente de confirmación del despliegue.
+Las migraciones 008–009 separan inmuebles e hipotecas de las posiciones financieras y registran alquileres, gastos y pagos hipotecarios en el ledger existente. El valor bruto atribuible y la deuda atribuible se conservan por separado; amortización de principal reduce caja y deuda, mientras que intereses y gastos son salidas de caja. Los snapshots conservan los valores del momento y el respaldo incluye estas tablas.
 
-**Visión:** pasar de seguir inversiones y caja a mostrar una imagen fiel del patrimonio neto familiar, incluyendo inmuebles y deudas, con fechas y procedencia claras. Mantener la interfaz centrada en pocas cifras comprensibles; no convertirla en un sistema contable ni en asesor financiero.
-
-**Reglas de integración**
-
-- `assets` sigue representando posiciones de inversión por broker; no reutilizarlo para viviendas o hipotecas. Sus objetivos de inversión no deben incluir inmuebles salvo una política futura explícita.
-- Modelar inmuebles como activos patrimoniales independientes, con valor bruto, porcentaje de propiedad, fecha/fuente de valoración y moneda. Guardar solo ubicación aproximada opcional; evitar direcciones completas y datos de inquilinos.
-- Modelar hipotecas y otros préstamos como pasivos separados, enlazados opcionalmente a un inmueble. Registrar saldo pendiente y fecha/fuente de ese saldo; separar porcentaje de propiedad del porcentaje de deuda atribuible al propietario.
-- Calcular el patrimonio neto sin contar dos veces el capital: cartera financiera + efectivo + valor bruto atribuible de inmuebles − deuda atribuible. Mostrar también el valor bruto del inmueble y la deuda, no solo una cifra neta opaca.
-- Mantener los flujos reales de caja en el libro existente `portfolio_transactions`, asociados a la cuenta y clasificados/enlazados a inmueble o préstamo. No crear un segundo libro de movimientos que duplique saldos.
-- Separar amortización de principal (reduce caja y deuda, no es gasto/rentabilidad) de intereses y gastos (salidas de caja). El alquiler cobrado es entrada de caja, no una revaloración del inmueble.
-- Congelar valores, deuda y proporciones en snapshots; editar hoy no debe reescribir la historia. Incluir las nuevas tablas y relaciones en el respaldo JSON antes de habilitar su uso.
-
-**Secuencia recomendada**
-
-1. **Balance inicial:** `008_real_estate_wealth.sql` crea el registro de inmuebles, hipotecas y snapshots de patrimonio. La app guarda valoración manual fechada, participación de propiedad y participación de deuda; no incorpora rentas, proyecciones ni integraciones bancarias.
-2. **Prueba y despliegue:** el propietario aplicó 008 y verificó tablas/RLS/RPCs con el diagnóstico 002. Tras el despliegue de Vercel, probar con datos ficticios antes de registrar cifras reales.
-3. **Hipotecas y equity:** presentar valor atribuible, deuda atribuible y patrimonio neto conciliables; no simular amortizaciones ni tasas futuras.
-4. **Flujos reales (migración aplicada):** 009 añade alquiler cobrado, gasto inmobiliario categorizado y pago hipotecario al ledger existente. Una cuota guarda pago total y principal: el principal reduce caja y deuda a la vez; los intereses son la diferencia y no contaminan la rentabilidad bursátil. El diagnóstico 002 confirma el RPC protegido por RLS y `authenticated`; quedan push, despliegue y prueba ficticia de los tres flujos. Las previsiones recurrentes quedan fuera.
-5. **Vista wealth tracker:** resumir patrimonio neto y su evolución; ofrecer desglose breve de inversiones, efectivo, inmuebles y deuda. Mostrar junto a cada valoración su fecha y si está incompleta o desactualizada.
-
-**Criterio de aceptación:** con datos ficticios, total neto = activos atribuibles menos pasivos atribuibles; flujos y cambios de deuda se reconcilian con caja; snapshots históricos permanecen reproducibles; la exportación/restauración conserva cada clase; y ninguna valoración incompleta se presenta como confirmada.
-
-**Primera entrega recomendada:** inmuebles + pasivos y patrimonio neto básico, con valoración manual y snapshots. Dejar el registro detallado de flujos como siguiente incremento: separa primero la comprensión del balance del trabajo contable de cada mes y reduce el riesgo de doble contabilización.
+**Pendiente de validar:** conciliación integral con datos ficticios y restauración en un entorno aislado. No interpretar snapshots patrimoniales como rentabilidad y no afirmar cobertura completa hasta reconciliar cada clase de activo y pasivo.
 
 ## Flujo de entrega y calidad
 

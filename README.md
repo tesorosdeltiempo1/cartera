@@ -2,11 +2,11 @@
 
 > **Patrimonio · Disciplina · Legado**
 
-Registro privado de patrimonio personal, inspirado en la sobriedad clásica: criterio antes que ruido, constancia antes que espectáculo. La identidad visual toma referencias grecorromanas con una paleta de tinta, mármol y oro antiguo; la prioridad sigue siendo la claridad de los datos.
+Registro privado de patrimonio personal, de propietario único: criterio antes que ruido y claridad antes que automatizaciones llamativas. La identidad visual toma referencias clásicas con una paleta sobria; la prioridad sigue siendo que los datos sean comprensibles, trazables y recuperables.
 
 ## Propósito
 
-Cartera registra posiciones reales por broker, las reúne manualmente bajo activos consolidados, compara exposición con objetivos y conserva un histórico mediante snapshots. No ejecuta operaciones ni ofrece asesoramiento financiero.
+Cartera reúne posiciones por broker, efectivo, inmuebles y deuda; permite estimaciones directas en EUR o valoraciones detalladas, registra movimientos y conserva cortes históricos. No ejecuta operaciones ni ofrece asesoramiento financiero.
 
 Principios de producto:
 
@@ -23,7 +23,10 @@ Principios de producto:
 - RLS activo en `assets`, `investment_assets`, `portfolio_snapshots` y `portfolio_snapshot_assets`; las políticas limitan acceso a la sesión cuyo UID está configurado en `public.is_cartera_owner()`.
 - El inventario posterior a la migración mostró grants CRUD a `authenticated`, ninguna concesión a `anon` en esas cuatro tablas y políticas de propietario. `FORCE ROW LEVEL SECURITY` figura desactivado; el acceso desde la aplicación utiliza roles Supabase de cliente, no el propietario de las tablas.
 - Activos consolidados, objetivos, tesis/notas y vínculo manual entre posiciones de broker y activos maestros.
-- Dashboard, posiciones por broker, histórico de snapshots y exportación JSON privada.
+- Dashboard, posiciones, efectivo, ledger, patrimonio inmobiliario, histórico y exportación JSON privada.
+- Las estimaciones directas en EUR permiten registrar un importe aproximado sin inventar unidades o conversiones. El filtro de antigüedad es una señal informativa, no una política de actualización.
+- La importación CSV revisable está implementada en el código; su flujo de producción debe confirmarse por separado. No interpreta formatos originales de brokers y aplica las filas una por una.
+- El respaldo se exporta como JSON y permite comprobar localmente su estructura y referencias. No tiene restauración integrada; la recuperación no se considera probada hasta ensayarla en un entorno aislado.
 - Migración aplicada por el propietario en Supabase y plantilla SQL sin UID personal versionado.
 - Identidad visual Aureum: referencias clásicas grecorromanas, tinta verde profunda, mármol cálido y oro antiguo; accesibilidad y legibilidad como límites de diseño.
 
@@ -34,13 +37,13 @@ La autenticación de la interfaz no sustituye RLS. No habilitar registro públic
 - `assets` representa una posición individual en un broker; `investment_assets` es el catálogo maestro.
 - La exposición consolidada suma las posiciones vinculadas al mismo activo. Los objetivos pertenecen al activo maestro, no a cada broker.
 - No se copian automáticamente objetivos antiguos ni se fusionan nombres/tickers ambiguos.
-- El P0 de moneda y procedencia está desplegado y la migración de campos se informó aplicada. Las posiciones heredadas siguen pendientes de clasificación individual: no se infiere su moneda ni se incluyen como importes EUR confirmados hasta verificarlas. El P0 permanece abierto hasta revisar los datos y confirmar valoraciones y snapshots futuros.
+- El P0 de moneda y procedencia está desplegado y la migración de campos se informó aplicada. Las posiciones heredadas pueden seguir pendientes de clasificación: no se infiere su moneda ni se incluyen como importes EUR confirmados hasta verificarlas.
 - La exposición indirecta dentro de fondos (look-through) no se calcula.
 - Producción guarda desglose en snapshots. La nueva versión P0 adjunta inputs de valoración reproducibles a snapshots futuros; ningún snapshot histórico se recalcula.
 - La exportación JSON contiene datos patrimoniales en claro: guárdala en un lugar privado.
 - La migración 007 está aplicada y verificada en Supabase. El propietario confirmó que `/operaciones` ya está desplegada y funciona correctamente.
-- La migración 008 de inmuebles, hipotecas y snapshots de patrimonio está aplicada y verificada. `/patrimonio` se publicó en `main` con `e0cef85`; falta confirmar el despliegue de Vercel.
-- La migración 009 de alquileres, gastos y pagos hipotecarios está aplicada y verificada. El formulario de flujos queda pendiente de push/despliegue.
+- La exportación comprueba paginación y conteos, pero consulta las tablas por separado y no garantiza una instantánea transaccional.
+- La comparación entre snapshots es nominal; no debe interpretarse como rentabilidad ajustada por aportaciones, retiradas o cambios de cobertura.
 
 ## Stack
 

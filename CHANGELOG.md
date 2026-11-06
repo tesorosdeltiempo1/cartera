@@ -2,6 +2,19 @@
 
 Este archivo recoge las iteraciones funcionales y visuales por separado del README. Las fechas indican cuándo se implementó cada cambio; no implican por sí mismas que esté desplegado ni validado en producción.
 
+## 2026-11-06 — Comprobación local de respaldos
+
+- Respaldo privado permite seleccionar un JSON y comprobar su versión, tablas, identificadores y referencias internas sin subir el archivo ni escribir en Supabase.
+- La validación no certifica actualidad, equivalencia con producción ni restaurabilidad; esas comprobaciones siguen requiriendo un entorno aislado.
+- Añadidas pruebas para respaldos válidos, malformados, incompletos, versiones incompatibles, IDs duplicados y referencias rotas.
+
+## 2026-11-06 — Dirección de producto y estado documental
+
+- Se actualizan README, roadmap y guía operativa para reflejar el producto de propietario único, las estimaciones EUR, la importación CSV en el código y los límites actuales del respaldo.
+- Se prioriza continuidad, conciliación y trazabilidad; la revisión mensual guiada queda aplazada a petición del propietario.
+- La restauración sigue sin implementarse ni probarse. El criterio exige un proyecto Supabase desechable y fixtures ficticios; no se usó producción ni se modificaron datos financieros.
+- Documentación únicamente; sin cambios de código, esquema, despliegue o datos.
+
 ## 2026-11-05 — Revisión de antigüedad de estimaciones (local)
 
 - Posiciones muestra cuántos días tiene cada estimación y ofrece un filtro directo para las que superan 90 días o carecen de fecha.

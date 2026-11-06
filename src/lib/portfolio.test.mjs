@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { getNextContributionDate } from './contributionPlans.ts'
-import { fetchAllRows } from './backup.ts'
+import { fetchAllRows, validateBackupJson } from './backup.ts'
 import { compareSnapshotValues, prepareHistoricalSnapshot } from './historicalSnapshot.ts'
 import { calculateSale, filterLedgerTransactions, summarizeCashAccounts, summarizePositionReturns } from './ledger.ts'
 import { getEstimateAgeDays, getPositionOverviewValuation, isEstimateDueForReview } from './valuation.ts'
@@ -213,4 +213,68 @@ test('backup pagination rejects missing counts, missing data, changed totals, an
     error: null,
   })), /cambiaron durante la exportación/)
   await assert.rejects(fetchAllRows(async () => ({ data: [], count: 1, error: null })), /respaldo parcial/)
+})
+
+function backupId(index) {
+  return `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`
+}
+
+test('backup validation accepts a complete version 7 archive with linked rows', () => {
+  const backup = {
+    app: 'Cartera',
+    formatVersion: 7,
+    exportedAt: '2026-11-06T12:00:00.000Z',
+    tables: {
+      assets: [{ id: backupId(1), investment_asset_id: backupId(2) }],
+      investment_assets: [{ id: backupId(2) }],
+      portfolio_snapshots: [{ id: backupId(3) }],
+      portfolio_snapshot_assets: [{ id: backupId(4), snapshot_id: backupId(3), investment_asset_id: backupId(2) }],
+      portfolio_cash_accounts: [{ id: backupId(5) }],
+      portfolio_transactions: [{ id: backupId(6), cash_account_id: backupId(5), position_id: backupId(1) }],
+      real_estate_assets: [{ id: backupId(7) }],
+      mortgage_liabilities: [{ id: backupId(8), property_id: backupId(7) }],
+      wealth_snapshots: [{ id: backupId(9) }],
+      portfolio_contribution_plans: [{ id: backupId(10), target_position_id: backupId(1) }],
+    },
+  }
+
+  const result = validateBackupJson(JSON.stringify(backup))
+  assert.equal(result.valid, true)
+  assert.deepEqual(result.errors, [])
+  assert.equal(result.counts.assets, 1)
+  assert.equal(result.counts.portfolio_transactions, 1)
+  assert.equal(result.exportedAt, backup.exportedAt)
+})
+
+test('backup validation reports unsupported, incomplete, duplicate, and broken-reference data', () => {
+  assert.match(validateBackupJson('{').errors[0], /JSON válido/)
+
+  const backup = {
+    app: 'Cartera',
+    formatVersion: 6,
+    exportedAt: '2026-11-06T12:00:00.000Z',
+    tables: Object.fromEntries([
+      'assets',
+      'investment_assets',
+      'portfolio_snapshots',
+      'portfolio_snapshot_assets',
+      'portfolio_cash_accounts',
+      'portfolio_transactions',
+      'real_estate_assets',
+      'mortgage_liabilities',
+      'wealth_snapshots',
+      'portfolio_contribution_plans',
+    ].map((table) => [table, []])),
+  }
+  backup.tables.assets = [{ id: backupId(1) }, { id: backupId(1) }]
+  backup.tables.portfolio_transactions = [{ id: backupId(2), cash_account_id: '00000000-0000-4000-8000-000000000099' }]
+
+  const result = validateBackupJson(JSON.stringify(backup))
+  assert.equal(result.valid, false)
+  assert.ok(result.errors.some((error) => /no compatible/.test(error)))
+  assert.ok(result.errors.some((error) => /identificador duplicado/.test(error)))
+  assert.ok(result.errors.some((error) => /cash_account_id/.test(error)))
+
+  delete backup.tables.wealth_snapshots
+  assert.ok(validateBackupJson(JSON.stringify(backup)).errors.some((error) => /Falta la tabla wealth_snapshots/.test(error)))
 })

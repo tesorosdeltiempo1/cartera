@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import AllocationComparison from '@/components/AllocationComparison'
+import BackupValidator from '@/components/BackupValidator'
 import ExportBackupButton from '@/components/ExportBackupButton'
 import SaveSnapshotButton from '@/components/SaveSnapshotButton'
 import TrackRecordChart from '@/components/TrackRecordChart'
@@ -409,9 +410,12 @@ export default function DashboardClient() {
               <summary className="disclosure-summary">
                 <span><span className="disclosure-title">Respaldo privado</span><span className="disclosure-subtitle">Descarga tus datos patrimoniales</span></span><span className="disclosure-mark" aria-hidden="true" />
               </summary>
-              <section className="disclosure-body flex flex-wrap items-center justify-between gap-4">
-                <p className="text-sm text-slate-400">JSON · posiciones, activos, operaciones, inmuebles e histórico.</p>
-                <ExportBackupButton disabled={loading || Boolean(errorMessage)} />
+              <section className="disclosure-body grid gap-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <p className="text-sm text-slate-400">JSON · posiciones, activos, operaciones, inmuebles e histórico.</p>
+                  <ExportBackupButton disabled={loading || Boolean(errorMessage)} />
+                </div>
+                <BackupValidator />
               </section>
             </details>
           </div>

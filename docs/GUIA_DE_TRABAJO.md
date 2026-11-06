@@ -2,7 +2,7 @@
 
 ## Propósito y visión
 
-Aureum es un registro privado y auditable del patrimonio familiar a largo plazo. La prioridad es que los valores sean comprensibles, reproducibles y trazables; no es un broker ni un asesor financiero. Una automatización no debe ocultar datos incompletos ni modificar el pasado sin una decisión explícita.
+Aureum es un registro patrimonial privado, de propietario único, para conocer qué se posee y se debe, de dónde sale cada cifra y qué cambia entre cortes. La prioridad es que los valores sean comprensibles, reproducibles y trazables; no es un broker ni un asesor financiero. Una automatización no debe ocultar datos incompletos ni modificar el pasado sin una decisión explícita.
 
 Principios para cada cambio:
 
@@ -16,17 +16,17 @@ El detalle de prioridades y criterios de salida vive en [ROADMAP.md](ROADMAP.md)
 
 ## Situación actual
 
-La línea base confirmada en producción incluye acceso de propietario con Supabase Auth y RLS, dashboard, activos consolidados con vínculos manuales, posiciones por broker, snapshots históricos y exportación JSON. El despliegue se conecta a `main` en Vercel.
+El proyecto incluye acceso privado de propietario con Supabase Auth y RLS, dashboard, activos consolidados, posiciones por broker, estimaciones EUR, importación CSV revisable, ledger, inmuebles, snapshots y exportación JSON. El despliegue se conecta a `main` en Vercel; comprobar la versión y los flujos autenticados en producción antes de atribuirles estado operativo.
 
-El P0 de moneda y procedencia está desplegado y su migración se informó aplicada. La valoración usa EUR como base, pero las posiciones antiguas siguen pendientes de clasificación individual. El P0 no se considera cerrado hasta verificar cada precio, moneda y cambio pertinente y confirmar snapshots futuros. No se deben reinterpretar las cifras antiguas ni recalcular snapshots.
+El P0 de moneda y procedencia está desplegado y su migración se informó aplicada. La valoración usa EUR como base; las posiciones antiguas pueden seguir pendientes de clasificación. La estimación directa en EUR permite una vía cotidiana sin exigir unidades ni conversión. No se deben reinterpretar cifras antiguas ni recalcular snapshots.
 
 La migración 007 ya está aplicada y el propietario confirmó que `/operaciones` está desplegada y funciona. Iniciar el ledger fija un punto de partida actual; no reconstruye compras anteriores.
 
-El dashboard y `/operaciones` calculan caja y rentabilidad mediante `get_portfolio_ledger_summary`; el límite de 250 queda solo para la lista de movimientos recientes. El respaldo pagina las tablas y comprueba recuentos; el snapshot se guarda en una llamada transaccional. `npm run lint` y `npm run build` pasan. Tras el despliegue, queda comprobar los flujos de la aplicación; no se han creado operaciones ni snapshots de prueba sobre datos reales.
+El dashboard y `/operaciones` calculan caja y rentabilidad mediante `get_portfolio_ledger_summary`; el límite de 250 queda solo para la lista de movimientos recientes. El respaldo pagina las tablas y comprueba recuentos, pero consulta cada tabla por separado; todavía no hay restauración integrada ni una recuperación completa ensayada en entorno aislado.
 
 La inspección compartida confirma el esquema y los permisos de PostgreSQL, pero no sustituye la validación de los flujos de la aplicación. No se han creado operaciones ni snapshots de prueba sobre datos reales.
 
-El guardado de resumen y detalle usa `save_portfolio_snapshot` en una transacción; comprueba su comportamiento con un snapshot cuando estés listo para iniciar el histórico.
+El guardado de resumen y detalle usa `save_portfolio_snapshot` en una transacción. No crear operaciones o snapshots de prueba en producción; utilizar un entorno aislado.
 
 Los estados anteriores son una fotografía documental: comprobar el despliegue y el estado de Supabase antes de ejecutar cualquier operación real. El estado operativo de acceso está en [database/005_owner_access_status.md](database/005_owner_access_status.md).
 
@@ -34,7 +34,7 @@ Los estados anteriores son una fotografía documental: comprobar el despliegue y
 
 | Ruta | Responsabilidad |
 | --- | --- |
-| `src/app/` | Rutas App Router: dashboard (`/`), activos, posiciones, histórico y la ruta local de operaciones. |
+| `src/app/` | Rutas App Router: resumen (`/`), activos, posiciones, histórico, operaciones y patrimonio. |
 | `src/components/` | Formularios y componentes de interfaz reutilizados por las rutas. `AuthGate` controla el acceso de interfaz y `NavBar` la navegación autenticada. |
 | `src/lib/valuation.ts` | Reglas de completitud y conversión de las valoraciones de posiciones a EUR. |
 | `src/lib/currencies.ts` | Opciones de moneda utilizadas por los formularios. |
@@ -73,9 +73,9 @@ El propietario aplicó 007 y compartió el diagnóstico 002; tablas, RLS, polici
 
 El propietario confirmó que el ledger está desplegado y funciona. También aplicó las migraciones 008 y 009; el diagnóstico 002 confirmó sus tablas, columnas, RLS, policies y permisos de `record_property_cash_flow`. No vuelvas a ejecutar las migraciones 007, 008 ni 009.
 
-La ruta `/patrimonio` está desplegada. El formulario de flujos pasó lint/build y queda pendiente de publicarse y probarse con un movimiento ficticio antes de registrar datos reales.
+Las migraciones 007–013 y el estado de despliegue registrado deben verificarse antes de repetir operaciones sobre Supabase. Nunca uses la base de producción para ensayar importaciones, restauraciones, movimientos o snapshots.
 
-En Posiciones, usa los filtros `Pendientes` y `Valoradas` y busca por nombre, ticker o broker para completar la revisión P0; no deduzcas monedas ni cambies valores sin confirmarlos en el broker.
+El filtro de antigüedad de estimaciones es informativo. Una revisión mensual guiada queda aplazada; no debe añadirse como requisito de uso hasta que el propietario lo solicite.
 
 ## Qué significa terminar
 
